@@ -1,4 +1,4 @@
-;;; ALCWALL v2.1.0 - schedule module
+;;; ALCWALL v2.1.1 - schedule module
 
 ;;; --------------------------------------------------------------------------
 ;;; Length schedule

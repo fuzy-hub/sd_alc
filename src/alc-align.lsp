@@ -1,71 +1,71 @@
-;;; ALCWALL v2.1.0 - alignment module
+;;; ALCWALL v2.1.1 - alignment module
 
 ;;; --------------------------------------------------------------------------
 ;;; Text alignment
 
-(defun alc--variant-point-list (value / raw result)
-  (if (= (type value) 'VARIANT)
-    (setq raw (vlax-variant-value value))
-    (setq raw value)
-  )
-  (cond
-    ((= (type raw) 'SAFEARRAY)
+(defun alc--object-bounds-unsafe (object / minimum maximum)
+  (vla-GetBoundingBox object 'minimum 'maximum)
+  (list
+    (vlax-safearray->list minimum)
+    (vlax-safearray->list maximum))
+)
+
+(defun alc--object-bounds (entity / object result)
+  (setq object
+    (vl-catch-all-apply 'vlax-ename->vla-object (list entity)))
+  (if (not (vl-catch-all-error-p object))
+    (progn
       (setq result
-        (vl-catch-all-apply 'vlax-safearray->list (list raw)))
+        (vl-catch-all-apply 'alc--object-bounds-unsafe (list object)))
       (if (not (vl-catch-all-error-p result)) result)
     )
-    ((listp raw) raw)
   )
 )
 
-(defun alc--object-point-property (object property / result)
-  (setq result
-    (vl-catch-all-apply 'vlax-get-property (list object property)))
-  (if (not (vl-catch-all-error-p result))
-    (alc--variant-point-list result)
-  )
+(defun alc--bounds-corners (minimum maximum / min-x min-y min-z max-x max-y max-z)
+  (setq min-x (car minimum)
+        min-y (cadr minimum)
+        min-z (caddr minimum)
+        max-x (car maximum)
+        max-y (cadr maximum)
+        max-z (caddr maximum))
+  (list
+    (list min-x min-y min-z)
+    (list min-x max-y min-z)
+    (list max-x min-y min-z)
+    (list max-x max-y min-z)
+    (list min-x min-y max-z)
+    (list min-x max-y max-z)
+    (list max-x min-y max-z)
+    (list max-x max-y max-z))
 )
 
-(defun alc--text-anchor-wcs (entity / data entity-type object horizontal vertical)
-  (if (and entity (setq data (entget entity)))
+(defun alc--text-left-x-ucs (entity / bounds corners values point)
+  (if (setq bounds (alc--object-bounds entity))
     (progn
-      (setq entity-type (cdr (assoc 0 data))
-            object
-              (vl-catch-all-apply 'vlax-ename->vla-object (list entity)))
-      (if (vl-catch-all-error-p object)
-        nil
-        (cond
-          ((equal entity-type "MTEXT")
-            (alc--object-point-property object 'InsertionPoint)
-          )
-          ((equal entity-type "TEXT")
-            (setq horizontal (cdr (assoc 72 data))
-                  vertical (cdr (assoc 73 data)))
-            (if (and (or (not horizontal) (= horizontal 0))
-                     (or (not vertical) (= vertical 0)))
-              (alc--object-point-property object 'InsertionPoint)
-              (alc--object-point-property object 'TextAlignmentPoint)
-            )
-          )
-        )
+      (setq corners
+          (alc--bounds-corners (car bounds) (cadr bounds))
+        values nil)
+      (foreach point corners
+        (setq values (cons (car (trans point 0 1)) values))
       )
+      (if values (apply 'min values))
     )
   )
 )
 
-(defun alc--move-text-to-ucs-x
-  (entity target-x / anchor anchor-ucs delta-ucs delta-wcs object result)
-  (if (setq anchor (alc--text-anchor-wcs entity))
+(defun alc--move-text-left-to-ucs-x
+  (entity target-x / current-x delta-ucs delta-wcs object result)
+  (if (setq current-x (alc--text-left-x-ucs entity))
     (progn
-      (setq anchor-ucs (trans anchor 0 1)
-            delta-ucs (list (- target-x (car anchor-ucs)) 0.0 0.0)
+      (setq delta-ucs (list (- target-x current-x) 0.0 0.0)
             delta-wcs (trans delta-ucs 1 0 T))
       (if (< (abs (car delta-ucs)) 1e-9)
         T
         (progn
           (setq object
-              (vl-catch-all-apply
-                'vlax-ename->vla-object (list entity)))
+            (vl-catch-all-apply
+              'vlax-ename->vla-object (list entity)))
           (if (vl-catch-all-error-p object)
             nil
             (progn
@@ -86,21 +86,20 @@
 )
 
 (defun alc--text-align-loop
-  (/ selection reference reference-entity reference-data reference-anchor
-    target-x index entity aligned-count failed-count)
-  (prompt "\nChon cac TEXT/MTEXT can canh thang dung: ")
+  (/ selection reference reference-entity reference-data target-x
+    index entity aligned-count failed-count)
+  (prompt "\nChon cac TEXT/MTEXT can canh le trai: ")
   (if (setq selection (ssget '((0 . "TEXT,MTEXT"))))
-    (if (setq reference (entsel "\nChon TEXT/MTEXT tham chieu: "))
+    (if (setq reference (entsel "\nChon TEXT/MTEXT tham chieu le trai: "))
       (progn
         (setq reference-entity (car reference)
               reference-data (entget reference-entity))
         (if (and reference-data
                  (member (cdr (assoc 0 reference-data)) '("TEXT" "MTEXT"))
-                 (setq reference-anchor
-                   (alc--text-anchor-wcs reference-entity)))
+                 (setq target-x
+                   (alc--text-left-x-ucs reference-entity)))
           (progn
-            (setq target-x (car (trans reference-anchor 0 1))
-                  index 0
+            (setq index 0
                   aligned-count 0
                   failed-count 0)
             (repeat (sslength selection)
@@ -108,7 +107,7 @@
                     index (1+ index))
               (if (equal entity reference-entity)
                 nil
-                (if (alc--move-text-to-ucs-x entity target-x)
+                (if (alc--move-text-left-to-ucs-x entity target-x)
                   (setq aligned-count (1+ aligned-count))
                   (setq failed-count (1+ failed-count))
                 )
@@ -116,9 +115,9 @@
             )
             (prompt
               (strcat
-                "\nTKALIGN: da canh "
+                "\nTKALIGN: da canh le trai "
                 (itoa aligned-count)
-                " text theo truc X cua text tham chieu"
+                " text theo text tham chieu"
                 (if (> failed-count 0)
                   (strcat ", loi " (itoa failed-count) " text.")
                   ".")))

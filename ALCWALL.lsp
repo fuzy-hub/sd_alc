@@ -1,10 +1,10 @@
 ;;; ALCWALL.lsp
 ;;; ALC wall drafting toolkit loader for ZWCAD/AutoCAD on Windows.
-;;; Version: 2.1.0
+;;; Version: 2.1.1
 
 (vl-load-com)
 
-(setq *alc-version* "2.1.0")
+(setq *alc-version* "2.1.1")
 
 (defun alc--loader-root (/ entry)
   (if (setq entry (findfile "ALCWALL.lsp"))

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.1.1 — 2026-08-18
+
+- Sửa `TKALIGN` căn theo mép trái thực tế của bounding box thay vì điểm neo text.
+- Text có justification trái, giữa hoặc phải vẫn về cùng một lề trái hiển thị.
+
 ## 2.1.0 — 2026-08-18
 
 - Thêm lệnh `TKALIGN` để căn nhiều `TEXT/MTEXT` theo trục X của text tham chiếu.
