@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.0 — 2026-08-18
+
+- Thêm lệnh `TKALIGN` để căn nhiều `TEXT/MTEXT` theo trục X của text tham chiếu.
+- Giữ nguyên tọa độ Y và khoảng cách dọc giữa các text.
+- Hỗ trợ text có justification khác nhau thông qua điểm neo của đối tượng.
+
 ## 2.0.1 — 2026-08-18
 
 - Sửa chọn phía của `ALCGT` khi đường tham chiếu theo trục Y.

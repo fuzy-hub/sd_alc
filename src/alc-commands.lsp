@@ -1,4 +1,4 @@
-;;; ALCWALL v2.0.1 - commands module
+;;; ALCWALL v2.1.0 - commands module
 
 ;;; --------------------------------------------------------------------------
 ;;; Public commands
@@ -112,6 +112,11 @@
   (princ)
 )
 
+(defun c:TKALIGN ()
+  (alc--run-command 'alc--text-align-loop "TKALIGN")
+  (princ)
+)
+
 (princ
-  "\nALCWALL loaded. Commands: ALCWALL, ALCCENTRAL, ALCDOOR, ALCLT, ALCGT, ALCGTS, ALCTK, ALCTKC, TKDIM, TKCOUNT, ALCSET.")
+  "\nALCWALL loaded. Commands: ALCWALL, ALCCENTRAL, ALCDOOR, ALCLT, ALCGT, ALCGTS, ALCTK, ALCTKC, TKDIM, TKCOUNT, TKALIGN, ALCSET.")
 (princ)

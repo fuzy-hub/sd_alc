@@ -24,7 +24,7 @@
         commands
           '("C:ALCSET" "C:ALCWALL" "C:ALCCENTRAL" "C:ALCDOOR"
             "C:ALCLT" "C:ALCGT" "C:ALCGTS" "C:ALCTK"
-            "C:ALCTKC" "C:TKDIM" "C:TKCOUNT")
+            "C:ALCTKC" "C:TKDIM" "C:TKCOUNT" "C:TKALIGN")
         atoms (atoms-family 1)
         missing nil)
   (if (vl-catch-all-error-p load-result)
@@ -49,7 +49,7 @@
         (setq lines
           (list
             "PASS"
-            "COMMAND_COUNT=11"
+            "COMMAND_COUNT=12"
             (strcat "VERSION=" *alc-version*)))
       )
     )
