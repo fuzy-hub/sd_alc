@@ -1,4 +1,4 @@
-;;; ALCWALL v2.0.0 - settings module
+;;; ALCWALL v2.0.1 - settings module
 ;;; ALCWALL.lsp
 ;;; 2D ALC wall tool for AutoCAD on Windows.
 ;;; Commands: ALCWALL, ALCCENTRAL, ALCDOOR, ALCLT, ALCGT, ALCGTS, ALCTK, ALCTKC, TKDIM, TKCOUNT, ALCSET

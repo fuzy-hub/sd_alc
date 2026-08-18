@@ -1,13 +1,13 @@
-# ALCWALL 2.0.0
+# ALCWALL 2.0.1
 
-ALCWALL là bộ công cụ AutoLISP hỗ trợ triển khai tường ALC 2D trên ZWCAD/AutoCAD for Windows. Bản `2.0.0` được kiểm thử chính thức bằng ZWCAD 2027 (`27.2.0.21636`).
+ALCWALL là bộ công cụ AutoLISP hỗ trợ triển khai tường ALC 2D trên ZWCAD/AutoCAD for Windows. Bản `2.0.1` được kiểm thử chính thức bằng ZWCAD 2027 (`27.2.0.21636`).
 
 ## Cài đặt
 
 1. Giữ nguyên toàn bộ cấu trúc thư mục, đặc biệt là `ALCWALL.lsp` và thư mục `src`.
 2. Trong ZWCAD, mở `OPTIONS > Files > Support File Search Path` và thêm thư mục ALCWALL.
 3. Chạy `APPLOAD`, chọn `ALCWALL.lsp`. Có thể thêm tệp này vào Startup Suite nếu muốn tự động nạp.
-4. Khi thấy thông báo `ALCWALL v2.0.0 modules loaded`, bộ lệnh đã sẵn sàng.
+4. Khi thấy thông báo `ALCWALL v2.0.1 modules loaded`, bộ lệnh đã sẵn sàng.
 
 Không nạp riêng các tệp trong `src`; `ALCWALL.lsp` là loader duy nhất.
 

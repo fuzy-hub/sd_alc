@@ -42,6 +42,8 @@ function Invoke-ZwcadScript {
             -Force -ErrorAction SilentlyContinue
         Remove-Item -LiteralPath (Join-Path $resolvedResults 'fixture-test.log') `
             -Force -ErrorAction SilentlyContinue
+        Remove-Item -LiteralPath (Join-Path $resolvedResults 'wall-tie-side-test.log') `
+            -Force -ErrorAction SilentlyContinue
         Get-ChildItem -LiteralPath $resolvedFixtures -File -Filter '*.dwg' `
             -ErrorAction SilentlyContinue | Remove-Item -Force
 
@@ -56,6 +58,8 @@ function Invoke-ZwcadScript {
 
         $process.Kill()
         $process.WaitForExit()
+        Get-Process -Name ZWCAD -ErrorAction SilentlyContinue |
+            Stop-Process -Force
         if ($attempt -eq 2) {
             throw "ZWCAD timed out twice while running $ScriptName"
         }
@@ -65,23 +69,35 @@ function Invoke-ZwcadScript {
 
 Invoke-ZwcadScript -ScriptName 'run-all.scr'
 
+# ZWCAD can leave a headless child after the script has already flushed all
+# results. No ZWCAD process existed before the run, so any remaining process
+# here belongs to this test invocation.
+Get-Process -Name ZWCAD -ErrorAction SilentlyContinue |
+    Stop-Process -Force
+
 $smokeLog = Join-Path $resolvedResults 'smoke-test.log'
 $fixtureLog = Join-Path $resolvedResults 'fixture-test.log'
+$wallTieLog = Join-Path $resolvedResults 'wall-tie-side-test.log'
 if (-not (Test-Path -LiteralPath $smokeLog) -or
-    -not (Test-Path -LiteralPath $fixtureLog)) {
+    -not (Test-Path -LiteralPath $fixtureLog) -or
+    -not (Test-Path -LiteralPath $wallTieLog)) {
     throw 'ZWCAD did not produce the expected test logs.'
 }
 
 $smoke = Get-Content -LiteralPath $smokeLog
 $fixtures = Get-Content -LiteralPath $fixtureLog
+$wallTie = Get-Content -LiteralPath $wallTieLog
 $dwgs = Get-ChildItem -LiteralPath $resolvedFixtures -File -Filter '*.dwg'
 
-if ($smoke[0] -ne 'PASS' -or $fixtures[0] -ne 'PASS' -or $dwgs.Count -ne 5) {
+if ($smoke[0] -ne 'PASS' -or $fixtures[0] -ne 'PASS' -or
+    $wallTie[0] -ne 'PASS' -or $dwgs.Count -ne 5) {
     $smoke
     $fixtures
+    $wallTie
     throw "ALCWALL ZWCAD tests failed; generated DWG count: $($dwgs.Count)"
 }
 
 $smoke
 $fixtures
+$wallTie
 "DWG_COUNT=$($dwgs.Count)"

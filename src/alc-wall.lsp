@@ -1,4 +1,4 @@
-;;; ALCWALL v2.0.0 - wall module
+;;; ALCWALL v2.0.1 - wall module
 (defun alc--draw-lintel
   (door-start door-end side-point
     / dx dy segment-length ux uy cross-product side px py z
@@ -92,7 +92,7 @@
 
 (defun alc--draw-wall-tie
   (tie-start tie-end side-point tie-width tie-color
-    / dx dy segment-length ux uy cross-product side px py z
+    / dx dy segment-length ux uy cross-product side-offset side px py z
       tie-gap
       inner-start inner-end outer-start outer-end points normal wcs-points
       boundary hatch hatch-ename)
@@ -106,9 +106,14 @@
             cross-product
               (- (* dx (- (cadr side-point) (cadr tie-start)))
                  (* dy (- (car side-point) (car tie-start))))
-            side (if (>= cross-product 0.0) 1.0 -1.0)
-            px (* side (- uy))
-            py (* side ux)
+            side-offset (/ cross-product segment-length)
+            side
+              (cond
+                ((> side-offset 1e-6) 1.0)
+                ((< side-offset -1e-6) -1.0)
+              )
+            px (if side (* side (- uy)) 0.0)
+            py (if side (* side ux) 0.0)
             z (caddr tie-start)
             tie-gap 50.0
             inner-start
@@ -135,11 +140,16 @@
             normal (trans '(0.0 0.0 1.0) 1 0 T)
             wcs-points (mapcar '(lambda (p) (trans p 1 0)) points)
             boundary
-              (alc--track-temp
-                (alc--create-lwpolyline-wcs-on-layer
-                  wcs-points T normal (getvar "CLAYER"))))
-      (if boundary
-        (progn
+              (if side
+                (alc--track-temp
+                  (alc--create-lwpolyline-wcs-on-layer
+                    wcs-points T normal (getvar "CLAYER")))))
+      (cond
+        ((not side)
+          (prompt
+            "\nDiem chon ben dang nam tren duong tham chieu. Hay chon lech sang ben can ve.")
+          nil)
+        (boundary
           (setq hatch
                   (alc--make-hatch-with-settings
                     boundary "ANSI31" tie-color 10.0)
@@ -165,7 +175,7 @@
               (alc--cleanup-temp)
               (prompt "\nKhong the tao hatch giang tuong.")
               nil)))
-        (progn
+        (T
           (prompt "\nKhong the tao hinh bao giang tuong.")
           nil))
     )

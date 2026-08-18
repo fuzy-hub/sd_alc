@@ -4,5 +4,7 @@
 (alc-test-run-smoke)
 (load (strcat (getenv "ALCWALL_TEST_ROOT") "/tests/generate-fixtures.lsp"))
 (alc-test-run-fixtures)
+(load (strcat (getenv "ALCWALL_TEST_ROOT") "/tests/wall-tie-side-test.lsp"))
+(alc-test-run-wall-tie-side)
 _.QUIT
 _N

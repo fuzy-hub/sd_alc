@@ -1,4 +1,4 @@
-;;; ALCWALL v2.0.0 - commands module
+;;; ALCWALL v2.0.1 - commands module
 
 ;;; --------------------------------------------------------------------------
 ;;; Public commands
