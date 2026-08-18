@@ -1,0 +1,6 @@
+(setvar "FILEDIA" 0)
+(setvar "CMDECHO" 0)
+(load (strcat (getenv "ALCWALL_TEST_ROOT") "/tests/smoke-test.lsp"))
+(alc-test-run-smoke)
+_.QUIT
+_N

@@ -1,0 +1,7 @@
+* text=auto
+*.lsp text eol=lf
+*.scr text eol=lf
+*.ps1 text eol=lf
+*.md text eol=lf
+*.dwg binary
+

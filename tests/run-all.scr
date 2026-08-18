@@ -1,0 +1,8 @@
+(setvar "FILEDIA" 0)
+(setvar "CMDECHO" 0)
+(load (strcat (getenv "ALCWALL_TEST_ROOT") "/tests/smoke-test.lsp"))
+(alc-test-run-smoke)
+(load (strcat (getenv "ALCWALL_TEST_ROOT") "/tests/generate-fixtures.lsp"))
+(alc-test-run-fixtures)
+_.QUIT
+_N

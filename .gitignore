@@ -1,0 +1,8 @@
+ErrorReports/
+tests/results/*.log
+*.bak
+*.dwl
+*.dwl2
+*.sv$
+*.zw$
+
