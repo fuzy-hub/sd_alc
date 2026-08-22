@@ -1,4 +1,4 @@
-;;; ALCWALL v2.1.1 - settings module
+;;; ALCWALL v2.2.0 - settings module
 ;;; ALCWALL.lsp
 ;;; 2D ALC wall tool for AutoCAD on Windows.
 ;;; Commands: ALCWALL, ALCCENTRAL, ALCDOOR, ALCLT, ALCGT, ALCGTS, ALCTK, ALCTKC, TKDIM, TKCOUNT, ALCSET
@@ -25,13 +25,15 @@
 
 (defun alc--defaults ()
   (setq *alc-pattern* "ANSI37"
-        *alc-color* 5
-        *alc-scale* 500.0
+        *alc-color* 251
+        *alc-background-color* 9
+        *alc-scale* 250.0
         *alc-thickness* 100.0
         *alc-door-width* 900.0
         *alc-stat-text-height* 100.0
         *alc-count-prefix* "CK"
-        *alc-last-side* 1)
+        *alc-last-side* 1
+        *alc-settings-schema-version* 2)
 )
 
 ;;; --------------------------------------------------------------------------
@@ -43,13 +45,6 @@
   )
 )
 
-(defun alc--dxf-put (code value data / item)
-  (if (setq item (assoc code data))
-    (subst (cons code value) item data)
-    (append data (list (cons code value)))
-  )
-)
-
 (defun alc--valid-color-p (value)
   (and (numberp value)
        (= value (fix value))
@@ -57,24 +52,38 @@
        (<= value 255))
 )
 
-(defun alc--load-settings (/ ename data value)
+(defun alc--load-settings (/ ename data value schema-version needs-upgrade)
   (alc--defaults)
   (if (setq ename (alc--settings-ename))
     (progn
-      (setq data (entget ename))
+      (setq data (entget ename)
+            schema-version (cdr (assoc 92 data))
+            needs-upgrade
+              (not (and (numberp schema-version)
+                        (= schema-version 2))))
       (if (and (setq value (cdr (assoc 1 data)))
                (eq (type value) 'STR)
                (/= value ""))
         (setq *alc-pattern* value)
       )
-      (if (and (setq value (cdr (assoc 90 data)))
-               (alc--valid-color-p value))
-        (setq *alc-color* (fix value))
-      )
-      (if (and (setq value (cdr (assoc 40 data)))
-               (numberp value)
-               (> value 0.0))
-        (setq *alc-scale* value)
+      ;; Schema V1 used color 5 and scale 500 as defaults. Do not let those
+      ;; persisted legacy values override the new V2 defaults (251/9/250).
+      (if (not needs-upgrade)
+        (progn
+          (if (and (setq value (cdr (assoc 90 data)))
+                   (alc--valid-color-p value))
+            (setq *alc-color* (fix value))
+          )
+          (if (and (setq value (cdr (assoc 91 data)))
+                   (alc--valid-color-p value))
+            (setq *alc-background-color* (fix value))
+          )
+          (if (and (setq value (cdr (assoc 40 data)))
+                   (numberp value)
+                   (> value 0.0))
+            (setq *alc-scale* value)
+          )
+        )
       )
       (if (and (setq value (cdr (assoc 41 data)))
                (numberp value)
@@ -99,45 +108,107 @@
       (if (setq value (cdr (assoc 70 data)))
         (setq *alc-last-side* (if (= value -1) -1 1))
       )
+      (if needs-upgrade
+        (alc--save-settings)
+      )
     )
   )
 )
 
-(defun alc--save-settings (/ ename data)
-  (if (setq ename (alc--settings-ename))
-    (progn
-      (setq data (entget ename)
-            data (alc--dxf-put 1 *alc-pattern* data)
-            data (alc--dxf-put 90 *alc-color* data)
-            data (alc--dxf-put 40 *alc-scale* data)
-            data (alc--dxf-put 41 *alc-thickness* data)
-            data (alc--dxf-put 42 *alc-door-width* data)
-            data (alc--dxf-put 43 *alc-stat-text-height* data)
-            data (alc--dxf-put 2 *alc-count-prefix* data)
-            data (alc--dxf-put 70 *alc-last-side* data))
-      (entmod data)
+(defun alc--settings-ready-p ()
+  (and (boundp '*alc-settings-schema-version*)
+       (numberp *alc-settings-schema-version*)
+       (= *alc-settings-schema-version* 2)
+       (boundp '*alc-pattern*)
+       (eq (type *alc-pattern*) 'STR)
+       (/= *alc-pattern* "")
+       (boundp '*alc-color*)
+       (alc--valid-color-p *alc-color*)
+       (boundp '*alc-background-color*)
+       (alc--valid-color-p *alc-background-color*)
+       (boundp '*alc-scale*)
+       (numberp *alc-scale*)
+       (> *alc-scale* 0.0)
+       (boundp '*alc-thickness*)
+       (numberp *alc-thickness*)
+       (> *alc-thickness* 0.0)
+       (boundp '*alc-door-width*)
+       (numberp *alc-door-width*)
+       (> *alc-door-width* 0.0)
+       (boundp '*alc-stat-text-height*)
+       (numberp *alc-stat-text-height*)
+       (> *alc-stat-text-height* 0.0)
+       (boundp '*alc-count-prefix*)
+       (eq (type *alc-count-prefix*) 'STR)
+       (/= *alc-count-prefix* "")
+       (boundp '*alc-last-side*)
+       (member *alc-last-side* '(-1 1)))
+)
+
+(defun alc--ensure-settings ()
+  ;; Do not reload the drawing XRecord before every command.  ALCSET changes
+  ;; these session variables immediately; reloading here could overwrite those
+  ;; changes when a CAD host has not committed the XRecord yet.
+  (if (not (alc--settings-ready-p))
+    (alc--load-settings)
+  )
+)
+
+(defun alc--make-settings-record ()
+  (entmakex
+    (list
+      '(0 . "XRECORD")
+      '(100 . "AcDbXrecord")
+      (cons 1 *alc-pattern*)
+      (cons 90 *alc-color*)
+      (cons 91 *alc-background-color*)
+      (cons 92 2)
+      (cons 40 *alc-scale*)
+      (cons 41 *alc-thickness*)
+      (cons 42 *alc-door-width*)
+      (cons 43 *alc-stat-text-height*)
+      (cons 2 *alc-count-prefix*)
+      (cons 70 *alc-last-side*)
     )
+  )
+)
+
+(defun alc--save-settings
+  (/ dictionary old-record new-record added-record restored-record)
+  ;; AutoCAD does not support changing XRECORD contents with entmod.  Some
+  ;; hosts append the submitted entity list instead, making the record grow
+  ;; exponentially on repeated saves.  Replace the dictionary entry with a
+  ;; freshly created, canonical XRECORD and erase the old object only after
+  ;; the replacement has succeeded.
+  (setq dictionary (namedobjdict)
+        old-record (alc--settings-ename)
+        new-record (alc--make-settings-record))
+  (if new-record
     (progn
-      (setq ename
-        (entmakex
-          (list
-            '(0 . "XRECORD")
-            '(100 . "AcDbXrecord")
-            (cons 1 *alc-pattern*)
-            (cons 90 *alc-color*)
-            (cons 40 *alc-scale*)
-            (cons 41 *alc-thickness*)
-            (cons 42 *alc-door-width*)
-            (cons 43 *alc-stat-text-height*)
-            (cons 2 *alc-count-prefix*)
-            (cons 70 *alc-last-side*)
+      (if old-record
+        (dictremove dictionary "ALCWALL_SETTINGS_V1")
+      )
+      (setq added-record
+        (dictadd dictionary "ALCWALL_SETTINGS_V1" new-record))
+      (if added-record
+        (if old-record
+          (entdel old-record)
+        )
+        (progn
+          ;; Keep the previous settings reachable if replacing the dictionary
+          ;; entry fails for any reason.
+          (if old-record
+            (setq restored-record
+              (dictadd dictionary "ALCWALL_SETTINGS_V1" old-record))
+          )
+          (entdel new-record)
+          (if (not restored-record)
+            (prompt "\nCould not save ALC settings to this drawing.")
           )
         )
       )
-      (if ename
-        (dictadd (namedobjdict) "ALCWALL_SETTINGS_V1" ename)
-      )
     )
+    (prompt "\nCould not create the ALC settings record.")
   )
   (princ)
 )
@@ -154,6 +225,7 @@
     "\nCurrent: Thickness=" (rtos *alc-thickness* 2 0)
     " | Pattern=" *alc-pattern*
     " | Color=" (alc--color-name *alc-color*)
+    " | Background=" (alc--color-name *alc-background-color*)
     " | Scale=" (rtos *alc-scale* 2 0)
   )
 )
@@ -175,6 +247,17 @@
       (setq *alc-color* color)
       (alc--save-settings)
       (prompt (strcat "\nSelected color: " (alc--color-name color)))
+    )
+  )
+)
+
+(defun alc--set-background-color (/ color)
+  (if (setq color (acad_colordlg *alc-background-color* nil))
+    (progn
+      (setq *alc-background-color* color)
+      (alc--save-settings)
+      (prompt
+        (strcat "\nSelected background color: " (alc--color-name color)))
     )
   )
 )
@@ -221,13 +304,15 @@
   (setq choice "Continue")
   (while (not (equal choice "Exit"))
     (prompt (alc--status))
-    (initget "Thickness Pattern Color Scale Exit")
+    (initget "Thickness Pattern Color Background Scale Exit")
     (setq choice
-      (getkword "\nSettings [Thickness/Pattern/Color/Scale/Exit] <Exit>: "))
+      (getkword
+        "\nSettings [Thickness/Pattern/Color/Background/Scale/Exit] <Exit>: "))
     (cond
       ((equal choice "Thickness") (alc--set-thickness))
       ((equal choice "Pattern") (alc--set-pattern))
       ((equal choice "Color") (alc--set-color))
+      ((equal choice "Background") (alc--set-background-color))
       ((equal choice "Scale") (alc--set-scale))
       (T (setq choice "Exit"))
     )

@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.2.0 — 2026-08-22
+
+- Sửa lỗi ghi `XRECORD` bằng `entmod` làm dữ liệu thiết lập tăng theo cấp số nhân sau mỗi lần lưu; nay thay mới dictionary entry bằng một record chuẩn.
+- Thêm thiết lập màu nền hatch tường, mặc định ACI 9.
+- Đổi màu hatch mặc định sang ACI 251 và hatch scale mặc định sang 250.
+- Tự nâng cấp XRecord cũ để giá trị mặc định 5/500 không ghi đè mặc định mới.
+- Giữ màu nền hatch khi dùng `ALCDOOR` để tách tường.
+- Luôn đưa polyline boundary lên trên hatch để thấy rõ màu nét bao tường.
+
 ## 2.1.1 — 2026-08-18
 
 - Sửa `TKALIGN` căn theo mép trái thực tế của bounding box thay vì điểm neo text.

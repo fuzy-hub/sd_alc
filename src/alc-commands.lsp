@@ -1,11 +1,11 @@
-;;; ALCWALL v2.1.1 - commands module
+;;; ALCWALL v2.2.0 - commands module
 
 ;;; --------------------------------------------------------------------------
 ;;; Public commands
 
 (defun c:ALCSET ()
   (vl-load-com)
-  (alc--load-settings)
+  (alc--ensure-settings)
   (alc--settings)
   (princ)
 )
@@ -14,7 +14,7 @@
   (loop-function command-name
     / *error* document document-result old-cmdecho undo-open message)
   (vl-load-com)
-  (alc--load-settings)
+  (alc--ensure-settings)
   (setq *alc-temp-entities* nil
         old-cmdecho (getvar "CMDECHO")
         undo-open nil)

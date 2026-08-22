@@ -1,4 +1,4 @@
-;;; ALCWALL v2.1.1 - geometry module
+;;; ALCWALL v2.2.0 - geometry module
 
 ;;; --------------------------------------------------------------------------
 ;;; Geometry helpers

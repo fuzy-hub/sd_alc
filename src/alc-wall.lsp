@@ -1,4 +1,4 @@
-;;; ALCWALL v2.1.1 - wall module
+;;; ALCWALL v2.2.0 - wall module
 (defun alc--draw-lintel
   (door-start door-end side-point
     / dx dy segment-length ux uy cross-product side px py z
@@ -47,7 +47,9 @@
                   wcs-points T normal (getvar "CLAYER"))))
       (if boundary
         (progn
-          (setq hatch (alc--make-hatch-with-settings boundary "ANSI31" 4 10.0)
+          (setq hatch
+                  (alc--make-hatch-with-settings
+                    boundary "ANSI31" 4 10.0 nil)
                 hatch-ename (alc--vla-object-ename hatch))
           (if hatch-ename (alc--track-temp hatch-ename))
           (if hatch
@@ -152,7 +154,7 @@
         (boundary
           (setq hatch
                   (alc--make-hatch-with-settings
-                    boundary "ANSI31" tie-color 10.0)
+                    boundary "ANSI31" tie-color 10.0 nil)
                 hatch-ename (alc--vla-object-ename hatch))
           (if hatch-ename (alc--track-temp hatch-ename))
           (if hatch
@@ -271,15 +273,44 @@
   (vla-AppendOuterLoop hatch outer-loop)
 )
 
-(defun alc--finish-hatch (hatch scale color)
+(defun alc--set-hatch-background (hatch background-color / color-object)
+  (if background-color
+    (progn
+      (setq color-object (vla-get-BackgroundColor hatch))
+      (vla-put-ColorIndex color-object background-color)
+      (vla-put-BackgroundColor hatch color-object)
+      (vl-catch-all-apply 'vlax-release-object (list color-object))
+    )
+  )
+  hatch
+)
+
+(defun alc--finish-hatch (hatch scale color background-color)
   (vla-put-PatternScale hatch scale)
   (vla-put-Color hatch color)
+  (alc--set-hatch-background hatch background-color)
   (vla-Evaluate hatch)
   hatch
 )
 
+(defun alc--bring-boundary-to-front (boundary / result)
+  ;; The hatch is created after its boundary, so many CAD hosts display it on
+  ;; top of the polyline. Keep the wall outline visible by explicitly moving
+  ;; the boundary to the front after the hatch has been evaluated.
+  (setq result
+    (vl-catch-all-apply
+      'vl-cmdf (list "_.DRAWORDER" boundary "" "_Front")))
+  (if (vl-catch-all-error-p result)
+    (prompt
+      (strcat
+        "\nWall created, but its boundary could not be moved above the hatch: "
+        (vl-catch-all-error-message result)))
+  )
+  (not (vl-catch-all-error-p result))
+)
+
 (defun alc--make-hatch-with-settings
-  (boundary pattern color scale / hatch result)
+  (boundary pattern color scale background-color / hatch result)
   (setq hatch
     (vl-catch-all-apply
       'alc--add-hatch-object
@@ -308,7 +339,8 @@
         (progn
           (setq result
             (vl-catch-all-apply
-              'alc--finish-hatch (list hatch scale color)))
+              'alc--finish-hatch
+              (list hatch scale color background-color)))
           (if (vl-catch-all-error-p result)
             (progn
               (vl-catch-all-apply 'vla-Delete (list hatch))
@@ -318,7 +350,10 @@
                   (vl-catch-all-error-message result)))
               nil
             )
-            hatch
+            (progn
+              (alc--bring-boundary-to-front boundary)
+              hatch
+            )
           )
         )
       )
@@ -328,7 +363,25 @@
 
 (defun alc--make-hatch (boundary)
   (alc--make-hatch-with-settings
-    boundary *alc-pattern* *alc-color* *alc-scale*)
+    boundary *alc-pattern* *alc-color* *alc-scale*
+    *alc-background-color*)
+)
+
+(defun alc--read-hatch-background-unsafe (object / color-object color-index)
+  (setq color-object (vla-get-BackgroundColor object)
+        color-index (vla-get-ColorIndex color-object))
+  (vl-catch-all-apply 'vlax-release-object (list color-object))
+  color-index
+)
+
+(defun alc--read-hatch-background (object / result)
+  (setq result
+    (vl-catch-all-apply 'alc--read-hatch-background-unsafe (list object)))
+  (if (and (not (vl-catch-all-error-p result))
+           (alc--valid-color-p result))
+    result
+    *alc-background-color*
+  )
 )
 
 (defun alc--read-hatch-settings-unsafe (hatch / object)
@@ -336,7 +389,8 @@
   (list
     (vla-get-PatternName object)
     (vla-get-Color object)
-    (vla-get-PatternScale object))
+    (vla-get-PatternScale object)
+    (alc--read-hatch-background object))
 )
 
 (defun alc--read-hatch-settings (hatch / result)
@@ -472,7 +526,8 @@
     / polygon layer normal base-axis raw-direction direction-dot axis
       projected-distance p1-wcs p2-wcs p3-wcs split-polygons polygon-a polygon-b
       boundary-a boundary-b hatch-a hatch-b hatch-a-ename hatch-b-ename
-      old-hatches old-hatch hatch-settings hatch-pattern hatch-color hatch-scale)
+      old-hatches old-hatch hatch-settings hatch-pattern hatch-color hatch-scale
+      hatch-background-color)
   (setq polygon
     (alc--clean-polygon-points (alc--lwp-points wall)))
   (cond
@@ -550,19 +605,24 @@
                               (if (not hatch-settings)
                                 (setq hatch-settings
                                   (list
-                                    *alc-pattern* *alc-color* *alc-scale*))
+                                    *alc-pattern* *alc-color* *alc-scale*
+                                    *alc-background-color*))
                               )
                               (setq hatch-pattern (car hatch-settings)
                                     hatch-color (cadr hatch-settings)
                                     hatch-scale (caddr hatch-settings)
+                                    hatch-background-color
+                                      (cadddr hatch-settings)
                                     hatch-a
                                       (alc--make-hatch-with-settings
                                         boundary-a hatch-pattern
-                                        hatch-color hatch-scale)
+                                        hatch-color hatch-scale
+                                        hatch-background-color)
                                     hatch-b
                                       (alc--make-hatch-with-settings
                                         boundary-b hatch-pattern
-                                        hatch-color hatch-scale)
+                                        hatch-color hatch-scale
+                                        hatch-background-color)
                                 hatch-a-ename (alc--vla-object-ename hatch-a)
                                 hatch-b-ename (alc--vla-object-ename hatch-b))
                               (if hatch-a-ename

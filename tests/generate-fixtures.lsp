@@ -16,14 +16,21 @@
   )
 )
 
-(defun alc-test--clear (/ selection index entity)
+(defun alc-test--clear (/ selection index entity entities)
   (vl-catch-all-apply 'vl-cmdf (list "_.UCS" "_World"))
   (if (setq selection (ssget "_X"))
     (progn
-      (setq index 0)
+      ;; Snapshot the entity names before deleting anything. AutoCAD may
+      ;; invalidate entries in a selection set while its entities are erased.
+      (setq index 0
+            entities nil)
       (repeat (sslength selection)
-        (setq entity (ssname selection index)
-              index (1+ index))
+        (if (setq entity (ssname selection index))
+          (setq entities (cons entity entities))
+        )
+        (setq index (1+ index))
+      )
+      (foreach entity entities
         (if (entget entity) (entdel entity))
       )
     )
@@ -36,6 +43,31 @@
   (if (setq selection (ssget "_X" (list (cons 0 type-name))))
     (sslength selection)
     0
+  )
+)
+
+(defun alc-test--hatch-settings-ok
+  (/ selection index settings all-valid)
+  (setq all-valid T)
+  (if (setq selection (ssget "_X" '((0 . "HATCH"))))
+    (progn
+      (setq index 0)
+      (repeat (sslength selection)
+        (setq settings
+          (alc--read-hatch-settings (ssname selection index)))
+        (if (not
+              (and settings
+                   (equal (strcase (car settings)) (strcase *alc-pattern*))
+                   (= (cadr settings) *alc-color*)
+                   (equal (caddr settings) *alc-scale* 1e-9)
+                   (= (cadddr settings) *alc-background-color*)))
+          (setq all-valid nil)
+        )
+        (setq index (1+ index))
+      )
+      all-valid
+    )
+    nil
   )
 )
 
@@ -61,7 +93,8 @@
 (defun alc-test--fixture-ok (expected-polylines expected-hatches)
   (and
     (= (alc-test--entity-count "LWPOLYLINE") expected-polylines)
-    (= (alc-test--entity-count "HATCH") expected-hatches))
+    (= (alc-test--entity-count "HATCH") expected-hatches)
+    (alc-test--hatch-settings-ok))
 )
 
 (defun alc-test--record (name passed results)
@@ -175,7 +208,7 @@
       ;; Force the replacement-hatch stage to fail, then restore production
       ;; behavior by reloading the wall module.
       (defun alc--make-hatch-with-settings
-        (boundary pattern color scale)
+        (boundary pattern color scale background-color)
         nil
       )
       (setq transaction-result
@@ -191,8 +224,10 @@
             edge-pass
               (and valid-result
                    (not edge-result)
+                   edge-wall
                    (entget edge-wall)
                    (not transaction-result)
+                   transaction-wall
                    (entget transaction-wall)
                    (not (vl-catch-all-error-p restore-result))
                    (= edge-polyline-count 4)
@@ -202,10 +237,12 @@
           (strcat
             "INFO edge-door valid=" (if valid-result "T" "nil")
             " exact-edge=" (if edge-result "T" "nil")
-            " exact-edge-wall=" (if (entget edge-wall) "kept" "missing")
+            " exact-edge-wall="
+              (if (and edge-wall (entget edge-wall)) "kept" "missing")
             " transaction=" (if transaction-result "T" "nil")
             " transaction-wall="
-              (if (entget transaction-wall) "kept" "missing")
+              (if (and transaction-wall (entget transaction-wall))
+                "kept" "missing")
             " restore="
               (if (vl-catch-all-error-p restore-result) "failed" "ok")
             " polylines=" (itoa edge-polyline-count)
