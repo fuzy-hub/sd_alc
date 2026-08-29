@@ -1,4 +1,4 @@
-;;; ALCWALL v2.2.0 - wall module
+;;; ALCWALL v2.5.0 - wall module
 (defun alc--draw-lintel
   (door-start door-end side-point
     / dx dy segment-length ux uy cross-product side px py z
@@ -274,15 +274,22 @@
 )
 
 (defun alc--set-hatch-background (hatch background-color / color-object)
-  (if background-color
-    (progn
+  (cond
+    ((= background-color 0)
+      hatch)
+    ((= background-color 256)
+      (setq color-object (vla-get-BackgroundColor hatch))
+      (vla-SetRGB color-object 255 255 255)
+      (vla-put-BackgroundColor hatch color-object)
+      (vl-catch-all-apply 'vlax-release-object (list color-object))
+      hatch)
+    ((alc--valid-color-p background-color)
       (setq color-object (vla-get-BackgroundColor hatch))
       (vla-put-ColorIndex color-object background-color)
       (vla-put-BackgroundColor hatch color-object)
       (vl-catch-all-apply 'vlax-release-object (list color-object))
-    )
+      hatch)
   )
-  hatch
 )
 
 (defun alc--finish-hatch (hatch scale color background-color)
@@ -367,20 +374,33 @@
     *alc-background-color*)
 )
 
-(defun alc--read-hatch-background-unsafe (object / color-object color-index)
+(defun alc--read-hatch-background-unsafe
+  (object / color-object color-method color-index red green blue result)
   (setq color-object (vla-get-BackgroundColor object)
-        color-index (vla-get-ColorIndex color-object))
+        color-method (vla-get-ColorMethod color-object)
+        color-index (vla-get-ColorIndex color-object)
+        red (vla-get-Red color-object)
+        green (vla-get-Green color-object)
+        blue (vla-get-Blue color-object)
+        result
+          (cond
+            ;; acColorMethodByRGB = 194. Keep true white distinct from ACI 7.
+            ((and (= color-method 194)
+                  (= red 255) (= green 255) (= blue 255))
+              256)
+            ((alc--valid-color-p color-index) color-index)
+            (T 0)))
   (vl-catch-all-apply 'vlax-release-object (list color-object))
-  color-index
+  result
 )
 
 (defun alc--read-hatch-background (object / result)
   (setq result
     (vl-catch-all-apply 'alc--read-hatch-background-unsafe (list object)))
   (if (and (not (vl-catch-all-error-p result))
-           (alc--valid-color-p result))
+           (alc--valid-background-color-p result))
     result
-    *alc-background-color*
+    0
   )
 )
 

@@ -1,7 +1,7 @@
-;;; ALCWALL v2.2.0 - settings module
+;;; ALCWALL v2.5.0 - settings module
 ;;; ALCWALL.lsp
 ;;; 2D ALC wall tool for AutoCAD on Windows.
-;;; Commands: ALCWALL, ALCCENTRAL, ALCDOOR, ALCLT, ALCGT, ALCGTS, ALCTK, ALCTKC, TKDIM, TKCOUNT, ALCSET
+;;; Commands: ALCWALL, ALCCENTRAL, ALCDOOR, ALCLT, ALCGT, ALCGTS, ALCTK, ALCTKC, TKDIM, TKCOUNT, TKMS, TKALIGN, ALCSET
 ;;;
 ;;; Creates a closed LWPOLYLINE wall boundary and an associative hatch.
 ;;; Straight segments only; all picked points are projected to the plane of
@@ -26,7 +26,7 @@
 (defun alc--defaults ()
   (setq *alc-pattern* "ANSI37"
         *alc-color* 251
-        *alc-background-color* 9
+        *alc-background-color* 256
         *alc-scale* 250.0
         *alc-thickness* 100.0
         *alc-door-width* 900.0
@@ -52,6 +52,16 @@
        (<= value 255))
 )
 
+(defun alc--valid-background-color-p (value)
+  ;; 0 means no background. 256 is an internal sentinel for true white;
+  ;; neither value is passed to the ACI ColorIndex property.
+  (and (numberp value)
+       (= value (fix value))
+       (or (= value 0)
+           (= value 256)
+           (alc--valid-color-p value)))
+)
+
 (defun alc--load-settings (/ ename data value schema-version needs-upgrade)
   (alc--defaults)
   (if (setq ename (alc--settings-ename))
@@ -67,7 +77,7 @@
         (setq *alc-pattern* value)
       )
       ;; Schema V1 used color 5 and scale 500 as defaults. Do not let those
-      ;; persisted legacy values override the new V2 defaults (251/9/250).
+      ;; persisted legacy values override the V2 defaults.
       (if (not needs-upgrade)
         (progn
           (if (and (setq value (cdr (assoc 90 data)))
@@ -75,7 +85,7 @@
             (setq *alc-color* (fix value))
           )
           (if (and (setq value (cdr (assoc 91 data)))
-                   (alc--valid-color-p value))
+                   (alc--valid-background-color-p value))
             (setq *alc-background-color* (fix value))
           )
           (if (and (setq value (cdr (assoc 40 data)))
@@ -113,6 +123,10 @@
       )
     )
   )
+  ;; Every APPLOAD starts with a true-white hatch background. ALCSET may
+  ;; change it for the current session, but persisted background choices do
+  ;; not override this startup default on the next load.
+  (setq *alc-background-color* 256)
 )
 
 (defun alc--settings-ready-p ()
@@ -125,7 +139,7 @@
        (boundp '*alc-color*)
        (alc--valid-color-p *alc-color*)
        (boundp '*alc-background-color*)
-       (alc--valid-color-p *alc-background-color*)
+       (alc--valid-background-color-p *alc-background-color*)
        (boundp '*alc-scale*)
        (numberp *alc-scale*)
        (> *alc-scale* 0.0)
@@ -220,12 +234,20 @@
   (strcat "ACI " (itoa color))
 )
 
+(defun alc--background-color-name (color)
+  (cond
+    ((= color 0) "None")
+    ((= color 256) "TrueColor RGB 255,255,255")
+    (T (alc--color-name color))
+  )
+)
+
 (defun alc--status ()
   (strcat
     "\nCurrent: Thickness=" (rtos *alc-thickness* 2 0)
     " | Pattern=" *alc-pattern*
     " | Color=" (alc--color-name *alc-color*)
-    " | Background=" (alc--color-name *alc-background-color*)
+    " | Background=" (alc--background-color-name *alc-background-color*)
     " | Scale=" (rtos *alc-scale* 2 0)
   )
 )
@@ -251,13 +273,34 @@
   )
 )
 
-(defun alc--set-background-color (/ color)
-  (if (setq color (acad_colordlg *alc-background-color* nil))
+(defun alc--set-background-color (/ choice color dialog-color)
+  (initget "Color None TrueColor")
+  (setq choice
+    (getkword
+      (strcat
+        "\nBackground [Color/None/TrueColor] <Color> (current: "
+        (alc--background-color-name *alc-background-color*)
+        "): ")))
+  (cond
+    ((equal choice "None")
+      (setq color 0))
+    ((equal choice "TrueColor")
+      (setq color 256))
+    (T
+      (setq dialog-color
+        (if (alc--valid-color-p *alc-background-color*)
+          *alc-background-color*
+          9))
+      (setq color (acad_colordlg dialog-color nil)))
+  )
+  (if color
     (progn
       (setq *alc-background-color* color)
       (alc--save-settings)
       (prompt
-        (strcat "\nSelected background color: " (alc--color-name color)))
+        (strcat
+          "\nSelected background: "
+          (alc--background-color-name color)))
     )
   )
 )

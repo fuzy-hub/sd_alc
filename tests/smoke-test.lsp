@@ -52,9 +52,25 @@
   (list pass before-size after-size)
 )
 
+(defun alc-test--background-startup-default
+  (/ original-background none-reset-pass true-white-pass)
+  (setq original-background *alc-background-color*
+        *alc-background-color* 0)
+  (alc--save-settings)
+  (alc--load-settings)
+  (setq none-reset-pass (= *alc-background-color* 256)
+        *alc-background-color* 256)
+  (alc--save-settings)
+  (alc--load-settings)
+  (setq true-white-pass (= *alc-background-color* 256)
+        *alc-background-color* original-background)
+  (alc--save-settings)
+  (and none-reset-pass true-white-pass)
+)
+
 (defun alc-test-run-smoke
   (/ root load-result commands atoms missing name lines original-thickness
-     session-pass record-result)
+     session-pass background-pass record-result tkms-pass)
   (setq root (alc-test--root)
         load-result
           (vl-catch-all-apply
@@ -62,7 +78,8 @@
         commands
           '("C:ALCSET" "C:ALCWALL" "C:ALCCENTRAL" "C:ALCDOOR"
             "C:ALCLT" "C:ALCGT" "C:ALCGTS" "C:ALCTK"
-            "C:ALCTKC" "C:TKDIM" "C:TKCOUNT" "C:TKALIGN")
+            "C:ALCTKC" "C:TKDIM" "C:TKCOUNT" "C:TKMS" "C:TKALIGN"
+            "C:ALCDIM")
         atoms (atoms-family 1)
         missing nil)
   (if (vl-catch-all-error-p load-result)
@@ -93,13 +110,25 @@
           (alc--ensure-settings)
           (setq session-pass (equal *alc-thickness* 175.0 1e-9)
                 *alc-thickness* original-thickness
-                record-result (alc-test--settings-record-stability))
-          (if (and session-pass (car record-result))
+                background-pass (alc-test--background-startup-default)
+                record-result (alc-test--settings-record-stability)
+                tkms-pass
+                  (and
+                    (equal (alc--numbered-text-parts "MA") '("MA" 1))
+                    (equal (alc--numbered-text-parts "MA-009") '("MA" 10))
+                    (equal (alc--numbered-text-parts "MA-999") '("MA" 1000))
+                    (equal (alc--numbered-text-parts "MA-09") '("MA-09" 1))
+                    (equal (alc--three-digit-number 1) "001")
+                    (equal (alc--three-digit-number 99) "099")
+                    (equal (alc--three-digit-number 999) "999")))
+          (if (and session-pass background-pass (car record-result) tkms-pass)
             (setq lines
               (list
                 "PASS"
-                "COMMAND_COUNT=12"
+                "COMMAND_COUNT=14"
                 "SESSION_SETTINGS=PASS"
+                "BACKGROUND_MODES=PASS"
+                "TKMS_NUMBERING=PASS"
                 (strcat
                   "XRECORD_SIZE="
                   (itoa (cadr record-result))
@@ -112,6 +141,12 @@
                 (if session-pass
                   "SESSION_SETTINGS=PASS"
                   "SESSION_SETTINGS=RESET")
+                (if background-pass
+                  "BACKGROUND_MODES=PASS"
+                  "BACKGROUND_MODES=FAIL")
+                (if tkms-pass
+                  "TKMS_NUMBERING=PASS"
+                  "TKMS_NUMBERING=FAIL")
                 (strcat
                   "XRECORD_SIZE="
                   (itoa (cadr record-result))

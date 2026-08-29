@@ -104,7 +104,7 @@
 (defun alc-test-run-fixtures
   (/ root load-result results boundary valid-result edge-wall edge-result
     transaction-wall transaction-result restore-result
-    edge-polyline-count edge-hatch-count edge-pass
+    edge-polyline-count edge-hatch-count edge-background-pass edge-pass
     local-points wcs-points normal all-passed item)
   (setq root (alc-test--root)
         results nil
@@ -134,6 +134,7 @@
 
       ;; L-shaped wall.
       (alc-test--clear)
+      (setq *alc-background-color* 0)
       (setq boundary
         (alc-test--create-wall
           '((0.0 -50.0 0.0) (2050.0 -50.0 0.0)
@@ -148,6 +149,7 @@
 
       ;; U-shaped wall.
       (alc-test--clear)
+      (setq *alc-background-color* 256)
       (setq boundary
         (alc-test--create-wall
           '((0.0 -50.0 0.0) (2050.0 -50.0 0.0)
@@ -163,6 +165,7 @@
 
       ;; Wall created in a UCS rotated 30 degrees and saved with that UCS active.
       (alc-test--clear)
+      (setq *alc-background-color* 9)
       (vl-catch-all-apply 'vl-cmdf (list "_.UCS" "_Z" 30.0))
       (setq local-points
           '((0.0 -50.0 0.0) (3000.0 -50.0 0.0)
@@ -183,7 +186,8 @@
       ;; Valid near-edge opening plus an exact-edge rejection that must preserve
       ;; the original second wall and its hatch.
       (alc-test--clear)
-      (setq *alc-door-width* 900.0
+      (setq *alc-background-color* 256
+            *alc-door-width* 900.0
             boundary
               (alc-test--create-wall
                 '((0.0 -50.0 0.0) (3000.0 -50.0 0.0)
@@ -221,6 +225,7 @@
             'load (list (strcat root "/src/alc-wall.lsp")))
             edge-polyline-count (alc-test--entity-count "LWPOLYLINE")
             edge-hatch-count (alc-test--entity-count "HATCH")
+            edge-background-pass (alc-test--hatch-settings-ok)
             edge-pass
               (and valid-result
                    (not edge-result)
@@ -230,6 +235,7 @@
                    transaction-wall
                    (entget transaction-wall)
                    (not (vl-catch-all-error-p restore-result))
+                   edge-background-pass
                    (= edge-polyline-count 4)
                    (= edge-hatch-count 3)))
       (setq results
@@ -246,7 +252,8 @@
             " restore="
               (if (vl-catch-all-error-p restore-result) "failed" "ok")
             " polylines=" (itoa edge-polyline-count)
-            " hatches=" (itoa edge-hatch-count))
+            " hatches=" (itoa edge-hatch-count)
+            " background=" (if edge-background-pass "kept" "changed"))
           results))
       (setq results
         (alc-test--record "edge-door-opening.dwg"

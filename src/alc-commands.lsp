@@ -1,4 +1,4 @@
-;;; ALCWALL v2.2.0 - commands module
+;;; ALCWALL v2.5.0 - commands module
 
 ;;; --------------------------------------------------------------------------
 ;;; Public commands
@@ -112,11 +112,57 @@
   (princ)
 )
 
+(defun c:TKMS ()
+  (alc--run-command 'alc--tkms-loop "TKMS")
+  (princ)
+)
+
 (defun c:TKALIGN ()
   (alc--run-command 'alc--text-align-loop "TKALIGN")
   (princ)
 )
 
+(defun c:ALCDIM (/ selection entity-data style-name document dim-style result)
+  (vl-load-com)
+  (if (setq selection (entsel "\nSelect dimension to make its style current: "))
+    (progn
+      (setq entity-data (entget (car selection)))
+      (cond
+        ((/= (cdr (assoc 0 entity-data)) "DIMENSION")
+          (prompt "\nSelected object is not a dimension."))
+        ((not (setq style-name (cdr (assoc 3 entity-data))))
+          (prompt "\nCannot determine the selected dimension style."))
+        (T
+          (setq document
+                  (vla-get-ActiveDocument (vlax-get-acad-object))
+                dim-style
+                  (vl-catch-all-apply
+                    'vla-Item
+                    (list (vla-get-DimStyles document) style-name)))
+          (if (vl-catch-all-error-p dim-style)
+            (prompt
+              (strcat "\nCannot find dimension style: " style-name "."))
+            (progn
+              (setq result
+                (vl-catch-all-apply
+                  'vla-put-ActiveDimStyle (list document dim-style)))
+              (if (vl-catch-all-error-p result)
+                (prompt
+                  (strcat
+                    "\nCannot set current dimension style: "
+                    (vl-catch-all-error-message result)))
+                (prompt
+                  (strcat "\nCurrent dimension style: " style-name "."))
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+  (princ)
+)
+
 (princ
-  "\nALCWALL loaded. Commands: ALCWALL, ALCCENTRAL, ALCDOOR, ALCLT, ALCGT, ALCGTS, ALCTK, ALCTKC, TKDIM, TKCOUNT, TKALIGN, ALCSET.")
+  "\nALCWALL loaded. Commands: ALCWALL, ALCCENTRAL, ALCDOOR, ALCLT, ALCGT, ALCGTS, ALCTK, ALCTKC, TKDIM, TKCOUNT, TKMS, TKALIGN, ALCDIM, ALCSET.")
 (princ)

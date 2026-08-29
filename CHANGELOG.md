@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.5.0 — 2026-08-28
+
+- Thêm lệnh `ALCDIM`: chọn một DIM và đặt dimstyle của DIM đó thành dimstyle hiện hành.
+
+## 2.4.1 — 2026-08-26
+
+- Đặt màu nền hatch mặc định thành `TrueColor RGB 255,255,255` mỗi lần nạp `ALCWALL.lsp`.
+
+## 2.4.0 — 2026-08-26
+
+- Thêm `TKMS` để copy TEXT/MTEXT theo nhiều điểm và tự tăng hậu tố từ `-001` đến `-999`.
+- Nếu text nguồn đã kết thúc bằng hậu tố ba chữ số, bản copy đầu tiên tiếp tục từ số kế tiếp.
+
+## 2.3.0 — 2026-08-25
+
+- Thêm lựa chọn `None` để hatch không có màu nền.
+- Thêm lựa chọn nền trắng thực `TrueColor RGB 255,255,255`, tách biệt với ACI 7.
+- Giữ nguyên chế độ nền của hatch khi dùng `ALCDOOR` để tách tường.
+
 ## 2.2.0 — 2026-08-22
 
 - Sửa lỗi ghi `XRECORD` bằng `entmod` làm dữ liệu thiết lập tăng theo cấp số nhân sau mỗi lần lưu; nay thay mới dictionary entry bằng một record chuẩn.
