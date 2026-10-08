@@ -1,0 +1,76 @@
+ALCWALL 3.0.0 - AutoCAD 2027 validation
+Date: 2026-10-08 (Asia/Saigon)
+Run: alc-300-20261008-234016-a491b9a7
+All automated checks passed. Interactive mouse selection/Cancel in DCL remains a manual check.
+
+smoke-test.log
+PASS
+COMMAND_COUNT=16
+SESSION_SETTINGS=PASS
+BACKGROUND_MODES=PASS
+TKMS_NUMBERING=PASS
+XRECORD_SIZE=20->20
+VERSION=3.0.0
+
+styles-test.log
+PASS startup-resources
+PASS startup-current-layer
+PASS startup-current-text
+PASS startup-current-dim
+PASS text-font-and-width
+PASS DIMSCALE
+PASS DIMTXT
+PASS DIMASZ
+PASS DIMEXO
+PASS DIMEXE
+PASS DIMRND
+PASS DIMFXL
+PASS DIMGAP
+PASS DIMTIX
+PASS DIMCLRD
+PASS DIMCLRE
+PASS DIMCLRT
+PASS DIMDEC
+PASS DIMTDEC
+PASS DIMTMOVE
+PASS DIMFXLON
+PASS DIMJOGANG
+PASS dim-text-style
+PASS archtick-arrow
+PASS arrow-not-tick-size
+PASS same-arrow-both-ends
+INFO arrow=ArchTick DIMTSZ=0.0 DIMSAH=0
+PASS inherits-iso25-other-values
+PASS reload-preserves-existing-layer
+PASS reload-preserves-existing-text-style
+PASS reload-preserves-existing-dim-style
+PASS reload-activates-existing-resources
+
+settings-test.log
+PASS startup-layer
+PASS current-layer-preserved
+PASS angle-normalization
+PASS angle-persistence
+PASS v2-migration-keeps-scale
+PASS installed-pattern-catalog
+PASS dashed-preview
+PASS pattern-dialog-load
+PASS configured-hatch-angle
+PASS door-preserves-original-angle
+
+fixture-test.log
+PASS
+PASS straight-wall.dwg
+PASS l-wall.dwg
+PASS u-wall.dwg
+PASS rotated-ucs-wall.dwg
+INFO edge-door valid=T exact-edge=nil exact-edge-wall=kept transaction=nil transaction-wall=kept restore=ok polylines=4 hatches=3 background=kept
+PASS edge-door-opening.dwg
+
+wall-tie-side-test.log
+PASS
+PASS vertical-up-right
+PASS vertical-up-left
+PASS vertical-down-right
+PASS vertical-down-left
+PASS vertical-ambiguous-point

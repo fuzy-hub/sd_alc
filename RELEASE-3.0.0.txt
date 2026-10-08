@@ -1,0 +1,14 @@
+ALCWALL 3.0.0 bổ sung cấu hình góc hatch, bảng chọn pattern và khởi tạo tài nguyên ALC khi load.
+
+- ALCS/ALSC dùng chung ALCSET; Angle nhập theo độ và lưu trong bản vẽ.
+- Pattern mở bảng chọn có hình xem trước; lấy mẫu từ thư viện AutoCAD cài sẵn.
+- Chỉ tạo layer/text style/dim style khi chưa có; giữ nguyên định nghĩa đã tồn tại.
+- Sau load đặt current: 0. Tuong ALC, alc text, ALC Dim TL.
+- Layer mới: Blue ACI 4, Continuous, lineweight 0.09 mm.
+- Text style mới: NGHIA5.SHX, width factor 0.65.
+- Dim style mới: nền ISO-25, scale 100, text height 3, ArchTick và các thiết lập ALC.
+- ALCDOOR giữ góc hatch khi cắt cửa; giữ rollback nếu tạo hatch thay thế thất bại.
+
+Cài đặt: tải ALCWALL-3.0.0.zip, giải nén, thêm thư mục vào AutoCAD Support File Search Path rồi APPLOAD ALCWALL.lsp. Giữ nguyên thư mục src. NGHIA5.SHX cần có trong Fonts hoặc Support Path và không được kèm trong gói ZIP.
+
+Kiểm thử bằng AutoCAD 2027 trong các tiến trình riêng: nạp lệnh, XRecord, tạo/current/bảo toàn tài nguyên, scale 100 và text height 3, hatch/cắt cửa, tường thẳng/L/U, UCS xoay và lựa chọn phía giằng. Bảng pattern đã được kiểm tra nạp DCL; thao tác chọn/Cancel bằng chuột vẫn cần kiểm tra tương tác.

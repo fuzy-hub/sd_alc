@@ -45,6 +45,7 @@
             (= (alc-test--dxf-code-count 41 after-data) 1)
             (= (alc-test--dxf-code-count 42 after-data) 1)
             (= (alc-test--dxf-code-count 43 after-data) 1)
+            (= (alc-test--dxf-code-count 44 after-data) 1)
             (= (alc-test--dxf-code-count 70 after-data) 1)
             (= (alc-test--dxf-code-count 90 after-data) 1)
             (= (alc-test--dxf-code-count 91 after-data) 1)
@@ -79,7 +80,7 @@
           '("C:ALCSET" "C:ALCWALL" "C:ALCCENTRAL" "C:ALCDOOR"
             "C:ALCLT" "C:ALCGT" "C:ALCGTS" "C:ALCTK"
             "C:ALCTKC" "C:TKDIM" "C:TKCOUNT" "C:TKMS" "C:TKALIGN"
-            "C:ALCDIM")
+            "C:ALCDIM" "C:ALCS" "C:ALSC")
         atoms (atoms-family 1)
         missing nil)
   (if (vl-catch-all-error-p load-result)
@@ -125,7 +126,7 @@
             (setq lines
               (list
                 "PASS"
-                "COMMAND_COUNT=14"
+                "COMMAND_COUNT=16"
                 "SESSION_SETTINGS=PASS"
                 "BACKGROUND_MODES=PASS"
                 "TKMS_NUMBERING=PASS"

@@ -1,5 +1,48 @@
 # Changelog
 
+## 3.0.0 — 2026-10-08
+
+- Phát hành các cải tiến sau 2.5.0: Angle, bảng chọn pattern có preview và tên gọi ALCS/ALSC.
+- Tạo layer 0. Tuong ALC, text style alc text và dim style ALC Dim TL khi chưa có; giữ nguyên định nghĩa đã tồn tại.
+- Đặt cả ba tài nguyên làm current ngay sau load.
+- Dim style mới dùng scale 100, text height 3, ArchTick và nền ISO-25.
+- Giữ góc hatch khi cắt cửa và bổ sung kiểm thử AutoCAD 2027 với tiến trình riêng.
+
+
+## 2.6.3 — 2026-10-08
+
+- Đổi tên dim style mặc định thành ALC Dim TL, bỏ hậu tố 65.
+- Đặt Overall scale mặc định 100 và chiều cao text dim 3.
+- Tiếp tục chỉ tạo khi tên chưa có và đặt current ngay sau load.
+- Giữ lại dim style ALC Dim TL65 có sẵn để không ảnh hưởng DIM cũ.
+
+
+## 2.6.2 — 2026-10-08
+
+- Sau load lập tức đặt layer 0. Tuong ALC, text style alc text và dim style ALC Dim TL65 làm current.
+- Tiếp tục chỉ tạo tài nguyên chưa có; giữ nguyên thông số của tài nguyên đã tồn tại.
+- Restore dim style để dùng giá trị đã lưu thay cho override hiện hành.
+- Kiểm thử current ngay sau load và khi nạp lại với tài nguyên có sẵn đã được chỉnh.
+
+
+## 2.6.1 — 2026-10-08
+
+- Khi load chỉ tạo layer, text style và dim style chưa có; giữ nguyên các tài nguyên đã tồn tại.
+- Thêm text style alc text: NGHIA5.SHX, width factor 0.65.
+- Thêm ALC Dim TL65: nền ISO-25, scale 65, ArchTick và bộ thông số dim theo yêu cầu.
+- Giữ nguyên layer/style hiện hành và các dim override trong quá trình khởi tạo.
+- Thêm test tài nguyên cho template metric/imperial và nạp lại không ghi đè style.
+
+
+## 2.6.0 — 2026-10-08
+
+- Thêm góc hatch theo độ vào ALCSET; lưu trong bản vẽ và giữ góc khi cắt cửa.
+- Thêm ALCS/ALSC làm tên gọi của ALCSET.
+- Thay nhập tên pattern bằng bảng DCL có danh sách và hình xem trước.
+- Tự tạo/cập nhật layer 0. Tuong ALC: ACI 4, Continuous, 0.09 mm khi load.
+- Thêm test cấu hình và runner AutoCAD 2027 có kiểm soát PID/thời gian khởi động.
+
+
 ## 2.5.0 — 2026-08-28
 
 - Thêm lệnh `ALCDIM`: chọn một DIM và đặt dimstyle của DIM đó thành dimstyle hiện hành.

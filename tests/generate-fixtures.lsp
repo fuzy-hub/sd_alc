@@ -211,8 +211,8 @@
                 T '(0.0 0.0 1.0) (getvar "CLAYER")))
       ;; Force the replacement-hatch stage to fail, then restore production
       ;; behavior by reloading the wall module.
-      (defun alc--make-hatch-with-settings
-        (boundary pattern color scale background-color)
+      (defun alc--make-hatch-with-angle
+        (boundary pattern color scale background-color hatch-angle)
         nil
       )
       (setq transaction-result

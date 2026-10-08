@@ -1,4 +1,4 @@
-;;; ALCWALL v2.5.0 - commands module
+;;; ALCWALL v3.0.0 - commands module
 
 ;;; --------------------------------------------------------------------------
 ;;; Public commands
@@ -9,6 +9,9 @@
   (alc--settings)
   (princ)
 )
+
+(defun c:ALCS () (c:ALCSET))
+(defun c:ALSC () (c:ALCSET))
 
 (defun alc--run-command
   (loop-function command-name
@@ -164,5 +167,5 @@
 )
 
 (princ
-  "\nALCWALL loaded. Commands: ALCWALL, ALCCENTRAL, ALCDOOR, ALCLT, ALCGT, ALCGTS, ALCTK, ALCTKC, TKDIM, TKCOUNT, TKMS, TKALIGN, ALCDIM, ALCSET.")
+  "\nALCWALL loaded. Commands: ALCWALL, ALCCENTRAL, ALCDOOR, ALCLT, ALCGT, ALCGTS, ALCTK, ALCTKC, TKDIM, TKCOUNT, TKMS, TKALIGN, ALCDIM, ALCSET, ALCS, ALSC.")
 (princ)

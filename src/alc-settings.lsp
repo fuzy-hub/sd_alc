@@ -1,4 +1,4 @@
-;;; ALCWALL v2.5.0 - settings module
+;;; ALCWALL v3.0.0 - settings module
 ;;; ALCWALL.lsp
 ;;; 2D ALC wall tool for AutoCAD on Windows.
 ;;; Commands: ALCWALL, ALCCENTRAL, ALCDOOR, ALCLT, ALCGT, ALCGTS, ALCTK, ALCTKC, TKDIM, TKCOUNT, TKMS, TKALIGN, ALCSET
@@ -28,16 +28,43 @@
         *alc-color* 251
         *alc-background-color* 256
         *alc-scale* 250.0
+        *alc-angle* 0.0
         *alc-thickness* 100.0
         *alc-door-width* 900.0
         *alc-stat-text-height* 100.0
         *alc-count-prefix* "CK"
         *alc-last-side* 1
-        *alc-settings-schema-version* 2)
+        *alc-settings-schema-version* 3)
 )
 
 ;;; --------------------------------------------------------------------------
 ;;; Persistent settings
+
+(defun alc--normalize-angle (value / result)
+  (setq result (rem value (* 2.0 pi)))
+  (if (< result 0.0) (+ result (* 2.0 pi)) result)
+)
+
+(defun alc--set-angle (/ value)
+  ;; Explicit decimal degrees, independent of AUNITS, ANGBASE and ANGDIR.
+  (if (setq value
+        (getreal (strcat "\nHatch angle (degrees) <"
+          (rtos (/ (* *alc-angle* 180.0) pi) 2 2) ">: ")))
+    (progn
+      (setq *alc-angle* (alc--normalize-angle (/ (* value pi) 180.0)))
+      (alc--save-settings))
+  )
+)
+
+(defun alc--ensure-wall-layer (/ layer)
+  (or (tblobjname "LAYER" "0. Tuong ALC")
+      (progn
+        (entmakex '((0 . "LAYER") (100 . "AcDbSymbolTableRecord")
+                        (100 . "AcDbLayerTableRecord") (2 . "0. Tuong ALC")
+                        (70 . 0) (62 . 4) (6 . "Continuous") (370 . 9)))
+        (tblobjname "LAYER" "0. Tuong ALC")))
+)
+
 
 (defun alc--settings-ename (/ record)
   (if (setq record (dictsearch (namedobjdict) "ALCWALL_SETTINGS_V1"))
@@ -70,7 +97,7 @@
             schema-version (cdr (assoc 92 data))
             needs-upgrade
               (not (and (numberp schema-version)
-                        (= schema-version 2))))
+                        (member schema-version '(2 3)))))
       (if (and (setq value (cdr (assoc 1 data)))
                (eq (type value) 'STR)
                (/= value ""))
@@ -94,6 +121,10 @@
             (setq *alc-scale* value)
           )
         )
+      )
+      (if (and (setq value (cdr (assoc 44 data)))
+               (numberp value))
+        (setq *alc-angle* (alc--normalize-angle value))
       )
       (if (and (setq value (cdr (assoc 41 data)))
                (numberp value)
@@ -132,7 +163,7 @@
 (defun alc--settings-ready-p ()
   (and (boundp '*alc-settings-schema-version*)
        (numberp *alc-settings-schema-version*)
-       (= *alc-settings-schema-version* 2)
+       (= *alc-settings-schema-version* 3)
        (boundp '*alc-pattern*)
        (eq (type *alc-pattern*) 'STR)
        (/= *alc-pattern* "")
@@ -143,6 +174,10 @@
        (boundp '*alc-scale*)
        (numberp *alc-scale*)
        (> *alc-scale* 0.0)
+       (boundp '*alc-angle*)
+       (numberp *alc-angle*)
+       (>= *alc-angle* 0.0)
+       (< *alc-angle* (* 2.0 pi))
        (boundp '*alc-thickness*)
        (numberp *alc-thickness*)
        (> *alc-thickness* 0.0)
@@ -176,8 +211,9 @@
       (cons 1 *alc-pattern*)
       (cons 90 *alc-color*)
       (cons 91 *alc-background-color*)
-      (cons 92 2)
+      (cons 92 3)
       (cons 40 *alc-scale*)
+      (cons 44 *alc-angle*)
       (cons 41 *alc-thickness*)
       (cons 42 *alc-door-width*)
       (cons 43 *alc-stat-text-height*)
@@ -249,13 +285,13 @@
     " | Color=" (alc--color-name *alc-color*)
     " | Background=" (alc--background-color-name *alc-background-color*)
     " | Scale=" (rtos *alc-scale* 2 0)
+    " | Angle=" (rtos (/ (* *alc-angle* 180.0) pi) 2 2) " deg"
   )
 )
 
 (defun alc--set-pattern (/ value)
-  (setq value (getstring T (strcat "\nPattern <" *alc-pattern* ">: "))
-        value (vl-string-trim " " value))
-  (if (/= value "")
+  (setq value (alc--choose-pattern *alc-pattern*))
+  (if value
     (progn
       (setq *alc-pattern* (strcase value))
       (alc--save-settings)
@@ -347,16 +383,17 @@
   (setq choice "Continue")
   (while (not (equal choice "Exit"))
     (prompt (alc--status))
-    (initget "Thickness Pattern Color Background Scale Exit")
+    (initget "Thickness Pattern Color Background Scale Angle Exit")
     (setq choice
       (getkword
-        "\nSettings [Thickness/Pattern/Color/Background/Scale/Exit] <Exit>: "))
+        "\nSettings [Thickness/Pattern/Color/Background/Scale/Angle/Exit] <Exit>: "))
     (cond
       ((equal choice "Thickness") (alc--set-thickness))
       ((equal choice "Pattern") (alc--set-pattern))
       ((equal choice "Color") (alc--set-color))
       ((equal choice "Background") (alc--set-background-color))
       ((equal choice "Scale") (alc--set-scale))
+      ((equal choice "Angle") (alc--set-angle))
       (T (setq choice "Exit"))
     )
   )

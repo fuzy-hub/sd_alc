@@ -5,4 +5,7 @@ tests/results/*.log
 *.dwl2
 *.sv$
 *.zw$
-
+/github-publish-3.0/
+/ALCWALL-*.zip
+/tests/results/
+/tools/__pycache__/

@@ -1,4 +1,4 @@
-;;; ALCWALL v2.5.0 - wall module
+;;; ALCWALL v3.0.0 - wall module
 (defun alc--draw-lintel
   (door-start door-end side-point
     / dx dy segment-length ux uy cross-product side px py z
@@ -292,8 +292,9 @@
   )
 )
 
-(defun alc--finish-hatch (hatch scale color background-color)
+(defun alc--finish-hatch (hatch scale color background-color hatch-angle)
   (vla-put-PatternScale hatch scale)
+  (vla-put-PatternAngle hatch hatch-angle)
   (vla-put-Color hatch color)
   (alc--set-hatch-background hatch background-color)
   (vla-Evaluate hatch)
@@ -316,8 +317,8 @@
   (not (vl-catch-all-error-p result))
 )
 
-(defun alc--make-hatch-with-settings
-  (boundary pattern color scale background-color / hatch result)
+(defun alc--make-hatch-with-angle
+  (boundary pattern color scale background-color hatch-angle / hatch result)
   (setq hatch
     (vl-catch-all-apply
       'alc--add-hatch-object
@@ -347,7 +348,7 @@
           (setq result
             (vl-catch-all-apply
               'alc--finish-hatch
-              (list hatch scale color background-color)))
+              (list hatch scale color background-color hatch-angle)))
           (if (vl-catch-all-error-p result)
             (progn
               (vl-catch-all-apply 'vla-Delete (list hatch))
@@ -368,10 +369,15 @@
   )
 )
 
+;; Preserve the fixed zero-angle API used by lintels, wall ties and old callers.
+(defun alc--make-hatch-with-settings (boundary pattern color scale background-color)
+  (alc--make-hatch-with-angle boundary pattern color scale background-color 0.0)
+)
+
 (defun alc--make-hatch (boundary)
-  (alc--make-hatch-with-settings
+  (alc--make-hatch-with-angle
     boundary *alc-pattern* *alc-color* *alc-scale*
-    *alc-background-color*)
+    *alc-background-color* *alc-angle*)
 )
 
 (defun alc--read-hatch-background-unsafe
@@ -410,7 +416,8 @@
     (vla-get-PatternName object)
     (vla-get-Color object)
     (vla-get-PatternScale object)
-    (alc--read-hatch-background object))
+    (alc--read-hatch-background object)
+    (vla-get-PatternAngle object))
 )
 
 (defun alc--read-hatch-settings (hatch / result)
@@ -547,7 +554,7 @@
       projected-distance p1-wcs p2-wcs p3-wcs split-polygons polygon-a polygon-b
       boundary-a boundary-b hatch-a hatch-b hatch-a-ename hatch-b-ename
       old-hatches old-hatch hatch-settings hatch-pattern hatch-color hatch-scale
-      hatch-background-color)
+      hatch-background-color hatch-angle)
   (setq polygon
     (alc--clean-polygon-points (alc--lwp-points wall)))
   (cond
@@ -626,23 +633,24 @@
                                 (setq hatch-settings
                                   (list
                                     *alc-pattern* *alc-color* *alc-scale*
-                                    *alc-background-color*))
+                                    *alc-background-color* *alc-angle*))
                               )
                               (setq hatch-pattern (car hatch-settings)
                                     hatch-color (cadr hatch-settings)
                                     hatch-scale (caddr hatch-settings)
                                     hatch-background-color
                                       (cadddr hatch-settings)
+                                    hatch-angle (nth 4 hatch-settings)
                                     hatch-a
-                                      (alc--make-hatch-with-settings
+                                      (alc--make-hatch-with-angle
                                         boundary-a hatch-pattern
                                         hatch-color hatch-scale
-                                        hatch-background-color)
+                                        hatch-background-color hatch-angle)
                                     hatch-b
-                                      (alc--make-hatch-with-settings
+                                      (alc--make-hatch-with-angle
                                         boundary-b hatch-pattern
                                         hatch-color hatch-scale
-                                        hatch-background-color)
+                                        hatch-background-color hatch-angle)
                                 hatch-a-ename (alc--vla-object-ename hatch-a)
                                 hatch-b-ename (alc--vla-object-ename hatch-b))
                               (if hatch-a-ename

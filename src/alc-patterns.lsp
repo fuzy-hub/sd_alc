@@ -1,0 +1,157 @@
+;;; Read installed standard PAT libraries; no hard-coded unavailable patterns.
+
+(defun alc--split-string (text delimiter / position result)
+  (while (setq position (vl-string-search delimiter text))
+    (setq result (cons (substr text 1 position) result)
+          text (substr text (+ position 2))))
+  (reverse (cons text result))
+)
+
+(defun alc--read-pattern-file (path / stream line name description rows header values result)
+  (if (setq stream (open path "r"))
+    (progn
+      (while (setq line (read-line stream))
+        (setq line (vl-string-trim " \t" line))
+        (cond
+          ((and (> (strlen line) 0) (= (substr line 1 1) "*"))
+            (if name (setq result (cons (list name description (reverse rows)) result)))
+            (setq header (alc--split-string (substr line 2) ",")
+                  name (strcase (vl-string-trim " " (car header)))
+                  description (if (cadr header) (cadr header) "")
+                  rows nil))
+          ((and name (> (strlen line) 0) (/= (substr line 1 1) ";"))
+            (setq values (mapcar '(lambda (v) (distof v 2)) (alc--split-string line ",")))
+            (if (and (>= (length values) 5) (not (member nil values)))
+              (setq rows (cons values rows))))))
+      (close stream)
+      (if name (setq result (cons (list name description (reverse rows)) result)))))
+  (reverse result)
+)
+
+(defun alc--pattern-catalog (/ files file path entry result)
+  ;; Prefer the library matching drawing units; keep the first definition.
+  (setq files (if (= (getvar "MEASUREMENT") 1)
+                '("acadiso.pat" "acad.pat") '("acad.pat" "acadiso.pat"))
+        result (list (list "SOLID" "Solid fill" nil)))
+  (foreach file files
+    (if (setq path (findfile file))
+      (foreach entry (alc--read-pattern-file path)
+        (if (not (assoc (car entry) result)) (setq result (cons entry result))))))
+  (vl-sort result '(lambda (a b) (< (car a) (car b))))
+)
+
+(defun alc--preview-dash-p (distance dashes / period phase visible length)
+  (if (not dashes) T
+    (progn
+      (setq period (apply '+ (mapcar 'abs dashes)))
+      (if (< period 1e-8) T
+        (progn
+          (setq phase (rem distance period))
+          (if (< phase 0.0) (setq phase (+ phase period)))
+          (while (and dashes (not visible))
+            (setq length (abs (car dashes)))
+            (if (and (>= (car dashes) 0.0)
+                     (< phase (max length 0.8)))
+              (setq visible T)
+              (if (< phase length) (setq dashes nil)))
+            (setq phase (- phase length) dashes (cdr dashes)))
+          visible))))
+)
+
+(defun alc--pattern-preview (index / entry rows w h unit row spacing theta ux uy
+    dx dy ox oy n step radius x y dashes period dash)
+  (setq entry (nth (atoi index) catalog)
+        rows (caddr entry)
+        w (dimx_tile "preview") h (dimy_tile "preview") unit nil)
+  (set_tile "description" (strcat (car entry) " - " (cadr entry)))
+  (foreach row rows
+    (setq spacing (abs (nth 4 row)))
+    (if (> spacing 1e-8) (setq unit (if unit (min unit spacing) spacing))))
+  (setq unit (if unit (/ 14.0 unit) 1.0) radius (+ w h))
+  (start_image "preview")
+  (fill_image 0 0 w h 0)
+  (if (= (car entry) "SOLID") (fill_image 0 0 w h 7)
+    (foreach row rows
+      (setq theta (+ (/ (* (car row) pi) 180.0) *alc-angle*)
+            ux (cos theta) uy (sin theta)
+            dx (* unit (- (* (nth 3 row) ux) (* (nth 4 row) uy)))
+            dy (* unit (+ (* (nth 3 row) uy) (* (nth 4 row) ux)))
+            ox (* unit (- (* (nth 1 row) (cos *alc-angle*))
+                          (* (nth 2 row) (sin *alc-angle*))))
+            oy (* unit (+ (* (nth 1 row) (sin *alc-angle*))
+                          (* (nth 2 row) (cos *alc-angle*))))
+            dashes (mapcar '(lambda (v) (* unit v)) (cdr (cddddr row))) n -40)
+      ;; Bounded crop for a schematic preview, independent of actual hatch scale.
+      (repeat 81
+        (setq x (+ (/ w 2.0) ox (* n dx))
+              y (- (/ h 2.0) oy (* n dy))
+              period (if dashes (apply '+ (mapcar 'abs dashes)) 0.0))
+        (if (< period 1e-8)
+          (alc--preview-vector (- x (* radius ux)) (+ y (* radius uy))
+            (+ x (* radius ux)) (- y (* radius uy)) w h)
+          (progn
+            (setq step (- (* period (1+ (fix (/ radius period))))))
+            (while (< step radius)
+              (foreach dash dashes
+                (if (>= dash 0.0)
+                  (alc--preview-vector (+ x (* step ux)) (- y (* step uy))
+                    (+ x (* (+ step (max dash 0.8)) ux))
+                    (- y (* (+ step (max dash 0.8)) uy)) w h))
+                (setq step (+ step (abs dash)))))))
+        (setq n (1+ n)))))
+  (end_image)
+)
+
+;;; Clip each dash once instead of evaluating every pixel of every line.
+(defun alc--preview-vector (x1 y1 x2 y2 w h / low high axis delta a b valid)
+  (setq low 0.0 high 1.0 valid T)
+  (foreach axis (list (list x1 x2 (1- w)) (list y1 y2 (1- h)))
+    (setq delta (- (cadr axis) (car axis)))
+    (if (< (abs delta) 1e-9)
+      (if (or (< (car axis) 0.0) (> (car axis) (caddr axis))) (setq valid nil))
+      (progn
+        (setq a (/ (- (car axis)) delta)
+              b (/ (- (caddr axis) (car axis)) delta)
+              low (max low (min a b)) high (min high (max a b))))))
+  (if (and valid (<= low high))
+    (vector_image
+      (fix (max 0 (min (1- w) (+ x1 (* low (- x2 x1))))))
+      (fix (max 0 (min (1- h) (+ y1 (* low (- y2 y1))))))
+      (fix (max 0 (min (1- w) (+ x1 (* high (- x2 x1))))))
+      (fix (max 0 (min (1- h) (+ y1 (* high (- y2 y1)))))) 7))
+)
+
+(defun alc--choose-pattern (current / *error* catalog path dialog-id selected index result entry)
+  (defun *error* (message)
+    (if (and dialog-id (> dialog-id 0)) (unload_dialog dialog-id))
+    (if (and message (not (wcmatch (strcase message) "*CANCEL*,*QUIT*,*EXIT*")))
+      (prompt (strcat "\nPattern dialog: " message)))
+    (princ))
+  (setq catalog (alc--pattern-catalog)
+        path (findfile (strcat *alc-resource-root* "/src/alc-patterns.dcl")))
+  (cond
+    ((not path) (prompt "\nCannot find src/alc-patterns.dcl."))
+    ((<= (setq dialog-id (load_dialog path)) 0)
+      (prompt "\nCannot load the pattern dialog."))
+    ((not (new_dialog "alc_patterns" dialog-id))
+      (unload_dialog dialog-id) (setq dialog-id nil))
+    (T
+      (setq index 0 selected 0)
+      (start_list "patterns")
+      (foreach entry catalog
+        (add_list (car entry))
+        (if (= (car entry) current) (setq selected index))
+        (setq index (1+ index)))
+      (end_list)
+      (set_tile "patterns" (itoa selected))
+      (alc--pattern-preview (itoa selected))
+      (action_tile "patterns" "(setq selected (atoi $value)) (alc--pattern-preview $value)")
+      (action_tile "accept" "(done_dialog 1)")
+      (action_tile "cancel" "(done_dialog 0)")
+      (setq result (start_dialog))
+      (unload_dialog dialog-id)
+      (setq dialog-id nil)
+      (if (= result 1) (car (nth selected catalog)))))
+)
+
+(princ)

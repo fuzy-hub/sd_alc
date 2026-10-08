@@ -1,0 +1,56 @@
+RÀ SOÁT ALCWALL — 08/10/2026
+
+Đã triển khai trong 3.0.0
+- ALCS và ALSC gọi chung cấu hình ALCSET; P mở bảng chọn pattern có hình xem trước.
+- Angle nhập bằng độ thập phân, mặc định 0; chấp nhận góc âm và góc trên 360,
+  chuẩn hóa về [0,360). Lưu vào XRecord bằng radian, DXF 44, schema 3.
+- Bản vẽ schema 2 giữ các thiết lập màu, scale, độ dày và chiều rộng cửa.
+- Hatch tường mới dùng góc cấu hình. Khi cắt cửa, hai hatch mới giữ góc hatch cũ,
+  ngay cả khi người dùng đã thay góc mặc định. Lanh tô/giằng giữ góc riêng 0.
+- Mỗi lần load chỉ tạo layer 0. Tuong ALC nếu chưa có: Blue ACI 4,
+  Continuous, 0.09 mm. Đặt layer làm current, giữ nguyên toàn bộ thông số của layer đã tồn tại.
+- Pattern lấy từ acad.pat/acadiso.pat trong Support Path, ưu tiên MEASUREMENT.
+  Cancel giữ thiết lập cũ. Preview minh họa mẫu và góc, không mô phỏng tỷ lệ in.
+
+Bổ sung 2.6.1
+- Chỉ tạo text style alc text khi chưa có: NGHIA5.SHX, width factor 0.65.
+- Chỉ tạo dim style ALC Dim TL khi chưa có: nền ISO-25, overall scale 100, text height 3,
+  arrow ArchTick 1.8, extension offset 2 / extension 1, roundoff 5,
+  fixed extension 4 On, jog angle 45 độ, text offset 1, text inside On,
+  line/extension color 8, text color 3, precision/tol precision 0,
+  text movement 2, text style alc text.
+- Đặt alc text và ALC Dim TL làm current sau load; giữ định nghĩa có sẵn.
+  Restore dim style để áp dụng thông số đã lưu thay cho override trước đó.
+- Template imperial thiếu ISO-25 dùng nền ISO-25 chuẩn acadiso.dwt.
+
+Các điểm nên cải tiến tiếp
+1. src/alc-wall.lsp, alc--draw-wall và alc--draw-central-wall:
+   Nếu hatch lỗi, boundary vẫn được giữ. Có thể dùng cơ chế transaction đang
+   có ở ALCDOOR để cho phép rollback cả tường khi hatch thất bại.
+2. src/alc-wall.lsp, alc--read-hatch-background-unsafe:
+   Hàm hiện chỉ lưu trắng RGB 255,255,255 và ACI. Nếu người dùng sửa hatch
+   thủ công sang RGB khác, ALCDOOR có thể làm mất màu nền đó. Nên lưu toàn bộ
+   ColorMethod và RGB để sao chép chính xác hatch đã chỉnh thủ công.
+3. src/alc-patterns.lsp, alc--pattern-catalog:
+   Bảng chọn hiện hỗ trợ thư viện tiêu chuẩn. Có thể bổ sung PAT tùy chỉnh
+   từ Support Path và kiểm tra PatternType khi tạo hatch tùy chỉnh.
+4. ALCWALL.lsp, alc--loader-root:
+   Loader phụ thuộc findfile và Support Path. Nếu có nhiều bản ALCWALL trong
+   Support Path, có thể nạp nhầm module từ bản khác. Nên bổ sung lựa chọn
+   thư mục cài đặt rõ ràng và xác minh phiên bản giữa loader với module.
+
+Kiểm thử
+- Chạy AutoCAD 2027 riêng bằng tests/run-autocad-tests.ps1 -FullAutoCAD.
+- Core Console kiểm tra nạp mã và XRecord; không hỗ trợ các ActiveX mà
+  bộ công cụ hiện dùng, nên test hatch/cắt cửa cần AutoCAD đầy đủ.
+- Kết quả chính thức nằm trong tests/results/*.log và thư mục session có
+  session.json ghi nhãn chạy, PID, thời gian khởi động.
+- Không dùng kết quả ZWCAD cũ trong ZIP làm bằng chứng cho bản mới.
+- Cần kiểm tra thao tác chọn/Cancel bằng chuột trong bảng DCL trước khi
+  dùng rộng rãi; test batch kiểm tra nạp DCL và thư viện pattern.
+
+Tham khảo API
+PatternAngle dùng radian:
+https://help.autodesk.com/cloudhelp/2024/ENU/AutoCAD-ActiveX-Reference/files/GUID-A7CDE967-0755-41A0-B557-3E6918E57315.htm
+DXF LAYER:
+https://help.autodesk.com/cloudhelp/2018/ENU/AutoCAD-DXF/files/GUID-D94802B0-8BE8-4AC9-8054-17197688AFDB.htm
