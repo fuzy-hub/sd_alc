@@ -1,5 +1,81 @@
 # Changelog
 
+## 3.3.0 — 2026-10-11
+
+- Thêm ALCXTEND/VVXTEND để kéo dài đầu tường, cập nhật biên và hatch tại chỗ, giữ thuộc tính và liên kết.
+- Giữ Length (L), Multi (M), một bước Undo cho cả lượt; nhớ Length kéo dài riêng với ALCTRIM và giữ sau reload.
+- Thêm alias VVxxx cho mọi lệnh ALCxxx; giữ alias ngắn VV và VVC.
+- Bổ sung kiểm thử AutoCAD 2027 cho kéo dài thẳng/L/U, UCS xoay, hatch, Length/Multi, reload, Undo và alias.
+
+## 3.2.9 — 2026-10-10
+
+- Bật nền chữ dim Background cho ALC Dim TL (DIMTFILL=1, màu nền bản vẽ), áp dụng cả style đã có khi load lại.
+- Giữ các thông số dim khác.
+
+## 3.2.8 — 2026-10-10
+
+- Đổi height của alc text note thành 0.0, áp dụng cả style đã có khi load lại.
+- Giữ font Arial (TT), width 0.75 và màu hiện hành ByLayer.
+
+## 3.2.7 — 2026-10-10
+
+- Đặt font alc text note đúng Arial (TT): FontFile arial.ttf và SetFont typeface Arial, regular, TrueType.
+- Sửa font cả style đã tồn tại khi load; giữ chiều cao 300 và các thông số khác.
+
+## 3.2.6 — 2026-10-10
+
+- Thêm VVC làm alias của ALCCENTRAL, giữ nguyên cách vẽ tường theo tim.
+
+## 3.2.5 — 2026-10-10
+
+- Thêm VV làm alias của ALCWALL, dùng cùng luồng vẽ tường và Undo.
+
+## 3.2.4 — 2026-10-10
+
+- Gỡ định nghĩa c:ALCCUT20 còn trong bộ nhớ khi load bản mới; lệnh hiện hành là ALCTRIM.
+- Thêm kiểm thử nâng cấp trong cùng phiên: giả lập lệnh cũ, reload và xác nhận đã gỡ.
+
+## 3.2.3 — 2026-10-10
+
+- ALCTRIM giữ độ dài Length gần nhất trong phiên làm việc của bản vẽ, không reset khi gọi lệnh hoặc load Lisp lại.
+- Giá trị ban đầu 20 mm; Enter tại Length giữ giá trị đã nhớ, áp dụng cho cả single và Multi.
+
+## 3.2.2 — 2026-10-10
+
+- Thêm Length (L) đồng cấp Multi (M) trong ALCTRIM; nhập độ dài cắt dương, Enter giữ giá trị hiện hành.
+- Dùng Length trước hoặc trong Multi; các lần cắt tiếp theo dùng giá trị mới, mỗi lượt lệnh mặc định 20 mm.
+- Kiểm tra độ dài đoạn đầu theo khoảng cắt đã chọn, cập nhật biên và hatch tương ứng.
+
+## 3.2.1 — 2026-10-10
+
+- Đổi lệnh ALCCUT20 thành ALCTRIM.
+- Thêm Multi (M): chọn lần lượt các đầu tường, Enter kết thúc; Undo cả lượt bằng một bước.
+- Mặc định chọn một tường rồi kết thúc, vẫn rút cố định 20 mm.
+
+## 3.2.0 — 2026-10-10
+
+- Thêm ALCCUT20: chọn tường/hatch gần đầu cần rút, cố định 20 mm.
+- Cập nhật biên polyline và hatch, giữ thuộc tính và liên kết; hỗ trợ tường thẳng/L/U với hai đầu vuông.
+- Từ chối layer khóa, đầu quá ngắn và hình học/hatch không hỗ trợ; gom thao tác thành một bước Undo.
+
+## 3.1.2 — 2026-10-10
+
+- Bỏ màu vàng hiện hành cho text note, đặt ByLayer để lấy màu của layer 0. Tuong ALC đang current.
+- Giữ chiều cao text note 300 và màu Blue ACI 4 của layer tạo mới.
+
+## 3.1.1 — 2026-10-10
+
+- Đặt chiều cao cố định của alc text note thành 300, áp dụng cả style đã tồn tại khi load Lisp.
+- Giữ các thuộc tính khác của style đã có; chiều cao text dim vẫn 3.
+
+## 3.1.0 — 2026-10-10
+
+- Thêm alc text note: Arial, width 0.75, height 0; đặt current và màu hiện hành Yellow ACI 2.
+- Đổi alc text thành alc text dim, giữ STYLE record và liên kết DIM; ALC Dim TL dùng alc text dim.
+- Hatch Scale mặc định 25 thay cho 250; chuyển giá trị mặc định cũ khi nâng cấp XRecord schema 4.
+- Giữ các scale tùy chỉnh và giữ nguyên thông số style có sẵn ngoài việc chuyển liên kết text của dim theo yêu cầu.
+
+
 ## 3.0.0 — 2026-10-08
 
 - Phát hành các cải tiến sau 2.5.0: Angle, bảng chọn pattern có preview và tên gọi ALCS/ALSC.

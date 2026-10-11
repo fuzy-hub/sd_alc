@@ -1,4 +1,4 @@
-;;; ALCWALL v3.0.0 - alignment module
+;;; ALCWALL v3.3.0 - alignment module
 
 ;;; --------------------------------------------------------------------------
 ;;; Text alignment

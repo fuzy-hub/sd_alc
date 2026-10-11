@@ -1,16 +1,44 @@
-;;; ALCWALL v3.0.0 - create missing resources and make them current on load.
+;;; ALCWALL v3.3.0 - create missing resources and make them current on load.
 
-(defun alc--ensure-text-style ()
-  (if (not (tblobjname "STYLE" "alc text"))
+(defun alc--ensure-text-style (/ old data)
+  ;; Rename the existing STYLE record to retain DIM and entity references.
+  (if (and (not (tblobjname "STYLE" "alc text dim"))
+           (setq old (tblobjname "STYLE" "alc text")))
+    (progn
+      (setq data (entget old))
+      (entmod (subst '(2 . "alc text dim") (assoc 2 data) data))))
+  (if (not (tblobjname "STYLE" "alc text dim"))
       (progn
         (entmakex '((0 . "STYLE") (100 . "AcDbSymbolTableRecord")
-          (100 . "AcDbTextStyleTableRecord") (2 . "alc text") (70 . 0)
+          (100 . "AcDbTextStyleTableRecord") (2 . "alc text dim") (70 . 0)
           (40 . 0.0) (41 . 0.65) (50 . 0.0) (71 . 0) (42 . 0.0)
           (3 . "NGHIA5.SHX") (4 . "")))
         (if (not (findfile "NGHIA5.SHX"))
           (prompt "\nALC text style requires NGHIA5.SHX in the CAD font/support path."))
         ))
-  (tblobjname "STYLE" "alc text")
+  (tblobjname "STYLE" "alc text dim")
+)
+
+(defun alc--ensure-note-style (/ style data object)
+  (if (not (tblobjname "STYLE" "alc text note"))
+    (entmakex '((0 . "STYLE") (100 . "AcDbSymbolTableRecord")
+      (100 . "AcDbTextStyleTableRecord") (2 . "alc text note") (70 . 0)
+      (40 . 0.0) (41 . 0.75) (50 . 0.0) (71 . 0) (42 . 0.0)
+      (3 . "arial.ttf") (4 . ""))))
+  ;; Apply the requested variable height to existing note styles as well.
+  (if (setq style (tblobjname "STYLE" "alc text note"))
+    (progn
+      (setq data (entget style))
+      (if (/= (cdr (assoc 40 data)) 0.0)
+        (if (not (entmod (subst '(40 . 0.0) (assoc 40 data) data)))
+          (setq style nil)))
+      (if style
+        (progn
+          (setq object (vlax-ename->vla-object style))
+          ;; Set both the font file and TrueType face metadata for Arial (TT).
+          (vla-put-FontFile object "arial.ttf")
+          (vla-SetFont object "Arial" :vlax-false :vlax-false 0 38)))))
+  style
 )
 
 (defun alc--archtick-record (/ block saved result)
@@ -44,14 +72,24 @@
 
 (defun alc--ensure-dim-style (/ existing text-style arrow data pair)
   (if (setq existing (tblobjname "DIMSTYLE" "ALC Dim TL"))
-      existing
+      (progn
+        ;; Explicit migration updates the text-style reference and text fill.
+        (setq text-style (alc--ensure-text-style) data (entget existing))
+        (if (and text-style (not (equal (cdr (assoc 340 data)) text-style)))
+          (setq data (if (assoc 340 data)
+            (subst (cons 340 text-style) (assoc 340 data) data)
+            (append data (list (cons 340 text-style))))))
+        (setq data (if (assoc 69 data)
+          (subst '(69 . 1) (assoc 69 data) data)
+          (append data '((69 . 1)))))
+        (if (entmod data) existing))
       (if (and (setq text-style (alc--ensure-text-style))
                (setq arrow (alc--archtick-record)))
         (progn
           (setq data (alc--iso25-data))
           (foreach pair
             (append
-              '((2 . "ALC Dim TL") (70 . 0)
+              '((2 . "ALC Dim TL") (70 . 0) (69 . 1)
                 (40 . 100.0) (41 . 1.8) (42 . 2.0) (44 . 1.0) (45 . 5.0)
                 (49 . 4.0) (140 . 3.0) (147 . 1.0) (174 . 1)
                 (176 . 8) (177 . 8) (178 . 3) (271 . 0) (272 . 0)
@@ -67,7 +105,7 @@
 
 (defun alc--activate-drawing-resources (/ item result)
   (foreach item '(("LAYER" "0. Tuong ALC" "CLAYER")
-                 ("STYLE" "alc text" "TEXTSTYLE")
+                 ("STYLE" "alc text note" "TEXTSTYLE")
                  ("DIMSTYLE" "ALC Dim TL" "DIMSTYLE"))
     (if (tblsearch (car item) (cadr item))
       (progn
@@ -81,12 +119,16 @@
         (if (vl-catch-all-error-p result)
           (prompt (strcat "\nCannot make " (cadr item) " current: "
             (vl-catch-all-error-message result)))))))
+  ;; Notes inherit the color of the current wall layer.
+  (if (= (strcase (getvar "TEXTSTYLE")) "ALC TEXT NOTE")
+    (setvar "CECOLOR" "BYLAYER"))
   (princ)
 )
 
 (defun alc--init-drawing-resources (/ item result)
   (foreach item '((alc--ensure-wall-layer . "layer 0. Tuong ALC")
-                 (alc--ensure-text-style . "text style alc text")
+                 (alc--ensure-text-style . "text style alc text dim")
+                 (alc--ensure-note-style . "text style alc text note")
                  (alc--ensure-dim-style . "dim style ALC Dim TL"))
     (setq result (vl-catch-all-apply (car item) nil))
     (if (or (not result) (vl-catch-all-error-p result))

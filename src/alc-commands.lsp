@@ -1,7 +1,10 @@
-;;; ALCWALL v3.0.0 - commands module
+;;; ALCWALL v3.3.0 - commands module
 
 ;;; --------------------------------------------------------------------------
 ;;; Public commands
+
+;; Reloading a renamed command does not remove its old definition in AutoLISP.
+(setq c:ALCCUT20 nil)
 
 (defun c:ALCSET ()
   (vl-load-com)
@@ -70,13 +73,27 @@
   (princ)
 )
 
+(defun c:VV () (c:ALCWALL))
+
 (defun c:ALCCENTRAL ()
   (alc--run-command 'alc--central-loop "ALCCENTRAL")
   (princ)
 )
 
+(defun c:VVC () (c:ALCCENTRAL))
+
 (defun c:ALCDOOR ()
   (alc--run-command 'alc--door-loop "ALCDOOR")
+  (princ)
+)
+
+(defun c:ALCTRIM ()
+  (alc--run-command 'alc--trim-loop "ALCTRIM")
+  (princ)
+)
+
+(defun c:ALCXTEND ()
+  (alc--run-command 'alc--xtend-loop "ALCXTEND")
   (princ)
 )
 
@@ -166,6 +183,21 @@
   (princ)
 )
 
+;; Every public ALCxxx command has a matching VVxxx entry point.
+(defun c:VVSET () (c:ALCSET))
+(defun c:VVS () (c:ALCS))
+(defun c:VVWALL () (c:ALCWALL))
+(defun c:VVCENTRAL () (c:ALCCENTRAL))
+(defun c:VVDOOR () (c:ALCDOOR))
+(defun c:VVTRIM () (c:ALCTRIM))
+(defun c:VVXTEND () (c:ALCXTEND))
+(defun c:VVLT () (c:ALCLT))
+(defun c:VVGT () (c:ALCGT))
+(defun c:VVGTS () (c:ALCGTS))
+(defun c:VVTK () (c:ALCTK))
+(defun c:VVTKC () (c:ALCTKC))
+(defun c:VVDIM () (c:ALCDIM))
+
 (princ
-  "\nALCWALL loaded. Commands: ALCWALL, ALCCENTRAL, ALCDOOR, ALCLT, ALCGT, ALCGTS, ALCTK, ALCTKC, TKDIM, TKCOUNT, TKMS, TKALIGN, ALCDIM, ALCSET, ALCS, ALSC.")
+  "\nALCWALL loaded. Commands: ALCWALL, VV, ALCCENTRAL, VVC, ALCDOOR, ALCTRIM, ALCXTEND, ALCLT, ALCGT, ALCGTS, ALCTK, ALCTKC, TKDIM, TKCOUNT, TKMS, TKALIGN, ALCDIM, ALCSET, ALCS, ALSC. ALCxxx aliases: VVxxx.")
 (princ)

@@ -1,0 +1,29 @@
+ALCWALL 3.3.0 validation — 2026-10-11
+
+AutoCAD: Autodesk AutoCAD 2027 for Windows (full acad.exe; ActiveX/hatch tests).
+Command: tests/run-autocad-tests.ps1 -FullAutoCAD -TrimOnly
+Session: alc-330-20261011-155148-b976e473
+PID: 6372
+Start: 2026-10-11T15:51:48.5658131+07:00
+Exit code: 0
+
+Smoke: PASS; all 33 commands loaded, settings/XRecord regressions passed.
+Styles: 37 PASS, 0 FAIL.
+ALCTRIM: 39 PASS, 0 FAIL.
+ALCXTEND: 32 PASS, 0 FAIL.
+
+Extension coverage: start/end, fractional length, L/U wall, extension longer
+than the existing end segment, rotated UCS, hatch area/properties/link,
+invalid lengths, locked wall, VVXTEND Length before/inside Multi, one-step
+Undo for both walls and hatches, ALCXTEND single, reload/Enter retention,
+VVTRIM and independent trim/extension Length values.
+
+Static validation: Lisp parentheses/strings balanced; all 13 public ALCxxx
+commands have matching VVxxx wrappers; ZIP integrity and source equality pass.
+
+This run covers the changed command surface and shared trim/extension code.
+Other existing geometry/door/settings fixture suites were not rerun for 3.3.0.
+The initial restricted-process launch timed out during startup; the successful
+run above used the permissions needed by AutoCAD for its runtime files.
+Both runs used newly created, labeled processes with recorded PID/start time.
+The timed-out owned process was cleaned up; pre-existing CAD was not controlled.

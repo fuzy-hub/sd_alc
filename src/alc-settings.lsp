@@ -1,4 +1,4 @@
-;;; ALCWALL v3.0.0 - settings module
+;;; ALCWALL v3.3.0 - settings module
 ;;; ALCWALL.lsp
 ;;; 2D ALC wall tool for AutoCAD on Windows.
 ;;; Commands: ALCWALL, ALCCENTRAL, ALCDOOR, ALCLT, ALCGT, ALCGTS, ALCTK, ALCTKC, TKDIM, TKCOUNT, TKMS, TKALIGN, ALCSET
@@ -27,14 +27,14 @@
   (setq *alc-pattern* "ANSI37"
         *alc-color* 251
         *alc-background-color* 256
-        *alc-scale* 250.0
+        *alc-scale* 25.0
         *alc-angle* 0.0
         *alc-thickness* 100.0
         *alc-door-width* 900.0
         *alc-stat-text-height* 100.0
         *alc-count-prefix* "CK"
         *alc-last-side* 1
-        *alc-settings-schema-version* 3)
+        *alc-settings-schema-version* 4)
 )
 
 ;;; --------------------------------------------------------------------------
@@ -97,7 +97,7 @@
             schema-version (cdr (assoc 92 data))
             needs-upgrade
               (not (and (numberp schema-version)
-                        (member schema-version '(2 3)))))
+                        (member schema-version '(2 3 4)))))
       (if (and (setq value (cdr (assoc 1 data)))
                (eq (type value) 'STR)
                (/= value ""))
@@ -118,7 +118,10 @@
           (if (and (setq value (cdr (assoc 40 data)))
                    (numberp value)
                    (> value 0.0))
-            (setq *alc-scale* value)
+            ;; Upgrade the old default once; preserve custom scales in V4.
+            (setq *alc-scale*
+              (if (and (/= schema-version 4) (equal value 250.0 1e-9))
+                25.0 value))
           )
         )
       )
@@ -149,7 +152,7 @@
       (if (setq value (cdr (assoc 70 data)))
         (setq *alc-last-side* (if (= value -1) -1 1))
       )
-      (if needs-upgrade
+      (if (or needs-upgrade (/= schema-version 4))
         (alc--save-settings)
       )
     )
@@ -163,7 +166,7 @@
 (defun alc--settings-ready-p ()
   (and (boundp '*alc-settings-schema-version*)
        (numberp *alc-settings-schema-version*)
-       (= *alc-settings-schema-version* 3)
+       (= *alc-settings-schema-version* 4)
        (boundp '*alc-pattern*)
        (eq (type *alc-pattern*) 'STR)
        (/= *alc-pattern* "")
@@ -211,7 +214,7 @@
       (cons 1 *alc-pattern*)
       (cons 90 *alc-color*)
       (cons 91 *alc-background-color*)
-      (cons 92 3)
+      (cons 92 4)
       (cons 40 *alc-scale*)
       (cons 44 *alc-angle*)
       (cons 41 *alc-thickness*)

@@ -1,6 +1,6 @@
 RÀ SOÁT ALCWALL — 08/10/2026
 
-Đã triển khai trong 3.0.0
+Đã triển khai trong 3.1.2
 - ALCS và ALSC gọi chung cấu hình ALCSET; P mở bảng chọn pattern có hình xem trước.
 - Angle nhập bằng độ thập phân, mặc định 0; chấp nhận góc âm và góc trên 360,
   chuẩn hóa về [0,360). Lưu vào XRecord bằng radian, DXF 44, schema 3.
@@ -18,8 +18,8 @@ Bổ sung 2.6.1
   arrow ArchTick 1.8, extension offset 2 / extension 1, roundoff 5,
   fixed extension 4 On, jog angle 45 độ, text offset 1, text inside On,
   line/extension color 8, text color 3, precision/tol precision 0,
-  text movement 2, text style alc text.
-- Đặt alc text và ALC Dim TL làm current sau load; giữ định nghĩa có sẵn.
+  text movement 2, text style alc text dim.
+- Đặt alc text note và ALC Dim TL làm current sau load; giữ định nghĩa có sẵn, riêng chiều cao alc text note cập nhật thành 300.
   Restore dim style để áp dụng thông số đã lưu thay cho override trước đó.
 - Template imperial thiếu ISO-25 dùng nền ISO-25 chuẩn acadiso.dwt.
 
@@ -54,3 +54,15 @@ PatternAngle dùng radian:
 https://help.autodesk.com/cloudhelp/2024/ENU/AutoCAD-ActiveX-Reference/files/GUID-A7CDE967-0755-41A0-B557-3E6918E57315.htm
 DXF LAYER:
 https://help.autodesk.com/cloudhelp/2018/ENU/AutoCAD-DXF/files/GUID-D94802B0-8BE8-4AC9-8054-17197688AFDB.htm
+
+Bổ sung 3.1.2: alc text note dùng Arial, width 0.75, height 300, current và CECOLOR=BYLAYER. alc text cũ đổi tên thành alc text dim, giữ liên kết DIM. Hatch mặc định 25; chuyển default cũ 250 một lần trong schema 4, giữ các scale tùy chỉnh khác.
+
+Bổ sung 3.2.0: ALCCUT20 rút đầu tường 20 mm, cập nhật biên hatch và giữ thuộc tính. Kiểm thử AutoCAD 2027: tường thẳng hai đầu, L/U, UCS xoay, hatch area và giữ settings, từ chối đầu ngắn/layer khóa, Undo.
+
+Bổ sung 3.2.1: đổi lệnh thành ALCTRIM, tùy chọn Multi (M) để cắt nhiều tường trong một lượt, Enter kết thúc.
+
+Bổ sung 3.2.2: ALCTRIM có Length (L) đồng cấp Multi (M), mặc định 20 mm mỗi lượt lệnh, cho phép thay đổi độ dài trong Multi.
+
+Bổ sung 3.2.3: giữ Length của ALCTRIM trong phiên làm việc bằng biến Lisp, không reset khi gọi lại hoặc reload; không ghi vào DWG.
+
+Bổ sung 3.2.4: gỡ lệnh c:ALCCUT20 lưu từ bản cũ trong bộ nhớ khi reload; giữ ALCTRIM.

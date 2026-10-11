@@ -1,4 +1,4 @@
-;;; ALCWALL v3.0.0 - wall module
+;;; ALCWALL v3.3.0 - wall module
 (defun alc--draw-lintel
   (door-start door-end side-point
     / dx dy segment-length ux uy cross-product side px py z

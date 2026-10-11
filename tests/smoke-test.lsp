@@ -71,7 +71,9 @@
 
 (defun alc-test-run-smoke
   (/ root load-result commands atoms missing name lines original-thickness
-     session-pass background-pass record-result tkms-pass)
+     session-pass background-pass record-result tkms-pass legacy-command-pass)
+  ;; Simulate upgrading within a session where the obsolete command is loaded.
+  (defun c:ALCCUT20 () (princ "obsolete command"))
   (setq root (alc-test--root)
         load-result
           (vl-catch-all-apply
@@ -80,9 +82,13 @@
           '("C:ALCSET" "C:ALCWALL" "C:ALCCENTRAL" "C:ALCDOOR"
             "C:ALCLT" "C:ALCGT" "C:ALCGTS" "C:ALCTK"
             "C:ALCTKC" "C:TKDIM" "C:TKCOUNT" "C:TKMS" "C:TKALIGN"
-            "C:ALCDIM" "C:ALCS" "C:ALSC")
+            "C:ALCDIM" "C:ALCS" "C:ALSC" "C:ALCTRIM" "C:ALCXTEND" "C:VV" "C:VVC"
+            "C:VVSET" "C:VVS" "C:VVWALL" "C:VVCENTRAL" "C:VVDOOR"
+            "C:VVTRIM" "C:VVXTEND" "C:VVLT" "C:VVGT" "C:VVGTS"
+            "C:VVTK" "C:VVTKC" "C:VVDIM")
         atoms (atoms-family 1)
-        missing nil)
+        missing nil
+        legacy-command-pass (not c:ALCCUT20))
   (if (vl-catch-all-error-p load-result)
     (setq lines
       (list
@@ -122,11 +128,12 @@
                     (equal (alc--three-digit-number 1) "001")
                     (equal (alc--three-digit-number 99) "099")
                     (equal (alc--three-digit-number 999) "999")))
-          (if (and session-pass background-pass (car record-result) tkms-pass)
+          (if (and session-pass background-pass (car record-result) tkms-pass legacy-command-pass)
             (setq lines
               (list
                 "PASS"
-                "COMMAND_COUNT=16"
+                (strcat "COMMAND_COUNT=" (itoa (length commands)))
+                "LEGACY_ALCCUT20_REMOVED=PASS"
                 "SESSION_SETTINGS=PASS"
                 "BACKGROUND_MODES=PASS"
                 "TKMS_NUMBERING=PASS"
@@ -139,6 +146,7 @@
             (setq lines
               (list
                 "FAIL"
+                (if legacy-command-pass "LEGACY_ALCCUT20_REMOVED=PASS" "LEGACY_ALCCUT20_REMOVED=FAIL")
                 (if session-pass
                   "SESSION_SETTINGS=PASS"
                   "SESSION_SETTINGS=RESET")

@@ -1,0 +1,12 @@
+ALCWALL 3.3.0 bổ sung kéo dài đầu tường và alias VV cho toàn bộ lệnh ALC.
+
+- ALCXTEND / VVXTEND: kéo dài đầu gần điểm chọn nhất, cập nhật biên và hatch tại chỗ, giữ thuộc tính và liên kết.
+- Length (L) và Multi (M) hoạt động như ALCTRIM; Undo một lần khôi phục cả lượt Multi.
+- Length kéo dài mặc định 20 mm, nhớ riêng với Length rút ngắn trong phiên bản vẽ, kể cả sau reload.
+- Mọi ALCxxx có alias VVxxx; giữ các alias ngắn VV và VVC.
+
+Bao gồm các cải tiến từ 3.0.0 đến 3.2.9: ALCTRIM với Length/Multi và Undo, text note Arial (TT), height 0.0 và màu ByLayer; text dim NGHIA5.SHX, hatch scale mặc định 25; ALC Dim TL scale 100, text height 3 và nền chữ Background.
+
+Cài đặt: tải ALCWALL-3.3.0.zip, giải nén, thêm thư mục vào AutoCAD Support File Search Path rồi APPLOAD ALCWALL.lsp. Giữ nguyên thư mục src. Khi nâng cấp, APPLOAD lại loader; không nạp riêng các module. NGHIA5.SHX cần có trong Fonts hoặc Support Path, không kèm trong ZIP.
+
+Kiểm thử đạt bằng AutoCAD 2027 trong tiến trình riêng: nạp 33 lệnh, tài nguyên/style, hồi quy ALCTRIM, kéo dài tường thẳng/L/U và UCS xoay, bảo toàn hatch, Length/Multi, reload và Undo. Chi tiết tại tests/validation-3.3.0.txt.
