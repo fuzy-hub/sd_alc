@@ -3,8 +3,8 @@ $ErrorActionPreference='Stop'
 if (([int]$StylesOnly.IsPresent+[int]$TrimOnly.IsPresent+[int]$HardeningOnly.IsPresent) -gt 1) { throw 'Choose one suite mode.' }
 if (!$FullAutoCAD -and !$StylesOnly) { throw 'Hatch suites require -FullAutoCAD (AutoCAD 2027).' }
 $taskRoot=Split-Path -Parent $PSScriptRoot
-$taskExe='C:\Program Files\Autodesk\AutoCAD 2027\accoreconsole.exe'
-if ($FullAutoCAD) { $taskExe='C:\Program Files\Autodesk\AutoCAD 2027\acad.exe' }
+# Even the style suite uses ActiveX SetFont, unavailable in Core Console.
+$taskExe='C:\Program Files\Autodesk\AutoCAD 2027\acad.exe'
 if (!(Test-Path -LiteralPath $taskExe)) { throw "AutoCAD 2027 executable not found: $taskExe" }
 $taskLabel='alc-'+(Get-Content (Join-Path $taskRoot 'VERSION')).Trim().Replace('.','')+'-'+(Get-Date -Format yyyyMMdd-HHmmss)+'-'+[guid]::NewGuid().ToString('N').Substring(0,8)
 $taskRun=Join-Path $PSScriptRoot ('results/'+$taskLabel)
@@ -131,8 +131,7 @@ try {
     $env:ALCWALL_TEST_ROOT=$taskRoot.Replace('\','/')
     $env:ALCWALL_TEST_RUN=$taskRun.Replace('\','/')
     $env:ALCWALL_TEST_LABEL=$taskLabel
-    $taskArgs=@('/i',('"'+$taskDwg+'"'),'/s',('"'+$taskScript+'"'),'/l','en-US')
-    if ($FullAutoCAD) { $taskArgs=@('/nologo',('"'+$taskDwg+'"'),'/b',('"'+$taskScript+'"')) }
+    $taskArgs=@('/nologo',('"'+$taskDwg+'"'),'/b',('"'+$taskScript+'"'))
     $taskProcess=Start-Process -FilePath $taskExe -ArgumentList $taskArgs -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $taskRun 'stdout.log') -RedirectStandardError (Join-Path $taskRun 'stderr.log')
     $taskStart=$taskProcess.StartTime
     [pscustomobject]@{Label=$taskLabel;ProcessId=$taskProcess.Id;StartTime=$taskStart.ToString('o');Executable=$taskExe} | ConvertTo-Json | Set-Content (Join-Path $taskRun 'session.json')

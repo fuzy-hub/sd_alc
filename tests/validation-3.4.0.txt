@@ -44,3 +44,5 @@ GIỚI HẠN
 
 CÀI ĐẶT
 Giải nén ALCWALL-3.4.0.zip; chạy tools/install.ps1 trong thư mục giải nén, rồi APPLOAD ALCWALL-LOAD.lsp được tạo. Giữ nguyên src và các tệp manifest. NGHIA5.SHX không kèm trong gói.
+
+XÁC NHẬN BỘ CHẠY TEST: thử bổ sung Core Console tại checkout triển khai phát hiện ActiveX SetFont không khả dụng. Runner đã được sửa để cả -StylesOnly dùng AutoCAD 2027 đầy đủ; không hỗ trợ chạy bộ hiện tại qua Core Console. Các ca PASS ghi ở trên đều là AutoCAD đầy đủ.
