@@ -5,9 +5,37 @@
     (reverse checks))
 )
 
+(defun alc-test--seed-scale-record (schema scale / old data new)
+  (setq old (alc--settings-ename)
+        data (vl-remove-if '(lambda (pair) (member (car pair) '(-1 5 330))) (entget old))
+        data (subst (cons 92 schema) (assoc 92 data) data)
+        data (subst (cons 40 scale) (assoc 40 data) data)
+        new (entmakex data))
+  (if new
+    (progn
+      (dictremove (namedobjdict) "ALCWALL_SETTINGS_V1")
+      (dictadd (namedobjdict) "ALCWALL_SETTINGS_V1" new)
+      (entdel old)))
+)
+
 (defun alc-test-run-settings (/ checks layer old-layer old-angle old-scale data
     catalog boundary hatch old-hatch-angle door-result selection index result dialog-id entry)
   (setq checks nil old-layer (getvar "CLAYER") old-angle *alc-angle* old-scale *alc-scale*)
+  (alc--save-settings)
+  (alc--defaults)
+  (alc-test--check "default-hatch-scale-25" (= *alc-scale* 25.0))
+  (alc-test--seed-scale-record 3 250.0)
+  (alc--load-settings)
+  (alc-test--check "legacy-default-scale-upgrades-to-25"
+    (and (= *alc-scale* 25.0) (= (cdr (assoc 92 (entget (alc--settings-ename)))) 4)))
+  (alc-test--seed-scale-record 3 80.0)
+  (alc--load-settings)
+  (alc-test--check "legacy-custom-scale-kept" (= *alc-scale* 80.0))
+  (alc-test--seed-scale-record 4 250.0)
+  (alc--load-settings)
+  (alc-test--check "new-custom-scale-250-kept" (= *alc-scale* 250.0))
+  (setq *alc-scale* old-scale)
+  (alc--save-settings)
   (setq layer (if (tblobjname "LAYER" "0. Tuong ALC")
                 (entget (tblobjname "LAYER" "0. Tuong ALC"))))
   (alc-test--check "startup-layer"
