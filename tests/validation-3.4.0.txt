@@ -1,0 +1,46 @@
+ALCWALL 3.4.0 — BÁO CÁO TRIỂN KHAI VÀ KIỂM THỬ
+Ngày: 16/10/2026
+
+ĐÃ TRIỂN KHAI
+- VV/VVC: khôi phục đối tượng mới khi tạo hatch thất bại.
+- VVDOOR: kiểm tra biên thẳng/đồng phẳng/hình hợp lệ, layer khóa, hatch nhiều vòng/dùng chung/nhiều hatch/gradient trước khi thay thế. Giữ tường và hatch gốc nếu lỗi; kiểm thử cả lỗi sau khi đã xóa hatch gốc.
+- Giữ TrueColor, nền RGB, transparency, origin, layer hatch; màu/nét/độ rộng/XData của biên khi cắt cửa.
+- VVTRIM/VVXTEND: từ chối kết quả tự giao/suy biến. Tính diện tích tương đối gốc polygon để tránh mất chính xác khi tọa độ lớn.
+- Chỉ mục hatch dùng Scripting.Dictionary trong từng lượt rút/kéo; giải phóng sau lượt lệnh. Nếu khởi tạo chỉ mục lỗi, quay lại đường quét an toàn.
+- TKALIGN: đo hộp bao trên bản sao tạm đã biến đổi về UCS, không xoay hộp bao WCS; không sửa text tham chiếu.
+- Loader: ghim thư mục cài, từ chối nhiều bản không rõ nguồn, kiểm tra manifest/kích thước/phiên bản; chặn cả các lệnh còn sót từ bản cũ trước khi nạp.
+- Tách module thống kê thành các phần chiều dài, cửa, DIM, đánh số và copy text. Tạo danh sách đỉnh DXF bằng mapcar thay append lặp.
+- Test: log/DWG đầu ra theo phiên; fixture nguồn bất biến; marker hoàn tất từng suite và toàn script; mã phiên và số kiểm tra tối thiểu; lỗi là trạng thái được giữ lại.
+- Đóng gói từ một Git checkout, manifest SHA-256, ZIP tái lập, metadata commit/dirty, CI kiểm tra tĩnh/Python; script phát hành từ chối ZIP không khớp commit sạch.
+- Cập nhật README, CHANGELOG, RELEASE, REVIEW và công cụ sinh loader cài đặt.
+
+KIỂM THỬ ĐÃ ĐẠT
+1. Toàn bộ AutoCAD 2027, phiên alc-340-20261016-225809-49137a7d
+   PID: 16272; thời gian bắt đầu: 2026-10-16T22:58:09.3090221+07:00
+   Smoke 5; styles 37; settings 14; fixture 6; wall-tie-side 6;
+   trim 39; xtend 32; hardening 24 dòng PASS; không có FAIL.
+   Tổng 163 dòng PASS được đối chiếu với marker hoàn tất (một số suite có cả dòng tổng kết).
+2. Sau bổ sung chặn lệnh từ phiên bản cũ, kiểm tra lại loader/styles/hardening:
+   phiên alc-340-20261016-230113-4973f6b8; PID 18016; bắt đầu 2026-10-16T23:01:14.0538194+07:00.
+   Smoke 5; styles 37; hardening 24; không có FAIL.
+3. Python: 10 ca đạt — log bị cắt, thiếu marker, lỗi Lisp sau PASS, nhầm phiên, thiếu/sai run.complete, log rỗng và phân biệt tên ca kiểm thử có chữ failure với kết quả FAIL.
+4. Kiểm tra tĩnh: 24 tệp Lisp cân bằng ngoặc/chuỗi; 33 lệnh; đủ 13 alias VVxxx; manifest JSON và dữ liệu loader khớp; Python và PowerShell không lỗi cú pháp; git diff --check đạt.
+
+HIỆU NĂNG
+Trong AutoCAD 2027, bản vẽ tổng 1.002 hatch và 20 lần tìm cùng một biên:
+- Phiên toàn bộ: quét lặp 1.203 ms; lập chỉ mục + 20 lần tra cứu 218 ms (~5,52 lần).
+- Phiên xác nhận cuối: quét lặp 1.437 ms; lập chỉ mục + tra cứu 250 ms (~5,75 lần).
+- Số lượt quét database giảm từ 20 xuống 1; kết quả tra cứu trùng đường quét.
+Đây là benchmark tổng hợp cho phần tìm hatch, không phải cam kết mọi lệnh trong bản vẽ thực đều nhanh hơn cùng tỷ lệ. Các hatch nhiễu được tạo bằng copy hatch của một biên khác; chưa đo workload 10.000 hatch phân bố nhiều biên.
+
+AN TOÀN PHIÊN CAD
+Mỗi lần chạy sử dụng tiến trình AutoCAD 2027 mới có nhãn, PID và thời gian bắt đầu. Một số phiên không tự thoát hoàn toàn; runner chỉ dọn đúng PID/thời gian đã ghi sau marker hoàn tất và thời gian chờ, rồi xác nhận đủ suite. Các lần chẩn đoán lỗi ban đầu không được dùng làm bằng chứng PASS. Không điều khiển hoặc đóng phiên CAD đã mở sẵn của người dùng.
+
+GIỚI HẠN
+- Chưa hỗ trợ biên cung, hatch nhiều vòng/dùng chung/gradient khi cắt cửa; các dạng này bị từ chối.
+- Tương thích tường cũ chưa có mã nhận diện ALC bằng hình học; người dùng vẫn cần chọn đúng tường.
+- Kiểm tra DCL nạp/thư viện pattern đã đạt; thao tác chuột/Cancel trong bảng DCL chưa được kiểm tra thủ công ở lượt này.
+- Loader kiểm tra kích thước/phiên bản; SHA-256 được xác minh trong công cụ đóng gói/CI, không phải chữ ký số trong AutoLISP.
+
+CÀI ĐẶT
+Giải nén ALCWALL-3.4.0.zip; chạy tools/install.ps1 trong thư mục giải nén, rồi APPLOAD ALCWALL-LOAD.lsp được tạo. Giữ nguyên src và các tệp manifest. NGHIA5.SHX không kèm trong gói.

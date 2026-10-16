@@ -9,3 +9,6 @@ tests/results/*.log
 /ALCWALL-*.zip
 /tests/results/
 /tools/__pycache__/
+__pycache__/
+/ALCWALL-*.zip.json
+/ALCWALL-LOAD.lsp

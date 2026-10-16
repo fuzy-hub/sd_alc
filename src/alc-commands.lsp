@@ -1,4 +1,5 @@
-;;; ALCWALL v3.3.0 - commands module
+(setq *alc-module-version* "3.4.0")
+;;; ALCWALL v3.4.0 - commands module
 
 ;;; --------------------------------------------------------------------------
 ;;; Public commands
@@ -8,15 +9,14 @@
 
 (defun c:ALCSET ()
   (vl-load-com)
-  (alc--ensure-settings)
-  (alc--settings)
+  (if (alc--ready-p) (progn (alc--ensure-settings) (alc--settings)))
   (princ)
 )
 
 (defun c:ALCS () (c:ALCSET))
 (defun c:ALSC () (c:ALCSET))
 
-(defun alc--run-command
+(defun alc--run-command-unsafe
   (loop-function command-name
     / *error* document document-result old-cmdecho undo-open message)
   (vl-load-com)
@@ -26,6 +26,7 @@
         undo-open nil)
 
   (defun *error* (message)
+    (alc--end-hatch-index)
     (alc--cleanup-temp)
     (if old-cmdecho
       (setvar "CMDECHO" old-cmdecho)
@@ -56,7 +57,8 @@
     (setq undo-open T)
   )
 
-  (apply loop-function '())
+  (if (alc--ready-p) (apply loop-function '()))
+  (alc--end-hatch-index)
   (alc--cleanup-temp)
   (setvar "CMDECHO" old-cmdecho)
   (if undo-open
@@ -144,7 +146,7 @@
 
 (defun c:ALCDIM (/ selection entity-data style-name document dim-style result)
   (vl-load-com)
-  (if (setq selection (entsel "\nSelect dimension to make its style current: "))
+  (if (and (alc--ready-p) (setq selection (entsel "\nSelect dimension to make its style current: ")))
     (progn
       (setq entity-data (entget (car selection)))
       (cond
@@ -201,3 +203,5 @@
 (princ
   "\nALCWALL loaded. Commands: ALCWALL, VV, ALCCENTRAL, VVC, ALCDOOR, ALCTRIM, ALCXTEND, ALCLT, ALCGT, ALCGTS, ALCTK, ALCTKC, TKDIM, TKCOUNT, TKMS, TKALIGN, ALCDIM, ALCSET, ALCS, ALSC. ALCxxx aliases: VVxxx.")
 (princ)
+
+(defun alc--run-command (fn name) (if (alc--ready-p) (alc--run-command-unsafe fn name)))

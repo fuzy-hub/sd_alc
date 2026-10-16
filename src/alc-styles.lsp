@@ -1,4 +1,5 @@
-;;; ALCWALL v3.3.0 - create missing resources and make them current on load.
+(setq *alc-module-version* "3.4.0")
+;;; ALCWALL v3.4.0 - create missing resources and make them current on load.
 
 (defun alc--ensure-text-style (/ old data)
   ;; Rename the existing STYLE record to retain DIM and entity references.
@@ -125,18 +126,19 @@
   (princ)
 )
 
-(defun alc--init-drawing-resources (/ item result)
+(defun alc--init-drawing-resources (/ item result pass)
+  (setq pass T)
   (foreach item '((alc--ensure-wall-layer . "layer 0. Tuong ALC")
                  (alc--ensure-text-style . "text style alc text dim")
                  (alc--ensure-note-style . "text style alc text note")
                  (alc--ensure-dim-style . "dim style ALC Dim TL"))
     (setq result (vl-catch-all-apply (car item) nil))
     (if (or (not result) (vl-catch-all-error-p result))
-      (prompt (strcat "\nCannot create " (cdr item) ": "
+      (progn (setq pass nil) (prompt (strcat "\nCannot create " (cdr item) ": "
         (if (vl-catch-all-error-p result)
-          (vl-catch-all-error-message result) "drawing resource write failed")))))
-  (alc--activate-drawing-resources)
-  (princ)
+          (vl-catch-all-error-message result) "drawing resource write failed"))))))
+  (if pass (alc--activate-drawing-resources))
+  pass
 )
 
 (princ)

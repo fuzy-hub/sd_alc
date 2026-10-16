@@ -1,17 +1,25 @@
-# ALCWALL 3.3.0
+# ALCWALL 3.4.0
 
-ALCWALL là bộ công cụ AutoLISP hỗ trợ triển khai tường ALC 2D trên AutoCAD for Windows. Bản 3.3.0 được kiểm thử bằng AutoCAD 2027.
+ALCWALL là bộ công cụ AutoLISP hỗ trợ triển khai tường ALC 2D trên AutoCAD for Windows. Bản 3.4.0 được kiểm thử bằng AutoCAD 2027.
 
 ## Cài đặt
 
 1. Giữ nguyên toàn bộ cấu trúc thư mục, đặc biệt là `ALCWALL.lsp` và thư mục `src`.
 2. Trong AutoCAD, mở `OPTIONS > Files > Support File Search Path` và thêm thư mục ALCWALL.
-3. Chạy `APPLOAD`, chọn `ALCWALL.lsp`. Có thể thêm tệp này vào Startup Suite nếu muốn tự động nạp.
-4. Khi thấy thông báo `ALCWALL v3.3.0 modules loaded`, bộ lệnh đã sẵn sàng.
+3. Chạy PowerShell `./tools/install.ps1`, rồi `APPLOAD` tệp `ALCWALL-LOAD.lsp` được tạo trong thư mục cài. Có thể thêm tệp này vào Startup Suite. Loader này ghim đúng thư mục khi máy có nhiều bản ALCWALL. Nếu chỉ có một bản trong Support Path, vẫn có thể nạp trực tiếp `ALCWALL.lsp`.
+4. Khi thấy thông báo `ALCWALL v3.4.0 modules loaded`, bộ lệnh đã sẵn sàng.
 
 Khi cập nhật, APPLOAD lại `ALCWALL.lsp`; loader gỡ định nghĩa lệnh cũ `ALCCUT20` còn trong phiên làm việc, chỉ dùng `ALCTRIM`.
 
 Không nạp riêng các tệp trong `src`; `ALCWALL.lsp` là loader duy nhất.
+
+## Thay đổi 3.4.0
+
+- VV/VVC khôi phục toàn bộ đối tượng mới nếu không tạo được hatch. DOOR kiểm tra hình học/layer và từ chối hatch nhiều vòng, dùng chung, nhiều hatch hoặc gradient.
+- Cắt cửa giữ màu RGB/nền RGB/transparency/origin/layer của hatch, màu/nét/độ rộng/XData của biên. Các loại chưa hỗ trợ bị từ chối trước khi thay tường.
+- TRIM/XTEND từ chối kết quả tự giao/suy biến; chỉ mục hatch được tạo một lần trong lượt lệnh và giải phóng cả khi Cancel/lỗi.
+- TKALIGN dùng bản sao tạm để đo trực tiếp theo UCS, giữ nguyên đối tượng tham chiếu.
+- Loader khóa lệnh nếu manifest/module không hợp lệ hoặc nạp lỗi. Không chỉnh module trực tiếp trong bộ cài; khi phát triển, chạy `python tools/refresh_manifest.py` rồi `python tools/validate_project.py` sau khi rà soát thay đổi.
 
 ## Các lệnh
 
@@ -53,7 +61,7 @@ Giữ polyline và hatch hiện có, cập nhật biên hatch, giữ pattern, sc
 
 Chạy `ALCXTEND` hoặc `VVXTEND`, bấm biên tường hoặc hatch gần đầu cần kéo. Lệnh dịch đầu gần điểm bấm nhất ra ngoài theo hướng đoạn cuối, giữ nguyên đầu còn lại. Mặc định kéo thêm 20 mm. `L` (Length) và `M` (Multi) hoạt động như `ALCTRIM`: đổi Length trước hoặc trong Multi, Enter ở Length giữ giá trị hiện tại, chọn một tường rồi kết thúc hoặc chọn nhiều tường và Enter để kết thúc Multi. Length của kéo dài được nhớ riêng với Length của rút ngắn trong phiên bản vẽ, kể cả khi load Lisp lại; không lưu vào DWG.
 
-Giữ đối tượng biên và hatch hiện có, thuộc tính và liên kết hatch; Undo một lần khôi phục cả lượt. Hỗ trợ cùng dạng tường thẳng/L/U có hai đầu vuông và thứ tự đỉnh còn nguyên. Độ dài kéo thêm có thể lớn hơn đoạn đầu hiện có. Các giới hạn về layer khóa, biên cong, hatch nhiều vòng, biên đã sửa phức tạp và Text/DIM độc lập giống `ALCTRIM`; cần tránh kéo đầu tường gấp khúc tới mức tự giao.
+Giữ đối tượng biên và hatch hiện có, thuộc tính và liên kết hatch; Undo một lần khôi phục cả lượt. Hỗ trợ cùng dạng tường thẳng/L/U có hai đầu vuông và thứ tự đỉnh còn nguyên. Độ dài kéo thêm có thể lớn hơn đoạn đầu hiện có. Các giới hạn về layer khóa, biên cong, hatch nhiều vòng, biên đã sửa phức tạp và Text/DIM độc lập giống `ALCTRIM`; kết quả tự giao hoặc suy biến sẽ bị từ chối trước khi cập nhật.
 
 ## Cấu trúc
 
@@ -77,9 +85,21 @@ Chạy từ PowerShell:
 .\tests\run-autocad-tests.ps1 -FullAutoCAD
 ```
 
-Script mở một tiến trình AutoCAD 2027 riêng và ghi nhãn phiên, PID, thời gian khởi động trong `tests/results/<session>/session.json`. Các lệnh dùng ActiveX nên cần AutoCAD đầy đủ; Core Console chỉ phù hợp kiểm tra nạp mã và XRecord. Các log ZWCAD trong bản ZIP gốc là dữ liệu lịch sử.
+Script mở một tiến trình AutoCAD 2027 riêng và ghi nhãn phiên, PID, thời gian khởi động trong `tests/results/<session>/session.json`. Log, marker hoàn tất và DWG sinh ra nằm trong chính thư mục phiên; fixture đầu vào không bị ghi đè. Các lệnh dùng ActiveX nên cần AutoCAD đầy đủ; Core Console chỉ phù hợp kiểm tra nạp mã và XRecord. Các log ZWCAD trong bản ZIP gốc là dữ liệu lịch sử.
 
 `ALCDOOR` chỉ thay tường cũ sau khi tạo thành công đủ hai boundary và hai hatch mới. Khi một bước thất bại, các đối tượng tạm bị xóa và tường cũ được giữ lại.
+
+## Phát triển và phát hành
+
+Git checkout `github-publish-3.0` là nguồn chuẩn hiện tại; tên thư mục được giữ để tương thích đường dẫn cũ. Không duy trì bản staging mã nguồn thứ hai bằng tay. Thư mục cha có thể dùng như bản triển khai cục bộ, nhưng phải cập nhật từ checkout đã kiểm tra.
+
+1. Sửa mã trong Git checkout; cập nhật VERSION, phiên bản module/loader, CHANGELOG và RELEASE tương ứng.
+2. `python tools/refresh_manifest.py`, `python tools/validate_project.py`.
+3. `python -m unittest discover -s tests -p 'test_*.py' -v`.
+4. `./tests/run-autocad-tests.ps1 -FullAutoCAD` (toàn bộ); `-HardeningOnly` cho bộ hồi quy 3.4, `-TrimOnly` cho rút/kéo; Core Console chỉ dùng `-StylesOnly`.
+5. Rà soát log/marker và báo cáo của đúng phiên, commit nguồn rồi `python tools/package_release.py`. Công cụ kiểm tra manifest, nội dung ZIP và xuất tệp metadata SHA-256/commit/dirty. Chỉ phát hành từ commit sạch đã kiểm thử.
+
+CI chạy kiểm tra tĩnh, kiểm thử cổng xác nhận kết quả và đóng gói; không thay thế kiểm thử AutoCAD 2027. Kiểm tra DCL chọn/Cancel bằng chuột vẫn cần thực hiện thủ công trước khi phát hành rộng.
 
 ## Giới hạn hình học
 

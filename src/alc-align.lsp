@@ -1,4 +1,5 @@
-;;; ALCWALL v3.3.0 - alignment module
+(setq *alc-module-version* "3.4.0")
+;;; ALCWALL v3.4.0 - alignment module
 
 ;;; --------------------------------------------------------------------------
 ;;; Text alignment
@@ -40,19 +41,38 @@
     (list max-x max-y max-z))
 )
 
-(defun alc--text-left-x-ucs (entity / bounds corners values point)
-  (if (setq bounds (alc--object-bounds entity))
+
+(defun alc--measure-text-ucs (object / x y z origin matrix bounds)
+  (setq x (trans '(1.0 0.0 0.0) 1 0 T)
+        y (trans '(0.0 1.0 0.0) 1 0 T)
+        z (trans '(0.0 0.0 1.0) 1 0 T)
+        origin (trans '(0.0 0.0 0.0) 0 1)
+        matrix (vlax-tmatrix (list
+          (append x (list (car origin))) (append y (list (cadr origin)))
+          (append z (list (caddr origin))) '(0.0 0.0 0.0 1.0))))
+  (vla-TransformBy object matrix)
+  (setq bounds (alc--object-bounds-unsafe object))
+  (caar bounds))
+
+(defun alc--text-left-x-ucs (entity / object copy result layer copy-ename)
+  ;; Locked reference objects are measured without modifying their layer state.
+  (setq object (vl-catch-all-apply 'vlax-ename->vla-object (list entity)))
+  (if (not (vl-catch-all-error-p object))
     (progn
-      (setq corners
-          (alc--bounds-corners (car bounds) (cadr bounds))
-        values nil)
-      (foreach point corners
-        (setq values (cons (car (trans point 0 1)) values))
-      )
-      (if values (apply 'min values))
-    )
-  )
-)
+      (setq copy (vl-catch-all-apply 'vla-Copy (list object)))
+      (if (not (vl-catch-all-error-p copy))
+        (progn
+          (setq copy-ename (alc--track-temp (vlax-vla-object->ename copy)))
+          (setq layer (tblnext "LAYER" T))
+          (while (and layer (alc--layer-locked-p (cdr (assoc 2 layer)))) (setq layer (tblnext "LAYER")))
+          (setq result (vl-catch-all-apply 'alc--measure-unlocked-text (list copy layer)))
+          (vl-catch-all-apply 'vla-Delete (list copy))
+          (if (not (entget copy-ename)) (alc--untrack-temp copy-ename))
+          (vlax-release-object copy)
+          (if (not (vl-catch-all-error-p result)) result))))))
+
+(defun alc--measure-unlocked-text (object layer)
+  (if layer (progn (vla-put-Layer object (cdr (assoc 2 layer))) (alc--measure-text-ucs object))))
 
 (defun alc--move-text-left-to-ucs-x
   (entity target-x / current-x delta-ucs delta-wcs object result)

@@ -1,68 +1,11 @@
-RÀ SOÁT ALCWALL — 08/10/2026
+RÀ SOÁT ALCWALL 3.4.0 — 16/10/2026
 
-Đã triển khai trong 3.1.2
-- ALCS và ALSC gọi chung cấu hình ALCSET; P mở bảng chọn pattern có hình xem trước.
-- Angle nhập bằng độ thập phân, mặc định 0; chấp nhận góc âm và góc trên 360,
-  chuẩn hóa về [0,360). Lưu vào XRecord bằng radian, DXF 44, schema 3.
-- Bản vẽ schema 2 giữ các thiết lập màu, scale, độ dày và chiều rộng cửa.
-- Hatch tường mới dùng góc cấu hình. Khi cắt cửa, hai hatch mới giữ góc hatch cũ,
-  ngay cả khi người dùng đã thay góc mặc định. Lanh tô/giằng giữ góc riêng 0.
-- Mỗi lần load chỉ tạo layer 0. Tuong ALC nếu chưa có: Blue ACI 4,
-  Continuous, 0.09 mm. Đặt layer làm current, giữ nguyên toàn bộ thông số của layer đã tồn tại.
-- Pattern lấy từ acad.pat/acadiso.pat trong Support Path, ưu tiên MEASUREMENT.
-  Cancel giữ thiết lập cũ. Preview minh họa mẫu và góc, không mô phỏng tỷ lệ in.
+Đã triển khai: kiểm tra đầu vào DOOR và hình tự giao; bảo toàn thuộc tính; rollback khi lỗi tạo hatch/thay tường; chỉ mục hatch theo lượt TRIM/XTEND; đo text theo UCS; loader có manifest/cổng ready; test marker hoàn tất/log riêng; đóng gói từ một Git checkout.
 
-Bổ sung 2.6.1
-- Chỉ tạo text style alc text khi chưa có: NGHIA5.SHX, width factor 0.65.
-- Chỉ tạo dim style ALC Dim TL khi chưa có: nền ISO-25, overall scale 100, text height 3,
-  arrow ArchTick 1.8, extension offset 2 / extension 1, roundoff 5,
-  fixed extension 4 On, jog angle 45 độ, text offset 1, text inside On,
-  line/extension color 8, text color 3, precision/tol precision 0,
-  text movement 2, text style alc text dim.
-- Đặt alc text note và ALC Dim TL làm current sau load; giữ định nghĩa có sẵn, riêng chiều cao alc text note cập nhật thành 300.
-  Restore dim style để áp dụng thông số đã lưu thay cho override trước đó.
-- Template imperial thiếu ISO-25 dùng nền ISO-25 chuẩn acadiso.dwt.
+Thông số hiện hành: alc text note dùng Arial (TT), width 0.75, height 0.0; alc text dim dùng NGHIA5.SHX; hatch mặc định scale 25, nền RGB trắng; dim style ALC Dim TL scale 100, text height 3. Không dùng thông số height 300 từ ghi chú lịch sử.
 
-Các điểm nên cải tiến tiếp
-1. src/alc-wall.lsp, alc--draw-wall và alc--draw-central-wall:
-   Nếu hatch lỗi, boundary vẫn được giữ. Có thể dùng cơ chế transaction đang
-   có ở ALCDOOR để cho phép rollback cả tường khi hatch thất bại.
-2. src/alc-wall.lsp, alc--read-hatch-background-unsafe:
-   Hàm hiện chỉ lưu trắng RGB 255,255,255 và ACI. Nếu người dùng sửa hatch
-   thủ công sang RGB khác, ALCDOOR có thể làm mất màu nền đó. Nên lưu toàn bộ
-   ColorMethod và RGB để sao chép chính xác hatch đã chỉnh thủ công.
-3. src/alc-patterns.lsp, alc--pattern-catalog:
-   Bảng chọn hiện hỗ trợ thư viện tiêu chuẩn. Có thể bổ sung PAT tùy chỉnh
-   từ Support Path và kiểm tra PatternType khi tạo hatch tùy chỉnh.
-4. ALCWALL.lsp, alc--loader-root:
-   Loader phụ thuộc findfile và Support Path. Nếu có nhiều bản ALCWALL trong
-   Support Path, có thể nạp nhầm module từ bản khác. Nên bổ sung lựa chọn
-   thư mục cài đặt rõ ràng và xác minh phiên bản giữa loader với module.
+Giới hạn: chỉ biên đoạn thẳng 2D; chưa hỗ trợ hatch nhiều vòng/gradient khi cắt cửa. Tường cũ không có mã XData ALC vẫn được nhận theo hình học để tương thích. Không giả định mọi polyline hợp lệ đều chắc chắn được ALC tạo. Tránh sử dụng lệnh cắt cửa cho đối tượng không phải tường.
 
-Kiểm thử
-- Chạy AutoCAD 2027 riêng bằng tests/run-autocad-tests.ps1 -FullAutoCAD.
-- Core Console kiểm tra nạp mã và XRecord; không hỗ trợ các ActiveX mà
-  bộ công cụ hiện dùng, nên test hatch/cắt cửa cần AutoCAD đầy đủ.
-- Kết quả chính thức nằm trong tests/results/*.log và thư mục session có
-  session.json ghi nhãn chạy, PID, thời gian khởi động.
-- Không dùng kết quả ZWCAD cũ trong ZIP làm bằng chứng cho bản mới.
-- Cần kiểm tra thao tác chọn/Cancel bằng chuột trong bảng DCL trước khi
-  dùng rộng rãi; test batch kiểm tra nạp DCL và thư viện pattern.
+Loader kiểm tra kích thước và số phiên bản module để ngăn nhầm bộ cài; SHA-256 được kiểm tra ở công cụ đóng gói/CI, không phải xác thực chữ ký trong AutoLISP. Cài đặt ghim thư mục qua tools/install.ps1 khi máy có nhiều bản.
 
-Tham khảo API
-PatternAngle dùng radian:
-https://help.autodesk.com/cloudhelp/2024/ENU/AutoCAD-ActiveX-Reference/files/GUID-A7CDE967-0755-41A0-B557-3E6918E57315.htm
-DXF LAYER:
-https://help.autodesk.com/cloudhelp/2018/ENU/AutoCAD-DXF/files/GUID-D94802B0-8BE8-4AC9-8054-17197688AFDB.htm
-
-Bổ sung 3.1.2: alc text note dùng Arial, width 0.75, height 300, current và CECOLOR=BYLAYER. alc text cũ đổi tên thành alc text dim, giữ liên kết DIM. Hatch mặc định 25; chuyển default cũ 250 một lần trong schema 4, giữ các scale tùy chỉnh khác.
-
-Bổ sung 3.2.0: ALCCUT20 rút đầu tường 20 mm, cập nhật biên hatch và giữ thuộc tính. Kiểm thử AutoCAD 2027: tường thẳng hai đầu, L/U, UCS xoay, hatch area và giữ settings, từ chối đầu ngắn/layer khóa, Undo.
-
-Bổ sung 3.2.1: đổi lệnh thành ALCTRIM, tùy chọn Multi (M) để cắt nhiều tường trong một lượt, Enter kết thúc.
-
-Bổ sung 3.2.2: ALCTRIM có Length (L) đồng cấp Multi (M), mặc định 20 mm mỗi lượt lệnh, cho phép thay đổi độ dài trong Multi.
-
-Bổ sung 3.2.3: giữ Length của ALCTRIM trong phiên làm việc bằng biến Lisp, không reset khi gọi lại hoặc reload; không ghi vào DWG.
-
-Bổ sung 3.2.4: gỡ lệnh c:ALCCUT20 lưu từ bản cũ trong bộ nhớ khi reload; giữ ALCTRIM.
+Chỉ số hiệu năng và báo cáo chạy thực tế: tests/validation-3.4.0.txt. Kiểm tra DCL bằng thao tác chuột/Cancel vẫn là kiểm tra thủ công; không coi bộ batch là bằng chứng đã kiểm tra thao tác chuột.

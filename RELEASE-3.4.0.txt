@@ -1,0 +1,14 @@
+ALCWALL 3.4.0 — độ tin cậy, bảo toàn thuộc tính và hiệu năng Multi.
+
+- VV/VVC chỉ giữ tường khi tạo được cả boundary và hatch.
+- VVDOOR từ chối biên cong, hình không hợp lệ, hatch nhiều vòng/dùng chung/nhiều hatch, gradient và layer khóa; giữ tường gốc khi lỗi.
+- Cắt cửa giữ TrueColor, nền RGB, transparency, origin, layer hatch và thuộc tính hiển thị/XData của biên.
+- VVTRIM/VVXTEND từ chối kết quả tự giao/suy biến; dùng chỉ mục hatch trong từng lượt lệnh.
+- TKALIGN đo hộp bao trong hệ UCS bằng bản sao tạm, hỗ trợ text khác chiều cao khi UCS xoay.
+- Loader kiểm tra manifest/kích thước/phiên bản module, khóa lệnh nếu chưa nạp thành công. Có công cụ sinh loader ghim thư mục.
+- Bộ test tách log/DWG theo phiên, bắt lỗi Lisp, yêu cầu marker hoàn tất và số assertion; không ghi đè fixture đầu vào.
+- Tách module thống kê lớn; kiểm tra manifest SHA-256, alias, đóng gói tái lập và CI kiểm tra tĩnh.
+
+Cài đặt: giải nén toàn bộ thư mục, chạy tools/install.ps1 rồi APPLOAD ALCWALL-LOAD.lsp được tạo. Giữ nguyên src và hai tệp manifest. Font NGHIA5.SHX không kèm trong ZIP.
+
+Kiểm thử và giới hạn: xem tests/validation-3.4.0.txt và README. CI chỉ chạy kiểm tra tĩnh/Python; kiểm thử hình học/hatch yêu cầu AutoCAD 2027 đầy đủ trong tiến trình riêng.

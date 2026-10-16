@@ -1,4 +1,5 @@
-;;; ALCWALL v3.3.0 - geometry module
+(setq *alc-module-version* "3.4.0")
+;;; ALCWALL v3.4.0 - geometry module
 
 ;;; --------------------------------------------------------------------------
 ;;; Geometry helpers
@@ -101,12 +102,10 @@
                 (cons 70 (if closed 1 0))
                 (cons 38 elevation)
               ))
-      (foreach point ocs-points
-        (setq data
-          (append data
-            (list (cons 10 (list (car point) (cadr point))))))
-      )
-      (setq data (append data (list (cons 210 normal)))
+      (setq data (append data
+        (mapcar '(lambda (point) (cons 10 (list (car point) (cadr point)))) ocs-points)
+        (list (cons 210 normal))))
+      (setq data data
             ename (entmakex data))
       (if (alc--lwpolyline-p ename)
         ename
@@ -599,7 +598,8 @@
   found
 )
 
-(defun alc--find-boundary-hatches (boundary / selection index hatch result)
+(defun alc--scan-boundary-hatches (boundary / selection index hatch result)
+  (setq *alc-hatch-scan-count* (1+ *alc-hatch-scan-count*))
   (if (setq selection (ssget "_X" '((0 . "HATCH"))))
     (progn
       (setq index 0)
@@ -654,7 +654,7 @@
         )
         ((equal entity-type "HATCH")
           (setq boundaries (alc--hatch-source-boundaries selected))
-          (car boundaries)
+          (if (= (length boundaries) 1) (car boundaries))
         )
       )
     )
@@ -678,3 +678,8 @@
     (vl-catch-all-apply 'vla-put-Layer (list object layer))
   )
 )
+
+(defun alc--find-boundary-hatches (boundary)
+  (if (and (boundp '*alc-hatch-index*) *alc-hatch-index*)
+    (alc--indexed-hatches boundary)
+    (alc--scan-boundary-hatches boundary)))

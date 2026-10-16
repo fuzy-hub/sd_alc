@@ -1,4 +1,4 @@
-;;; Generates and validates ALCWALL DWG fixtures in ZWCAD 2027.
+;;; Generates and validates ALCWALL DWG fixtures in AutoCAD 2027.
 
 (vl-load-com)
 
@@ -6,15 +6,6 @@
   (vl-string-translate "\\" "/" (getenv "ALCWALL_TEST_ROOT"))
 )
 
-(defun alc-test--write-lines (path lines / stream line)
-  (if (setq stream (open path "w"))
-    (progn
-      (foreach line lines (write-line line stream))
-      (close stream)
-      T
-    )
-  )
-)
 
 (defun alc-test--clear (/ selection index entity entities)
   (vl-catch-all-apply 'vl-cmdf (list "_.UCS" "_World"))
@@ -82,7 +73,7 @@
 )
 
 (defun alc-test--save (name / path document result)
-  (setq path (strcat (alc-test--root) "/tests/fixtures/" name)
+  (setq path (strcat (getenv "ALCWALL_TEST_RUN") "/fixtures/" name)
         document (alc--get-active-document))
   (vl-catch-all-apply 'vl-cmdf (list "_.ZOOM" "_Extents"))
   (setq result

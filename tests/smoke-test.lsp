@@ -6,15 +6,6 @@
   (vl-string-translate "\\" "/" (getenv "ALCWALL_TEST_ROOT"))
 )
 
-(defun alc-test--write-lines (path lines / stream line)
-  (if (setq stream (open path "w"))
-    (progn
-      (foreach line lines (write-line line stream))
-      (close stream)
-      T
-    )
-  )
-)
 
 (defun alc-test--dxf-code-count (code data / item count)
   (setq count 0)

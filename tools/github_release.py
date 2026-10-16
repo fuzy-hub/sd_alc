@@ -10,6 +10,8 @@ from urllib.parse import urlencode, urlsplit
 from urllib.request import Request, urlopen
 
 root = Path(__file__).resolve().parents[1]
+if not (root / '.git').exists():
+    raise SystemExit('Publish from the canonical Git checkout, not a deployment copy.')
 repo = 'fuzy-hub/sd_alc'
 version = (root / 'VERSION').read_text(encoding='utf-8').strip()
 tag = 'v' + version
@@ -17,7 +19,7 @@ env = dict(os.environ, GIT_TERMINAL_PROMPT='0', GCM_INTERACTIVE='never')
 credential = subprocess.run(
     ['git', 'credential', 'fill'],
     input='protocol=https\nhost=github.com\n\n',
-    text=True, capture_output=True, env=env, cwd=root / 'github-publish-3.0')
+    text=True, capture_output=True, env=env, cwd=root)
 if credential.returncode:
     raise SystemExit('GitHub credential unavailable from the configured helper.')
 fields = dict(line.split('=', 1) for line in credential.stdout.splitlines() if '=' in line)
@@ -55,8 +57,19 @@ zip_path = root / f'ALCWALL-{version}.zip'
 body = (root / f'RELEASE-{version}.txt').read_text(encoding='utf-8')
 commit_result = subprocess.run(
     ['git', 'rev-parse', 'HEAD'], text=True, capture_output=True,
-    env=env, cwd=root / 'github-publish-3.0', check=True)
+    env=env, cwd=root, check=True)
 release_commit = commit_result.stdout.strip()
+status = subprocess.run(['git', 'status', '--porcelain'], text=True, capture_output=True,
+                        env=env, cwd=root, check=True)
+if status.stdout.strip():
+    raise SystemExit('Commit and test all source changes before publishing.')
+metadata_path = zip_path.with_suffix('.zip.json')
+if not metadata_path.exists():
+    raise SystemExit('Package with tools/package_release.py before publishing.')
+metadata = json.loads(metadata_path.read_text(encoding='utf-8'))
+if (metadata.get('source_commit') != release_commit or metadata.get('source_dirty') is not False
+        or metadata.get('sha256') != hashlib.sha256(zip_path.read_bytes()).hexdigest()):
+    raise SystemExit('Archive must match the clean release commit.')
 release = request('GET', base + '/releases/tags/' + tag)
 if release is None:
     release = request('POST', base + '/releases',

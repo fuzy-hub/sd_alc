@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.4.0 — 2026-10-16
+
+- Bảo vệ DOOR trước biên cong/hình lỗi, layer khóa, hatch dùng chung/nhiều vòng/gradient; rollback toàn bộ khi bước thay thế thất bại.
+- Bảo toàn RGB, nền RGB, transparency, origin, layer hatch và thuộc tính/XData biên khi cắt cửa; VV/VVC chỉ hoàn tất khi có hatch.
+- Chặn kết quả TRIM/XTEND tự giao/suy biến; chỉ mục hatch theo lượt lệnh thay cho quét lặp ở Multi.
+- TKALIGN đo trực tiếp theo UCS; loader ghim thư mục, kiểm tra manifest/module và khóa lệnh khi nạp lỗi.
+- Tách module thống kê; runner log/fixture đầu ra theo phiên, bắt lỗi Lisp, yêu cầu marker hoàn tất và số assertion.
+- Bổ sung kiểm thử lỗi/hồi quy, benchmark, kiểm tra cổng PASS bằng Python, manifest SHA-256, đóng gói tái lập và CI tĩnh.
+
 ## 3.3.0 — 2026-10-11
 
 - Thêm ALCXTEND/VVXTEND để kéo dài đầu tường, cập nhật biên và hatch tại chỗ, giữ thuộc tính và liên kết.

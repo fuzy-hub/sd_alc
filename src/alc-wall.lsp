@@ -1,4 +1,5 @@
-;;; ALCWALL v3.3.0 - wall module
+(setq *alc-module-version* "3.4.0")
+;;; ALCWALL v3.4.0 - wall module
 (defun alc--draw-lintel
   (door-start door-end side-point
     / dx dy segment-length ux uy cross-product side px py z
@@ -433,322 +434,97 @@
   )
 )
 
-(defun alc--draw-wall (first-point / points edge side-point offset boundary hatch)
-  (if (setq points (alc--ask-points first-point))
-    (if (setq edge
-          (alc--track-temp (alc--create-open-polyline points)))
-      (progn
-        (setq side-point
-          (getpoint "\nPick offset side <Enter = previous side>: "))
-        (if (not side-point)
-          (setq side-point (alc--default-side-point edge))
-        )
-        (if side-point
-          (if (setq offset
-                (alc--track-temp (alc--offset edge side-point)))
-            (if (setq boundary (alc--make-closed-polyline edge offset))
-              (progn
-                (setq *alc-last-side* (alc--side-of-offset edge offset))
-                (alc--cleanup-temp)
-                (setq hatch (alc--make-hatch boundary))
-                (alc--save-settings)
-                (if hatch
-                  (prompt "\nALC wall and hatch created.")
-                  (prompt "\nALC wall boundary created without hatch."))
-                T
-              )
-              (progn
-                (alc--cleanup-temp)
-                (prompt "\nCould not create the closed wall boundary.")
-                nil
-              )
-            )
-            (progn
-              (alc--cleanup-temp)
-              nil
-            )
-          )
-          (progn
-            (alc--cleanup-temp)
-            (prompt "\nNo valid offset side was found.")
-            nil
-          )
-        )
-      )
-      (progn
-        (prompt "\nCould not create the temporary wall polyline.")
-        nil
-      )
-    )
-  )
-)
 
-(defun alc--draw-central-wall
-  (first-point
-    / points centerline half-thickness side-a side-b
-      offset-a offset-b boundary hatch)
-  (if (setq points (alc--ask-points first-point))
-    (if (setq centerline
-          (alc--track-temp (alc--create-open-polyline points)))
-      (progn
-        (setq half-thickness (/ *alc-thickness* 2.0)
-              side-a (alc--side-point centerline 1 half-thickness)
-              side-b (alc--side-point centerline -1 half-thickness))
-        (if (and side-a side-b)
-          (if (setq offset-a
-                (alc--track-temp
-                  (alc--offset-distance
-                    centerline side-a half-thickness)))
-            (if (setq offset-b
-                  (alc--track-temp
-                    (alc--offset-distance
-                      centerline side-b half-thickness)))
-              (if (setq boundary
-                    (alc--make-closed-polyline offset-a offset-b))
-                (progn
-                  (alc--cleanup-temp)
-                  (setq hatch (alc--make-hatch boundary))
-                  (alc--save-settings)
-                  (if hatch
-                    (prompt "\nCentral ALC wall and hatch created.")
-                    (prompt
-                      "\nCentral ALC wall boundary created without hatch."))
-                  T
-                )
-                (progn
-                  (alc--cleanup-temp)
-                  (prompt
-                    "\nCould not create the closed central wall boundary.")
-                  nil
-                )
-              )
-              (progn
-                (alc--cleanup-temp)
-                nil
-              )
-            )
-            (progn
-              (alc--cleanup-temp)
-              nil
-            )
-          )
-          (progn
-            (alc--cleanup-temp)
-            (prompt "\nCould not determine both sides of the centerline.")
-            nil
-          )
-        )
-      )
-      (progn
-        (alc--cleanup-temp)
-        (prompt "\nCould not create the temporary centerline polyline.")
-        nil
-      )
-    )
-  )
-)
+(defun alc--draw-wall (first-point / points edge side-point offset boundary side)
+  (if (and (setq points (alc--ask-points first-point))
+           (setq edge (alc--track-temp (alc--create-open-polyline points))))
+    (progn
+      (setq side-point (getpoint "\nPick offset side <Enter = previous side>: "))
+      (if (not side-point) (setq side-point (alc--default-side-point edge)))
+      (if (and side-point
+               (setq offset (alc--track-temp (alc--offset edge side-point)))
+               (setq boundary (alc--track-temp (alc--make-closed-polyline edge offset)))
+               (alc--straight-wall-p boundary))
+        (progn
+          (setq side (alc--side-of-offset edge offset))
+          (if (alc--commit-wall boundary)
+            (progn (setq *alc-last-side* side) (alc--save-settings)
+              (prompt "\nALC wall and hatch created.") T)))
+        (progn (alc--cleanup-temp) (prompt "\nInvalid wall geometry; nothing created.") nil)))))
 
-(defun alc--draw-door-opening
-  (wall point-1 point-2
-    / polygon layer normal base-axis raw-direction direction-dot axis
-      projected-distance p1-wcs p2-wcs p3-wcs split-polygons polygon-a polygon-b
-      boundary-a boundary-b hatch-a hatch-b hatch-a-ename hatch-b-ename
-      old-hatches old-hatch hatch-settings hatch-pattern hatch-color hatch-scale
-      hatch-background-color hatch-angle)
-  (setq polygon
-    (alc--clean-polygon-points (alc--lwp-points wall)))
-  (cond
-    ((< (length polygon) 4)
-      (prompt
-        "\nThe selected wall boundary has too few vertices.")
-      nil
-    )
-    ((setq layer (cdr (assoc 8 (entget wall))))
-      (if (alc--layer-locked-p layer)
-        (progn
-          (prompt "\nThe wall layer is locked. Unlock it before adding an opening.")
-          nil
-        )
-        (progn
-          (setq normal
-            (if (assoc 210 (entget wall))
-              (cdr (assoc 210 (entget wall)))
-              '(0.0 0.0 1.0))
-          )
-          (setq p1-wcs (trans point-1 1 0)
-                raw-direction
-                  (alc--vector-subtract (trans point-2 1 0) p1-wcs))
-          (setq base-axis
-            (alc--best-edge-axis polygon raw-direction))
-          (if (and base-axis (> (alc--vector-length raw-direction) 1e-8))
-            (progn
-              (setq direction-dot (alc--vector-dot raw-direction base-axis))
-              (if (< direction-dot 0.0)
-                (setq axis (alc--vector-scale base-axis -1.0)
-                      direction-dot (- direction-dot))
-                (setq axis base-axis)
-              )
-              (if (> direction-dot 1e-8)
-                (progn
-                  (setq projected-distance direction-dot
-                        p2-wcs
-                          (alc--vector-add
-                            p1-wcs
-                            (alc--vector-scale axis projected-distance))
-                        p3-wcs
-                          (alc--vector-add
-                            p2-wcs
-                            (alc--vector-scale axis *alc-door-width*))
-                        split-polygons
-                          (alc--split-opening-polygons
-                            polygon axis p2-wcs p3-wcs))
-                  (if split-polygons
-                    (progn
-                      (alc--track-temp
-                        (alc--create-preview-line
-                          (trans p1-wcs 0 1) (trans p2-wcs 0 1)))
-                      (alc--track-temp
-                        (alc--create-preview-line
-                          (trans p2-wcs 0 1) (trans p3-wcs 0 1)))
-                      (setq polygon-a (car split-polygons)
-                            polygon-b (cadr split-polygons))
-                      (if (and (>= (length polygon-a) 3)
-                               (>= (length polygon-b) 3))
-                        (progn
-                          (setq boundary-a
-                            (alc--track-temp
-                              (alc--create-lwpolyline-wcs-on-layer
-                                polygon-a T normal layer))
-                            boundary-b
-                              (alc--track-temp
-                                (alc--create-lwpolyline-wcs-on-layer
-                                  polygon-b T normal layer)))
-                          (if (and boundary-a boundary-b)
-                            (progn
-                              (setq old-hatches
-                                (alc--find-boundary-hatches wall))
-                              (setq hatch-settings
-                                (alc--read-hatch-settings (car old-hatches)))
-                              (if (not hatch-settings)
-                                (setq hatch-settings
-                                  (list
-                                    *alc-pattern* *alc-color* *alc-scale*
-                                    *alc-background-color* *alc-angle*))
-                              )
-                              (setq hatch-pattern (car hatch-settings)
-                                    hatch-color (cadr hatch-settings)
-                                    hatch-scale (caddr hatch-settings)
-                                    hatch-background-color
-                                      (cadddr hatch-settings)
-                                    hatch-angle (nth 4 hatch-settings)
-                                    hatch-a
-                                      (alc--make-hatch-with-angle
-                                        boundary-a hatch-pattern
-                                        hatch-color hatch-scale
-                                        hatch-background-color hatch-angle)
-                                    hatch-b
-                                      (alc--make-hatch-with-angle
-                                        boundary-b hatch-pattern
-                                        hatch-color hatch-scale
-                                        hatch-background-color hatch-angle)
-                                hatch-a-ename (alc--vla-object-ename hatch-a)
-                                hatch-b-ename (alc--vla-object-ename hatch-b))
-                              (if hatch-a-ename
-                                (alc--track-temp hatch-a-ename)
-                              )
-                              (if hatch-b-ename
-                                (alc--track-temp hatch-b-ename)
-                              )
-                              (if (and hatch-a hatch-b
-                                       hatch-a-ename hatch-b-ename)
-                                (progn
-                                  (alc--put-object-layer hatch-a layer)
-                                  (alc--put-object-layer hatch-b layer)
-                                  (if (entdel wall)
-                                    (progn
-                                      (alc--untrack-temp boundary-a)
-                                      (alc--untrack-temp boundary-b)
-                                      (alc--untrack-temp hatch-a-ename)
-                                      (alc--untrack-temp hatch-b-ename)
-                                      (foreach old-hatch old-hatches
-                                        (if (entget old-hatch)
-                                          (entdel old-hatch)
-                                        )
-                                      )
-                                      (alc--cleanup-temp)
-                                      (prompt
-                                        (strcat
-                                          "\nALC opening created. Width="
-                                          (rtos *alc-door-width* 2 0)
-                                          "."))
-                                      T
-                                    )
-                                    (progn
-                                      (alc--cleanup-temp)
-                                      (prompt
-                                        "\nCould not replace the original wall.")
-                                      nil
-                                    )
-                                  )
-                                )
-                                (progn
-                                  (if (and hatch-a (not hatch-a-ename))
-                                    (vl-catch-all-apply
-                                      'vla-Delete (list hatch-a))
-                                  )
-                                  (if (and hatch-b (not hatch-b-ename))
-                                    (vl-catch-all-apply
-                                      'vla-Delete (list hatch-b))
-                                  )
-                                  (alc--cleanup-temp)
-                                  (prompt
-                                    "\nCould not create both replacement hatches. The original wall was kept.")
-                                  nil
-                                )
-                              )
-                            )
-                            (progn
-                              (alc--cleanup-temp)
-                              (prompt
-                                "\nCould not create both replacement wall segments.")
-                              nil
-                            )
-                          )
-                        )
-                        (progn
-                          (alc--cleanup-temp)
-                          (prompt "\nThe opening produced invalid wall geometry.")
-                          nil
-                        )
-                      )
-                    )
-                    (progn
-                      (prompt
-                        "\nCould not find two valid local wall intersections at P2 and P3.")
-                      nil
-                    )
-                  )
-                )
-                (progn
-                  (prompt "\nP2 must be offset from P1 along the wall direction.")
-                  nil
-                )
-              )
-            )
-            (progn
-              (prompt "\nCould not determine the wall direction.")
-              nil
-            )
-          )
-        )
-      )
-    )
-    (T
-      (prompt "\nThe selected wall has no valid layer.")
-      nil
-    )
-  )
-)
+
+(defun alc--draw-central-wall (first-point / points centerline half side-a side-b a b boundary)
+  (if (and (setq points (alc--ask-points first-point))
+           (setq centerline (alc--track-temp (alc--create-open-polyline points))))
+    (progn
+      (setq half (/ *alc-thickness* 2.0)
+            side-a (alc--side-point centerline 1 half)
+            side-b (alc--side-point centerline -1 half))
+      (if (and side-a side-b
+               (setq a (alc--track-temp (alc--offset-distance centerline side-a half)))
+               (setq b (alc--track-temp (alc--offset-distance centerline side-b half)))
+               (setq boundary (alc--track-temp (alc--make-closed-polyline a b)))
+               (alc--straight-wall-p boundary))
+        (if (alc--commit-wall boundary)
+          (progn (prompt "\nCentral ALC wall and hatch created.") T))
+        (progn (alc--cleanup-temp) (prompt "\nInvalid central wall; nothing created.") nil)))))
+
+
+(defun alc--door-build (wall point-1 point-2 / old-hatches polygon normal layer p1 raw axis dot p2 p3
+    polygons a b settings hatch-a hatch-b ha hb old pass)
+  (setq old-hatches (alc--find-boundary-hatches wall))
+  (and
+    (alc--require (alc--door-supported-p wall old-hatches)
+      "Unsupported curved/invalid wall, locked layer, shared/multiple hatch or gradient.")
+    (progn
+      (setq polygon (alc--clean-polygon-points (alc--lwp-points wall))
+            normal (cdr (assoc 210 (entget wall))) layer (cdr (assoc 8 (entget wall)))
+            p1 (trans point-1 1 0) raw (alc--vector-subtract (trans point-2 1 0) p1)
+            axis (alc--best-edge-axis polygon raw))
+      (alc--require (and axis (> (alc--vector-length raw) 1e-8)) "Cannot determine opening direction."))
+    (progn
+      (setq dot (alc--vector-dot raw axis))
+      (if (< dot 0.0) (setq axis (alc--vector-scale axis -1.0) dot (- dot)))
+      (alc--require (> dot 1e-8) "Opening start must be offset along the wall."))
+    (progn
+      (setq p2 (alc--vector-add p1 (alc--vector-scale axis dot))
+            p3 (alc--vector-add p2 (alc--vector-scale axis *alc-door-width*))
+            polygons (alc--split-opening-polygons polygon axis p2 p3))
+      (alc--require (and polygons (alc--valid-polygon-p (car polygons) normal)
+        (alc--valid-polygon-p (cadr polygons) normal)) "Opening must leave two valid wall segments."))
+    (progn
+      (setq a (alc--track-temp (alc--create-lwpolyline-wcs-on-layer (car polygons) T normal layer))
+            b (alc--track-temp (alc--create-lwpolyline-wcs-on-layer (cadr polygons) T normal layer)))
+      (alc--require (and a b) "Cannot create replacement boundaries."))
+    (alc--copy-boundary-properties wall a) (alc--copy-boundary-properties wall b)
+    (progn
+      (setq settings (alc--read-hatch-settings (car old-hatches)))
+      (if (not settings) (setq settings (list *alc-pattern* *alc-color* *alc-scale* *alc-background-color* *alc-angle*)))
+      (setq hatch-a (apply 'alc--make-hatch-with-angle (cons a settings))
+            ha (alc--track-temp (alc--vla-object-ename hatch-a)))
+      (setq hatch-b (apply 'alc--make-hatch-with-angle (cons b settings))
+            hb (alc--track-temp (alc--vla-object-ename hatch-b)))
+      (alc--require (and ha hb) "Cannot create both replacement hatches."))
+    (if old-hatches
+      (and (alc--copy-hatch-properties (car old-hatches) hatch-a)
+           (alc--copy-hatch-properties (car old-hatches) hatch-b))
+      (progn (vla-put-Layer hatch-a layer) (vla-put-Layer hatch-b layer) T))
+    (progn
+      (setq pass T)
+      (foreach old old-hatches (if (and pass (not (alc--erase-for-door old))) (setq pass nil)))
+      (and pass (alc--erase-for-door wall)))
+    (progn (foreach old (list a b ha hb) (alc--untrack-temp old)) T)))
+
+(defun alc--draw-door-opening (wall point-1 point-2 / *alc-door-erased* result entity)
+  (setq *alc-door-erased* nil
+        result (vl-catch-all-apply 'alc--door-build (list wall point-1 point-2)))
+  (if (or (vl-catch-all-error-p result) (not result))
+    (progn
+      (foreach entity *alc-door-erased* (if (not (entget entity)) (entdel entity)))
+      (alc--cleanup-temp)
+      (prompt (strcat "\nOpening cancelled; original wall kept. "
+        (if (vl-catch-all-error-p result) (vl-catch-all-error-message result) ""))) nil)
+    (progn (alc--cleanup-temp) (prompt "\nALC opening created; original properties preserved.") T)))
 
 (defun alc--wall-loop (/ answer done)
   (while (not done)

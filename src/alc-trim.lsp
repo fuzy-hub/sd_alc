@@ -1,3 +1,4 @@
+(setq *alc-module-version* "3.4.0")
 ;;; ALCWALL - shorten or extend one end of a straight-sided wall strip.
 
 (defun alc--ensure-trim-distance ()
@@ -108,7 +109,7 @@
   (cond
     ((or (not (numberp cut-distance)) (<= cut-distance 0.0))
       (prompt "\nDo dai phai lon hon 0.") nil)
-    ((or (not (alc--closed-lwpolyline-p wall)) blocked
+    ((or (not (alc--straight-wall-p wall)) blocked
          (alc--layer-locked-p (cdr (assoc 8 data))))
       (prompt "\nKhong the sua: layer bi khoa, bien cong hoac hatch khong ho tro.") nil)
     ((not (setq updated (alc--trim-points
@@ -117,6 +118,8 @@
       (prompt (if extend "\nKhong the keo dai: dau tuong khong vuong."
         (strcat "\nKhong the cat: dau tuong khong vuong hoac doan dau dai khong qua "
           (rtos cut-distance 2 2) " mm."))) nil)
+    ((not (alc--valid-polygon-p updated (cdr (assoc 210 data))))
+      (prompt "\nTu choi hinh tuong tu giao hoac suy bien.") nil)
     (T
       ;; Keep entity identity, properties and hatch links; change vertices only.
       (setq remaining updated)
@@ -164,6 +167,9 @@
     result))
 
 (defun alc--resize-loop (extend / selection wall multi done count cut-distance answer action)
+  (alc--end-hatch-index)
+  (if (vl-catch-all-error-p (vl-catch-all-apply 'alc--build-hatch-index nil))
+    (alc--end-hatch-index))
   (setq count 0 action (if extend "keo dai" "rut")
         cut-distance (if extend (alc--ensure-xtend-distance) (alc--ensure-trim-distance)))
   (while (not done)

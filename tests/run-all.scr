@@ -1,10 +1,10 @@
-(setvar "FILEDIA" 0)
-(setvar "CMDECHO" 0)
-(load (strcat (getenv "ALCWALL_TEST_ROOT") "/tests/smoke-test.lsp"))
-(alc-test-run-smoke)
-(load (strcat (getenv "ALCWALL_TEST_ROOT") "/tests/generate-fixtures.lsp"))
-(alc-test-run-fixtures)
-(load (strcat (getenv "ALCWALL_TEST_ROOT") "/tests/wall-tie-side-test.lsp"))
-(alc-test-run-wall-tie-side)
-_.QUIT
-_N
+(if (and (getenv "ALCWALL_TEST_ROOT") (getenv "ALCWALL_TEST_RUN") (getenv "ALCWALL_TEST_LABEL"))
+  (progn
+    (load (strcat (getenv "ALCWALL_TEST_ROOT") "/tests/test-harness.lsp"))
+    (setq *alc-install-root* (getenv "ALCWALL_TEST_ROOT"))
+    (alc-test--suite "smoke-test" "smoke-test.lsp" 'alc-test-run-smoke nil)
+    (alc-test--suite "fixture-test" "generate-fixtures.lsp" 'alc-test-run-fixtures nil)
+    (alc-test--suite "wall-tie-side-test" "wall-tie-side-test.lsp" 'alc-test-run-wall-tie-side nil)
+  )
+  (prompt "\nUse tests/run-autocad-tests.ps1 to create a labeled isolated AutoCAD 2027 session."))
+(princ)
