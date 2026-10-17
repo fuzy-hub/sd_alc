@@ -1,4 +1,4 @@
-(setq *alc-module-version* "3.4.0")
+(setq *alc-module-version* "3.3.5")
 ;;; Shared geometry validation, transactions and command-scoped hatch index.
 
 (defun alc--cross2 (a b c)

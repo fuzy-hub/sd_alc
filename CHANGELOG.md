@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.3.5 — 2026-10-17
+
+- Tự đặt MEASUREMENT=1 mỗi lần nạp ALCWALL; nạp qua Startup Suite để áp dụng khi mở CAD/bản vẽ.
+- Giữ các cải tiến của nguồn 3.4.0; số phát hành 3.3.5 theo yêu cầu.
+- Kiểm tra giá trị ban đầu 0 và đặt lại 1 sau khi người dùng đổi về 0 rồi reload.
+
 ## 3.4.0 — 2026-10-16
 
 - Bảo vệ DOOR trước biên cong/hình lỗi, layer khóa, hatch dùng chung/nhiều vòng/gradient; rollback toàn bộ khi bước thay thế thất bại.

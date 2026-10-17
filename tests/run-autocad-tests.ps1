@@ -28,10 +28,11 @@ $taskCommands=@'
 
 (load (strcat (getenv "ALCWALL_TEST_ROOT") "/tests/test-harness.lsp"))
 (setq *alc-install-root* (getenv "ALCWALL_TEST_ROOT"))
+(setvar "MEASUREMENT" 0)
 (alc-test--suite "smoke-test" "smoke-test.lsp" 'alc-test-run-smoke nil)
 (alc-test--suite "styles-test" "styles-test.lsp" 'alc-test-run-styles nil)
 '@
-$taskSuites=[ordered]@{'smoke-test'=5;'styles-test'=37}
+$taskSuites=[ordered]@{'smoke-test'=5;'styles-test'=39}
 if (!$StylesOnly) {
     $taskCommands+="`n(load (strcat (getenv `"ALCWALL_TEST_ROOT`") `"/tests/generate-fixtures.lsp`"))`n"
     if (!$TrimOnly -and !$HardeningOnly) {

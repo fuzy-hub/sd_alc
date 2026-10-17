@@ -1,4 +1,4 @@
-;;; ALCWALL 3.4.0 — pinned root, manifest validation, fail-closed command gate.
+;;; ALCWALL 3.3.5 — pinned root, manifest validation, fail-closed command gate.
 (vl-load-com)
 (setq *alc-ready* nil)
 (defun alc--require (condition message)
@@ -35,7 +35,7 @@
 (defun alc--load-module (root name / result)
   (setq *alc-module-version* nil
         result (vl-catch-all-apply 'load (list (strcat root "/src/" name))))
-  (alc--require (and (not (vl-catch-all-error-p result)) (equal *alc-module-version* "3.4.0"))
+  (alc--require (and (not (vl-catch-all-error-p result)) (equal *alc-module-version* "3.3.5"))
     (strcat "Module load/version error: " name)))
 
 
@@ -44,7 +44,7 @@
     (alc--require root "Cannot resolve installation folder.")
     (alc--require (setq stream (open (strcat root "/manifest.lspdata") "r")) "Missing manifest.lspdata.")
     (progn (setq line (read-line stream)) (close stream) (setq manifest (read line))
-      (alc--require (equal (car manifest) "3.4.0") "Manifest version mismatch."))
+      (alc--require (equal (car manifest) "3.3.5") "Manifest version mismatch."))
     (progn
       (setq pass T)
       (foreach item (cdr manifest)
@@ -55,9 +55,12 @@
       (foreach item '("alc-settings.lsp" "alc-styles.lsp" "alc-patterns.lsp" "alc-geometry.lsp" "alc-safety.lsp" "alc-wall.lsp" "alc-trim.lsp" "alc-schedule.lsp" "alc-door-schedule.lsp" "alc-dim-schedule.lsp" "alc-count.lsp" "alc-text-copy.lsp" "alc-align.lsp" "alc-commands.lsp")
         (if (and pass (not (alc--load-module root item))) (setq pass nil)))
       pass)
-    (progn (setq *alc-resource-root* root) (alc--load-settings)
+    (progn
+      ;; Apply metric hatch/linetype libraries on every startup or manual reload.
+      (setvar "MEASUREMENT" 1)
+      (setq *alc-resource-root* root) (alc--load-settings)
       (alc--init-drawing-resources))
-    (progn (setq *alc-version* "3.4.0" *alc-ready* T) T)))
+    (progn (setq *alc-version* "3.3.5" *alc-ready* T) T)))
 
 (setq *alc-boot-result* (vl-catch-all-apply 'alc--boot (list (alc--loader-root))))
 (if (or (not *alc-boot-result*) (vl-catch-all-error-p *alc-boot-result*))

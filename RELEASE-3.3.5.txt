@@ -1,0 +1,15 @@
+ALCWALL 3.3.5 — 2026-10-17
+
+Tự đặt MEASUREMENT=1 (hệ mét) mỗi lần nạp ALCWALL.
+Giữ các cải tiến của mã nguồn 3.4.0; dùng số phát hành 3.3.5 theo yêu cầu.
+
+Cài đặt:
+1. Giải nén, giữ nguyên ALCWALL.lsp, src và các manifest.
+2. Chạy tools/install.ps1 trong thư mục giải nén.
+3. APPLOAD tệp ALCWALL-LOAD.lsp vừa tạo.
+4. Thêm ALCWALL-LOAD.lsp vào APPLOAD > Startup Suite > Contents > Add
+   để tự áp dụng khi mở CAD/bản vẽ.
+
+MEASUREMENT lưu theo bản vẽ, điều khiển thư viện hatch/linetype hệ mét;
+không chuyển đổi kích thước đối tượng hiện có. Nạp lại Lisp cũng đặt lại 1.
+Kiểm thử bằng AutoCAD 2027 trong tiến trình riêng do Codex tạo.

@@ -1,4 +1,4 @@
-(setq *alc-module-version* "3.4.0")
+(setq *alc-module-version* "3.3.5")
 (defun alc--length-dimension-type-code-p (type-value / base-type)
   (if (numberp type-value)
     (progn

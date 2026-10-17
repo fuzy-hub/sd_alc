@@ -1,0 +1,25 @@
+ALCWALL 3.3.5 — kiểm thử 2026-10-17
+
+AutoCAD 2027, tiến trình riêng do Codex tạo.
+Session: alc-335-20261017-111053-a561ee5d
+PID: 29164
+Start: 2026-10-17T11:10:53.1629806+07:00
+
+Static validation: PASS
+Python unittest: 10/10 PASS
+
+PASS smoke-test: 5 checks
+PASS styles-test: 39 checks
+PASS settings-test: 14 checks
+PASS fixture-test: 6 checks
+PASS wall-tie-side-test: 6 checks
+PASS trim-test: 39 checks
+PASS xtend-test: 32 checks
+PASS hardening-test: 24 checks
+
+Total: 165 AutoCAD checks PASS.
+PASS startup-measurement-metric (initial MEASUREMENT=0 -> 1)
+PASS reload-resets-measurement-metric (reset to 0, reload -> 1)
+
+Thêm ALCWALL-LOAD.lsp vào Startup Suite để chạy tự động khi mở CAD/bản vẽ.
+Kiểm thử DCL bằng chuột chưa thực hiện trong lần phát hành này.

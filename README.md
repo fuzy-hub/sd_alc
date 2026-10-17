@@ -1,19 +1,24 @@
-# ALCWALL 3.4.0
+# ALCWALL 3.3.5
 
-ALCWALL là bộ công cụ AutoLISP hỗ trợ triển khai tường ALC 2D trên AutoCAD for Windows. Bản 3.4.0 được kiểm thử bằng AutoCAD 2027.
+ALCWALL là bộ công cụ AutoLISP hỗ trợ triển khai tường ALC 2D trên AutoCAD for Windows. Bản 3.3.5 được kiểm thử bằng AutoCAD 2027.
 
 ## Cài đặt
 
 1. Giữ nguyên toàn bộ cấu trúc thư mục, đặc biệt là `ALCWALL.lsp` và thư mục `src`.
 2. Trong AutoCAD, mở `OPTIONS > Files > Support File Search Path` và thêm thư mục ALCWALL.
-3. Chạy PowerShell `./tools/install.ps1`, rồi `APPLOAD` tệp `ALCWALL-LOAD.lsp` được tạo trong thư mục cài. Có thể thêm tệp này vào Startup Suite. Loader này ghim đúng thư mục khi máy có nhiều bản ALCWALL. Nếu chỉ có một bản trong Support Path, vẫn có thể nạp trực tiếp `ALCWALL.lsp`.
-4. Khi thấy thông báo `ALCWALL v3.4.0 modules loaded`, bộ lệnh đã sẵn sàng.
+3. Chạy PowerShell `./tools/install.ps1`, rồi `APPLOAD` tệp `ALCWALL-LOAD.lsp` được tạo trong thư mục cài. Thêm tệp này vào `APPLOAD > Startup Suite > Contents > Add` để tự nạp mỗi lần mở CAD/bản vẽ. Loader này ghim đúng thư mục khi máy có nhiều bản ALCWALL. Nếu chỉ có một bản trong Support Path, vẫn có thể nạp trực tiếp `ALCWALL.lsp`.
+4. Khi thấy thông báo `ALCWALL v3.3.5 modules loaded`, bộ lệnh đã sẵn sàng.
 
 Khi cập nhật, APPLOAD lại `ALCWALL.lsp`; loader gỡ định nghĩa lệnh cũ `ALCCUT20` còn trong phiên làm việc, chỉ dùng `ALCTRIM`.
 
 Không nạp riêng các tệp trong `src`; `ALCWALL.lsp` là loader duy nhất.
 
-## Thay đổi 3.4.0
+## Thay đổi 3.3.5
+
+- Tự đặt `MEASUREMENT=1` (hệ mét) mỗi lần nạp ALCWALL, kể cả khi giá trị cũ là 0. Thêm `ALCWALL-LOAD.lsp` vào Startup Suite để áp dụng tự động mỗi lần mở CAD/bản vẽ. Biến này lưu theo bản vẽ và không chuyển đổi kích thước hình học đã vẽ.
+- Giữ các cải tiến của mã nguồn 3.4.0 hiện có; dùng số phát hành 3.3.5 theo yêu cầu.
+
+## Các cải tiến kế thừa từ 3.4.0
 
 - VV/VVC khôi phục toàn bộ đối tượng mới nếu không tạo được hatch. DOOR kiểm tra hình học/layer và từ chối hatch nhiều vòng, dùng chung, nhiều hatch hoặc gradient.
 - Cắt cửa giữ màu RGB/nền RGB/transparency/origin/layer của hatch, màu/nét/độ rộng/XData của biên. Các loại chưa hỗ trợ bị từ chối trước khi thay tường.

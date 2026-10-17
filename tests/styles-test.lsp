@@ -27,6 +27,7 @@
         iso (tblobjname "DIMSTYLE" "ISO-25")
         old-dim (getvar "DIMSTYLE") old-text (getvar "TEXTSTYLE")
         old-layer (getvar "CLAYER") old-dimblk (getvar "DIMBLK"))
+  (alc-test--styles-check "startup-measurement-metric" (= (getvar "MEASUREMENT") 1))
   (alc-test--styles-check "startup-resources" (and layer text-style dim-style))
   (alc-test--styles-check "startup-current-layer" (= (getvar "CLAYER") "0. Tuong ALC"))
   (alc-test--styles-check "startup-current-text" (= (strcase (getvar "TEXTSTYLE")) "ALC TEXT NOTE"))
@@ -97,8 +98,10 @@
   (command "_.-DIMSTYLE" "_Restore" (if iso "ISO-25" "Standard"))
   (setvar "DIMSCALE" 99.0)
   (setvar "CECOLOR" "2")
+  (setvar "MEASUREMENT" 0)
   (load (strcat (alc-test--root) "/ALCWALL.lsp"))
   (setq after-values (mapcar 'getvar '("CLAYER" "TEXTSTYLE" "DIMSTYLE" "DIMBLK" "DIMSCALE" "DIMCLRD")))
+  (alc-test--styles-check "reload-resets-measurement-metric" (= (getvar "MEASUREMENT") 1))
   (alc-test--styles-check "reload-updates-note-height-preserves-other-values"
     (equal (alc-test--replace-dxf
       (alc-test--replace-dxf changed-note '(40 . 0.0)) (assoc 3 note-data)) (entget note-style)))
