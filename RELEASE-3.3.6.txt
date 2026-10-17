@@ -1,0 +1,13 @@
+ALCWALL 3.3.6 — 2026-10-17
+
+- Thêm ALCTKT (alias VVTKT): quét tường ALC, đặt tên bảng, cộng chiều dài tim theo chiều dày (ALC 100/150/200…), đơn vị m.
+- Tổng chiều dài gồm cả lỗ cửa khi chọn đủ hai đoạn tường hai bên. Lưu thông tin lỗ mở khi ALCDOOR; chống cộng trùng biên/hatch, hỗ trợ nhiều cửa và copy.
+- Phần cửa ngay dưới bảng tường: rộng cửa (mm), số lượng (cái), nguồn Đã lưu/Suy ra, tổng số cửa và tổng chiều rộng đã cộng.
+- Sửa lỗi phần cửa trông như trống vì hàng mới dùng chữ quá nhỏ: đặt rõ chiều cao chữ và căn giữa từng ô.
+- Giữ MEASUREMENT=1 mỗi lần nạp Lisp và các chức năng hiện có.
+
+Tường/cửa cũ chưa có dấu được suy ra từ layer, hatch và hình học. Khe hở có chủ ý thẳng hàng trên tường cũ cũng có thể được cộng; kiểm tra cột Suy ra.
+
+Cài đặt: giải nén, chạy tools/install.ps1, APPLOAD ALCWALL-LOAD.lsp và thêm vào Startup Suite. Giữ nguyên src và manifest. Chạy lại ALCTKT để tạo bảng mới; bảng cũ không tự cập nhật.
+
+Kiểm thử: AutoCAD 2027 trong tiến trình riêng; quy trình VV/VVC → ALCDOOR/VVDOOR → ALCTKT, kiểm tra ô/chữ, ảnh PNG và mở lại DWG.

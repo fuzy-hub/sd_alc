@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.3.6 — 2026-10-17
+
+- Sửa phần cửa trông như trống: đặt rõ cỡ chữ/căn giữa cho từng ô mới sau InsertRows. Bổ sung hồi quy dùng VV/VVC → ALCDOOR/VVDOOR → ALCTKT, kiểm tra chiều cao chữ, xuất PNG và kiểm tra lại DWG sau mở lại.
+
+- Bảng ALCTKT bổ sung phần cửa đã tính trong chiều dài tường: nhóm theo rộng cửa (mm), số lượng (cái), tách số cửa đã lưu/suy ra, tổng số cửa và tổng rộng (m); chỉ đếm các cửa thực sự đã cộng, không đếm trùng biên/hatch.
+
+- Thêm ALCTKT/VVTKT: chọn vùng tường ALC, đặt tên bảng, tổng hợp chiều dài tim theo chiều dày và tổng cộng (m).
+- Tổng chiều dài bao gồm cả lỗ cửa: lưu vị trí lỗ mở khi ALCDOOR, cộng một lần khi chọn đủ hai bên; hỗ trợ nhiều cửa và copy. Với tường cũ, suy ra khe cửa từ hai đầu tường cùng layer/bề dày/trục theo lựa chọn của người dùng và báo số khe để kiểm tra.
+- Không đếm trùng biên/hatch; dùng hình học hiện tại sau cắt cửa, rút/kéo. Gắn dấu nhận diện cho tường VV/VVC mới; hỗ trợ nhận diện bảo thủ cho tường cũ còn layer/hatch ALC.
+
 ## 3.3.5 — 2026-10-17
 
 - Tự đặt MEASUREMENT=1 mỗi lần nạp ALCWALL; nạp qua Startup Suite để áp dụng khi mở CAD/bản vẽ.

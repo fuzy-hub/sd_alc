@@ -1,5 +1,5 @@
-(setq *alc-module-version* "3.3.5")
-;;; ALCWALL v3.3.5 - commands module
+(setq *alc-module-version* "3.3.6")
+;;; ALCWALL v3.3.6 - commands module
 
 ;;; --------------------------------------------------------------------------
 ;;; Public commands
@@ -119,6 +119,11 @@
   (princ)
 )
 
+(defun c:ALCTKT ()
+  (alc--run-command 'alc--wall-type-stat-loop "ALCTKT")
+  (princ)
+)
+
 (defun c:ALCTKC ()
   (alc--run-command 'alc--door-stat-loop "ALCTKC")
   (princ)
@@ -197,11 +202,12 @@
 (defun c:VVGT () (c:ALCGT))
 (defun c:VVGTS () (c:ALCGTS))
 (defun c:VVTK () (c:ALCTK))
+(defun c:VVTKT () (c:ALCTKT))
 (defun c:VVTKC () (c:ALCTKC))
 (defun c:VVDIM () (c:ALCDIM))
 
 (princ
-  "\nALCWALL loaded. Commands: ALCWALL, VV, ALCCENTRAL, VVC, ALCDOOR, ALCTRIM, ALCXTEND, ALCLT, ALCGT, ALCGTS, ALCTK, ALCTKC, TKDIM, TKCOUNT, TKMS, TKALIGN, ALCDIM, ALCSET, ALCS, ALSC. ALCxxx aliases: VVxxx.")
+  "\nALCWALL loaded. Commands: ALCWALL, VV, ALCCENTRAL, VVC, ALCDOOR, ALCTRIM, ALCXTEND, ALCLT, ALCGT, ALCGTS, ALCTK, ALCTKT, ALCTKC, TKDIM, TKCOUNT, TKMS, TKALIGN, ALCDIM, ALCSET, ALCS, ALSC. ALCxxx aliases: VVxxx.")
 (princ)
 
 (defun alc--run-command (fn name) (if (alc--ready-p) (alc--run-command-unsafe fn name)))

@@ -1,5 +1,5 @@
-(setq *alc-module-version* "3.3.5")
-;;; ALCWALL v3.3.5 - wall module
+(setq *alc-module-version* "3.3.6")
+;;; ALCWALL v3.3.6 - wall module
 (defun alc--draw-lintel
   (door-start door-end side-point
     / dx dy segment-length ux uy cross-product side px py z
@@ -471,8 +471,11 @@
 
 
 (defun alc--door-build (wall point-1 point-2 / old-hatches polygon normal layer p1 raw axis dot p2 p3
-    polygons a b settings hatch-a hatch-b ha hb old pass)
-  (setq old-hatches (alc--find-boundary-hatches wall))
+    polygons a b settings hatch-a hatch-b ha hb old pass events-a events-b center-a center-b
+    source-metrics source-version)
+  (setq old-hatches (alc--find-boundary-hatches wall)
+        source-metrics (alc--wall-type-metrics wall)
+        source-version (if (alc--wall-legacy-openings-p wall) 1 2))
   (and
     (alc--require (alc--door-supported-p wall old-hatches)
       "Unsupported curved/invalid wall, locked layer, shared/multiple hatch or gradient.")
@@ -497,6 +500,20 @@
             b (alc--track-temp (alc--create-lwpolyline-wcs-on-layer (cadr polygons) T normal layer)))
       (alc--require (and a b) "Cannot create replacement boundaries."))
     (alc--copy-boundary-properties wall a) (alc--copy-boundary-properties wall b)
+    (progn
+      ;; Record actual cut-cap midpoints in transformable WCS XData.
+      ;; Both survivors inherit earlier openings; scheduling matches their caps.
+      (setq events-a (alc--nearest-events (alc--cut-events polygon axis p2 'P2) 2)
+            events-b (alc--nearest-events (alc--cut-events polygon axis p3 'P3) 2)
+            center-a (alc--vector-scale (alc--vector-add
+              (alc--event-point (car events-a)) (alc--event-point (cadr events-a))) 0.5)
+            center-b (alc--vector-scale (alc--vector-add
+              (alc--event-point (car events-b)) (alc--event-point (cadr events-b))) 0.5))
+      (and (alc--wall-save-opening a center-a center-b)
+           (alc--wall-save-opening b center-a center-b)
+           (or (not source-metrics)
+             (and (alc--wall-write-tag a (car source-metrics) source-version)
+                  (alc--wall-write-tag b (car source-metrics) source-version)))))
     (progn
       (setq settings (alc--read-hatch-settings (car old-hatches)))
       (if (not settings) (setq settings (list *alc-pattern* *alc-color* *alc-scale* *alc-background-color* *alc-angle*)))

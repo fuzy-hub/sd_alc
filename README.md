@@ -1,17 +1,23 @@
-# ALCWALL 3.3.5
+# ALCWALL 3.3.6
 
-ALCWALL là bộ công cụ AutoLISP hỗ trợ triển khai tường ALC 2D trên AutoCAD for Windows. Bản 3.3.5 được kiểm thử bằng AutoCAD 2027.
+ALCWALL là bộ công cụ AutoLISP hỗ trợ triển khai tường ALC 2D trên AutoCAD for Windows. Bản 3.3.6 được kiểm thử bằng AutoCAD 2027.
 
 ## Cài đặt
 
 1. Giữ nguyên toàn bộ cấu trúc thư mục, đặc biệt là `ALCWALL.lsp` và thư mục `src`.
 2. Trong AutoCAD, mở `OPTIONS > Files > Support File Search Path` và thêm thư mục ALCWALL.
 3. Chạy PowerShell `./tools/install.ps1`, rồi `APPLOAD` tệp `ALCWALL-LOAD.lsp` được tạo trong thư mục cài. Thêm tệp này vào `APPLOAD > Startup Suite > Contents > Add` để tự nạp mỗi lần mở CAD/bản vẽ. Loader này ghim đúng thư mục khi máy có nhiều bản ALCWALL. Nếu chỉ có một bản trong Support Path, vẫn có thể nạp trực tiếp `ALCWALL.lsp`.
-4. Khi thấy thông báo `ALCWALL v3.3.5 modules loaded`, bộ lệnh đã sẵn sàng.
+4. Khi thấy thông báo `ALCWALL v3.3.6 modules loaded`, bộ lệnh đã sẵn sàng.
 
 Khi cập nhật, APPLOAD lại `ALCWALL.lsp`; loader gỡ định nghĩa lệnh cũ `ALCCUT20` còn trong phiên làm việc, chỉ dùng `ALCTRIM`.
 
 Không nạp riêng các tệp trong `src`; `ALCWALL.lsp` là loader duy nhất.
+
+## Thay đổi 3.3.6
+
+- Thêm ALCTKT/VVTKT: quét tường, đặt tên bảng và cộng chiều dài tim theo chiều dày, gồm cả lỗ cửa.
+- Thống kê cửa theo chiều rộng, số lượng, nguồn đã lưu/suy ra; sửa chữ quá nhỏ ở các hàng cửa mới.
+- Kiểm thử trực tiếp VV/VVC → ALCDOOR/VVDOOR → ALCTKT, xuất ảnh và mở lại DWG.
 
 ## Thay đổi 3.3.5
 
@@ -40,6 +46,7 @@ Không nạp riêng các tệp trong `src`; `ALCWALL.lsp` là loader duy nhất.
 | `ALCGT`, `VVGT` | Vẽ giằng tường, cách đường tham chiếu 50 mm |
 | `ALCGTS`, `VVGTS` | Đặt chiều rộng và màu cho `ALCGT` |
 | `ALCTK`, `VVTK` | Lập bảng tổng chiều dài theo layer |
+| `ALCTKT`, `VVTKT` | Quét chọn tường ALC, đặt tên bảng và cộng chiều dài tim theo chiều dày |
 | `ALCTKC`, `VVTKC` | Thống kê block cửa |
 | `TKDIM` | Cộng kích thước và tạo bảng |
 | `TKCOUNT` | Đánh số tuần tự có khung |
@@ -55,6 +62,18 @@ Màu nền hatch có ba chế độ: màu ACI, `None` (không có nền) và
 `TrueColor RGB 255,255,255` (nền trắng thực, không phải ACI 7 thích nghi).
 Mỗi lần nạp `ALCWALL.lsp`, màu nền mặc định được đặt lại thành TrueColor trắng;
 lựa chọn khác trong `ALCSET` có hiệu lực trong phiên hiện tại.
+
+## Thống kê theo loại tường ALC
+
+Gõ `ALCTKT` (hoặc `VVTKT`), quét chọn vùng có tường rồi Enter, nhập tên bảng và chọn điểm chèn. Enter ở tên bảng dùng “BẢNG THỐNG KÊ TƯỜNG ALC”. Bảng gồm STT, loại tường (ALC 100, ALC 150, ALC 200…), đơn vị m, chiều dài và dòng tổng cộng. Ngay bên dưới là phần “CỬA ĐÃ TÍNH TRONG CHIỀU DÀI TƯỜNG”: nhóm theo rộng cửa (mm), số lượng (cái) và chi tiết số cửa “Đã lưu / Suy ra”. Cuối phần cửa có tổng số cửa và tổng chiều rộng được cộng (m). Ví dụ 2 cửa 900 mm và 1 cửa 1200 mm sẽ hiển thị 2 loại, tổng 3 cửa và tổng rộng 3.000 m. Các cửa cùng rộng được gom chung dù thuộc loại tường khác nhau. Chỉ những lỗ mở đã được cộng vào chiều dài tường mới xuất hiện ở phần cửa; không có cửa thì bảng ghi rõ trạng thái này. Cỡ chữ dùng thiết lập thống kê hiện tại. Một lần Undo xóa bảng vừa tạo.
+
+Mỗi tường được tính một lần kể cả khi quét cả biên lẫn hatch. Chiều dài lấy theo tim tường và cộng cả chiều rộng lỗ cửa khi chọn đủ hai đoạn tường hai bên, hỗ trợ tường thẳng/L/U và sau rút/kéo; không cộng chu vi, lanh tô hoặc giằng. Vùng quét dùng cách chọn đối tượng thông thường của AutoCAD: đối tượng được chọn được tính toàn bộ, không cắt chiều dài theo khung quét. Bảng là kết quả tại thời điểm chạy lệnh; chạy lại sau khi sửa tường.
+
+ALCDOOR lưu vị trí hai đầu lỗ cửa trong XData theo WCS, được dịch/chuyển khi copy tường. Lỗ cửa có thông tin lưu chỉ được cộng một lần nếu cả hai đoạn tường liền cửa đều được chọn; chọn cả biên và hatch không làm tăng thêm lần cộng. Khi một bên bị xóa hoặc đầu tường tại cửa đã dịch khỏi vị trí ghi nhận, lỗ đó không tự được cộng từ thông tin cũ.
+
+Theo lựa chọn của người dùng, với tường cũ chưa lưu đầy đủ lịch sử cửa, lệnh tự coi khe hở giữa hai đầu tường cùng layer, cùng chiều dày, cùng trục và hướng ra đối diện là cửa. Chỉ ghép hai đầu gần nhau nhất theo cả hai chiều; không ghép xuyên qua đoạn tường giữa. Khoảng cách khe không bị giới hạn nên các khe hở có chủ ý trên tường cũ cũng có thể được cộng. Dòng lệnh báo số khe đã suy ra để rà soát. Tường mới có dấu phiên bản 2 không dùng cách suy ra khe hở này; cửa mới dùng thông tin ALCDOOR đã lưu.
+
+Tường vẽ mới bằng VV/VVC có dấu nhận diện ALC riêng, được giữ khi cắt cửa, rút/kéo và copy. Tường cũ chưa có dấu được nhận diện theo layer `0. Tuong ALC`, hatch liên kết một biên ANSI37 (hoặc pattern ALC hiện tại khác ANSI31) và hình học dải tường thẳng đều bề dày. Không thể phân biệt tuyệt đối một đối tượng vẽ tay có cùng layer/hatch/hình dạng với tường cũ. Tường cũ đã đổi layer/pattern, biên cong/hình học không hợp lệ hoặc không xác định được chiều dày sẽ bị bỏ qua; với hình chữ nhật cũ chưa có dấu, cạnh ngắn được coi là chiều dày, trừ đoạn cửa ngắn có thể ghép thẳng hàng với đoạn tường cùng chiều dày trong vùng chọn. Tường có dấu vẫn được đọc trên layer khóa hoặc layer tùy chỉnh và dùng bề dày đã lưu để nhận đúng đoạn tường ngắn sau cắt cửa.
 
 ## Rút đầu tường 20 mm
 

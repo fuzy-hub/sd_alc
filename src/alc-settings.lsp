@@ -1,5 +1,5 @@
-(setq *alc-module-version* "3.3.5")
-;;; ALCWALL v3.3.5 - settings module
+(setq *alc-module-version* "3.3.6")
+;;; ALCWALL v3.3.6 - settings module
 ;;; ALCWALL.lsp
 ;;; 2D ALC wall tool for AutoCAD on Windows.
 ;;; Commands: ALCWALL, ALCCENTRAL, ALCDOOR, ALCLT, ALCGT, ALCGTS, ALCTK, ALCTKC, TKDIM, TKCOUNT, TKMS, TKALIGN, ALCSET

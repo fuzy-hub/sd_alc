@@ -1,0 +1,29 @@
+ALCTKT — sửa phần cửa trông như trống, 2026-10-17
+
+Đã tái hiện bằng VV/VVC -> ALCDOOR/VVDOOR -> ALCTKT và ảnh PNG xuất từ AutoCAD.
+Nguyên nhân: InsertRows dùng cỡ chữ mặc định nhỏ; GetText vẫn có giá trị nhưng ảnh hiển thị gần như trống.
+Sửa: SetCellTextHeight theo cỡ chữ thống kê và SetCellAlignment cho từng ô mới.
+
+Session full: alc-335-20261017-115917-0f6cb821
+PID: 10148
+Start: 2026-10-17T11:59:17.0737826+07:00
+PASS smoke-test: 5 checks
+PASS styles-test: 39 checks
+PASS settings-test: 14 checks
+PASS fixture-test: 6 checks
+PASS wall-tie-side-test: 6 checks
+PASS trim-test: 39 checks
+PASS xtend-test: 32 checks
+PASS hardening-test: 24 checks
+PASS wall-schedule-test: 48 checks
+PASS public-door-test: 5 checks
+Total: 218 checks PASS.
+
+Reopen session: alc-335-20261017-115845-a9a53dff
+PID: 18272
+Start: 2026-10-17T11:58:45.1675182+07:00
+PASS: mở lại bản sao DWG đã lưu; 49 checks, gồm 5 kiểm tra quy trình công khai và chiều cao chữ.
+Đã xem ảnh PNG trước sửa, sau sửa và sau mở lại bằng công cụ xem ảnh.
+Mẫu: 2 tường 100 mm, tổng gồm cửa 11 m; cửa 900 mm 1 cái, 1200 mm 1 cái; tổng 2 cửa, tổng rộng 2.1 m.
+
+Nạp lại ALCWALL-LOAD.lsp và chạy ALCTKT tạo bảng mới; bảng đã tạo trước sửa không tự thay đổi.

@@ -1,4 +1,4 @@
-(setq *alc-module-version* "3.3.5")
+(setq *alc-module-version* "3.3.6")
 ;;; Shared geometry validation, transactions and command-scoped hatch index.
 
 (defun alc--cross2 (a b c)
@@ -85,10 +85,51 @@
 (defun alc--commit-wall (boundary / hatch entity)
   (setq hatch (alc--make-hatch boundary) entity (alc--vla-object-ename hatch))
   (if entity
-    (progn (alc--track-temp entity) (alc--save-settings)
+    (progn (alc--track-temp entity) (alc--wall-tag boundary) (alc--save-settings)
       (alc--untrack-temp boundary) (alc--untrack-temp entity)
       (alc--cleanup-temp) T)
     (progn (alc--cleanup-temp) (prompt "\nHatch failed; new wall rolled back.") nil)))
+
+;; Only actual VV/VVC walls get this marker. Lintels/ties use another hatch API.
+;; Door replacement copies XData; trim/extend keep the same boundary entity.
+(defun alc--wall-write-tag (boundary width version / data)
+  (regapp "ALCWALL")
+  (setq data (entget boundary '("ALCWALL")))
+  (if (assoc -3 data) (setq data (vl-remove (assoc -3 data) data)))
+  (if (entmod (append data
+        (list (list -3 (list "ALCWALL" '(1000 . "WALL")
+          (cons 1040 width) (cons 1070 version)))))) T))
+
+(defun alc--wall-tag (boundary)
+  (alc--wall-write-tag boundary *alc-thickness* 2))
+
+(defun alc--wall-legacy-openings-p (wall / record)
+  (setq record (cdr (assoc "ALCWALL" (cdr (assoc -3 (entget wall '("ALCWALL")))))))
+  (not (equal (cdr (assoc 1070 record)) 2)))
+
+(defun alc--wall-tag-width (boundary / record width)
+  (setq record (cdr (assoc "ALCWALL" (cdr (assoc -3 (entget boundary '("ALCWALL"))))))
+        width (cdr (assoc 1040 record)))
+  (if (and (equal (cdr (assoc 1000 record)) "WALL")
+           (numberp width) (> width 0.0)) width))
+
+(defun alc--wall-openings (wall / record item start pairs)
+  (setq record (cdr (assoc "ALCOPENINGS" (cdr (assoc -3 (entget wall '("ALCOPENINGS")))))))
+  (foreach item record
+    (if (= (car item) 1011)
+      (if start
+        (setq pairs (cons (list start (cdr item)) pairs) start nil)
+        (setq start (cdr item)))))
+  (reverse pairs))
+
+(defun alc--wall-save-opening (wall start end / data record pair)
+  (regapp "ALCOPENINGS")
+  (setq record (list "ALCOPENINGS"))
+  (foreach pair (append (alc--wall-openings wall) (list (list start end)))
+    (setq record (append record (list (cons 1011 (car pair)) (cons 1011 (cadr pair))))))
+  (setq data (entget wall '("ALCOPENINGS")))
+  (if (assoc -3 data) (setq data (vl-remove (assoc -3 data) data)))
+  (if (entmod (append data (list (list -3 record)))) T))
 
 ;; Scripting.Dictionary gives keyed lookup without an O(M*H) association list.
 ;; Only resize commands opt in; their geometry changes do not add/remove hatches.

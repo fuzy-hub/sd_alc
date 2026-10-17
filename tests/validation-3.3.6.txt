@@ -1,0 +1,29 @@
+ALCWALL 3.3.6 — kiểm thử phát hành 2026-10-17
+
+Session: alc-336-20261017-122547-d4bde2fe
+AutoCAD 2027 PID: 19344
+Start: 2026-10-17T12:25:47.7423770+07:00
+
+Static validation: PASS, 26 Lisp files / 35 commands.
+Python unittest: 10/10 PASS.
+PASS smoke-test: 5 checks
+PASS styles-test: 39 checks
+PASS settings-test: 14 checks
+PASS fixture-test: 6 checks
+PASS wall-tie-side-test: 6 checks
+PASS trim-test: 39 checks
+PASS xtend-test: 32 checks
+PASS hardening-test: 24 checks
+PASS wall-schedule-test: 48 checks
+PASS public-door-test: 5 checks
+
+Total: 218 AutoCAD checks PASS.
+PASS: ALCTKT nhóm theo chiều dày, tính chiều dài gồm cửa, không đếm trùng biên/hatch.
+PASS: cửa đã lưu/suy ra, nhiều cửa, copy, đoạn cửa ngắn, số lượng theo rộng và tổng cộng.
+PASS: quy trình lệnh VV/VVC -> ALCDOOR/VVDOOR -> ALCTKT: 11 m tường, cửa 900 mm 1 cái, 1200 mm 1 cái, tổng 2 cửa.
+PASS: chiều cao chữ của từng ô cửa mới bằng 100 mm theo cỡ thống kê, thay cho mặc định quá nhỏ.
+DWG và PNG được tạo trong thư mục phiên; đã kiểm chứng ảnh hiển thị sau sửa ở phiên thử trước khi đánh số phát hành.
+Phiên mở lại DWG đã đạt 49 kiểm tra: alc-335-20261017-115845-a9a53dff (cùng mã chức năng trước đổi số phiên bản).
+
+Cài bằng tools/install.ps1 rồi APPLOAD ALCWALL-LOAD.lsp; thêm Startup Suite.
+Chạy lại ALCTKT để tạo bảng mới. Khe cửa cũ được suy ra có thể bao gồm khe hở có chủ ý.

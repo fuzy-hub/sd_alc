@@ -1,6 +1,8 @@
-param([int]$TimeoutSeconds=240, [switch]$FullAutoCAD, [switch]$StylesOnly, [switch]$TrimOnly, [switch]$HardeningOnly, [string]$InputDrawing)
+param([int]$TimeoutSeconds=240, [switch]$FullAutoCAD, [switch]$StylesOnly, [switch]$TrimOnly, [switch]$HardeningOnly, [string]$InputDrawing, [switch]$PublicDoorOnly, [switch]$PublicDoorReopen)
 $ErrorActionPreference='Stop'
 if (([int]$StylesOnly.IsPresent+[int]$TrimOnly.IsPresent+[int]$HardeningOnly.IsPresent) -gt 1) { throw 'Choose one suite mode.' }
+if ($PublicDoorOnly -and ($StylesOnly -or $TrimOnly -or $HardeningOnly)) { throw 'PublicDoorOnly cannot be combined with another suite mode.' }
+if ($PublicDoorReopen -and (!$PublicDoorOnly -or !$InputDrawing)) { throw 'PublicDoorReopen requires PublicDoorOnly and an existing InputDrawing.' }
 if (!$FullAutoCAD -and !$StylesOnly) { throw 'Hatch suites require -FullAutoCAD (AutoCAD 2027).' }
 $taskRoot=Split-Path -Parent $PSScriptRoot
 # Even the style suite uses ActiveX SetFont, unavailable in Core Console.
@@ -33,7 +35,7 @@ $taskCommands=@'
 (alc-test--suite "styles-test" "styles-test.lsp" 'alc-test-run-styles nil)
 '@
 $taskSuites=[ordered]@{'smoke-test'=5;'styles-test'=39}
-if (!$StylesOnly) {
+if (!$StylesOnly -and !$PublicDoorOnly) {
     $taskCommands+="`n(load (strcat (getenv `"ALCWALL_TEST_ROOT`") `"/tests/generate-fixtures.lsp`"))`n"
     if (!$TrimOnly -and !$HardeningOnly) {
         $taskCommands+=@'
@@ -121,6 +123,68 @@ L
         $taskCommands=$taskCommands.TrimEnd("`r","`n")+"`n(alc-test--suite `"hardening-test`" `"hardening-test.lsp`" 'alc-test-run-hardening nil)`n"
         $taskSuites['hardening-test']=24
     }
+    $taskCommands=$taskCommands.TrimEnd("`r","`n")+@'
+
+(alc-test--suite "wall-schedule-test" "wall-schedule-test.lsp" 'alc-test-run-wall-schedule T)
+(alc-test--step 'alc-test-wall-schedule-prepare "wall-schedule-test")
+ALCTKT
+_W
+-10,-10
+4500,5000
+
+BANG TUONG TANG 1
+6000,0
+(alc-test--step 'alc-test-wall-schedule-check-command "wall-schedule-test")
+_.UNDO
+1
+(alc-test--step 'alc-test-wall-schedule-check-undo "wall-schedule-test")
+(alc-test--finish "wall-schedule-test")
+'@
+    $taskSuites['wall-schedule-test']=48
+}
+if (!$StylesOnly) {
+    $taskCommands=$taskCommands.TrimEnd("`r","`n")+@'
+
+(load (strcat (getenv "ALCWALL_TEST_ROOT") "/tests/generate-fixtures.lsp"))
+(alc-test--suite "public-door-test" "public-door-test.lsp" 'alc-test-run-public-door T)
+'@
+    if (!$PublicDoorReopen) {
+        $taskCommands+="`n"+@'
+(alc-test--step 'alc-test-public-door-prepare "public-door-test")
+VV
+0,0
+6000,0
+
+0,100
+VVC
+0,2000
+5000,2000
+
+ALCDOOR
+900
+500,0
+0,50
+1500,50
+VVDOOR
+1200
+500,1950
+0,2000
+1000,2000
+ALCTKT
+_W
+-10,-100
+6010,2200
+
+PUBLIC WALL DOORS
+7000,0
+'@
+    }
+    $taskCommands+="`n"+@'
+(alc-test--step 'alc-test-public-door-check "public-door-test")
+(alc-test--step 'alc-test-public-door-save "public-door-test")
+(alc-test--finish "public-door-test")
+'@
+    $taskSuites['public-door-test']=5
 }
 $taskCommands=$taskCommands.TrimEnd("`r","`n")+"`n(setenv `"ACAD`" alc-test-saved-acad)`n(setvar `"SECURELOAD`" alc-test-saved-secureload)`n(setq alc-test-end-file (open (alc-test--result-path `"run.complete`") `"w`"))`n(write-line (getenv `"ALCWALL_TEST_LABEL`") alc-test-end-file)`n(close alc-test-end-file)`n(command-s `"_.QSAVE`")`n_.QUIT`n_Y`n"
 $taskScript=Join-Path $taskRun 'run.scr'
