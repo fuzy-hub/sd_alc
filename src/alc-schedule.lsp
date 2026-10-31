@@ -1,5 +1,5 @@
-(setq *alc-module-version* "3.4.2")
-;;; ALCWALL v3.4.2 - schedule module
+(setq *alc-module-version* "3.4.3")
+;;; ALCWALL v3.4.3 - schedule module
 
 ;;; --------------------------------------------------------------------------
 ;;; Length schedule
@@ -255,7 +255,7 @@
 
 (defun alc--stat-read-sample-point ()
   (initget "All")
-  (getpoint "\nChon doi tuong lay layer [All(A)] <Enter xong>: "))
+  (getpoint "\nChon doi tuong lay layer [All(A)] <Enter/Space: xong / last pick>: "))
 
 (defun alc--stat-read-sample-corner (first)
   (getcorner first "\nGoc doi dien: "))
@@ -293,14 +293,38 @@
   (if (vl-catch-all-error-p result)
     (vl-exit-with-error (vl-catch-all-error-message result)) result))
 
-(defun alc--stat-choose-layers (/ selection layers)
+(defun alc--stat-choose-layers (/ selection layers last name record)
   (setq selection (alc--stat-select-layer-objects))
-  (if (eq selection 'all) 'all
-    (progn
+  (cond
+    ((eq selection 'all)
+      (setq *alc-stat-last-layers* 'all)
+      'all)
+    (selection
       (setq layers (alc--stat-sample-layers selection))
       (if layers
-        (prompt (strcat "\nDa chon " (itoa (length layers)) " layer de thong ke.")))
-      layers)))
+        (progn
+          ;; AutoLISP variables belong to this drawing; do not clear on reload.
+          ;; Cache layer names, not sample entities, so deleted samples are safe.
+          (setq *alc-stat-last-layers* layers)
+          (prompt (strcat "\nDa chon " (itoa (length layers)) " layer de thong ke."))))
+      layers)
+    (T
+      (if (boundp '*alc-stat-last-layers*) (setq last *alc-stat-last-layers*))
+      (cond
+        ((eq last 'all)
+          (prompt "\nDung lai last pick: All (khong loc layer).")
+          'all)
+        ((and last (listp last))
+          (foreach name last
+            (if (setq record (tblsearch "LAYER" name))
+              (setq layers (cons (cdr (assoc 2 record)) layers))))
+          (if layers
+            (progn
+              (setq layers (acad_strlsort layers))
+              (prompt (strcat "\nDung lai last pick: " (itoa (length layers)) " layer.")))
+            (prompt "\nCac layer trong last pick khong con ton tai. Hay chon mau moi."))
+          layers)
+        (T (prompt "\nChua co last pick layer. Huy thong ke.") nil)))))
 
 (defun alc--stat-filter-selection (selection layers / index entity result wanted)
   (setq index 0 result (ssadd))

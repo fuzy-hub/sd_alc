@@ -1,4 +1,4 @@
-(setq *alc-module-version* "3.4.2")
+(setq *alc-module-version* "3.4.3")
 (defun alc--trim-trailing-hyphens (value)
   (while (and (> (strlen value) 0)
               (equal (substr value (strlen value) 1) "-"))

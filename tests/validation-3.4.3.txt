@@ -1,0 +1,47 @@
+ALCWALL 3.4.3 release validation — 2026-10-31
+
+Change: VVTK/ALCTK empty layer-sample confirmation reuses the last accepted
+layer filter in this drawing's session. Explicit All remains All. New samples
+replace the cache. Deleted layers are skipped; absent/empty cache cancels.
+Cache contains names, not entity references, and survives module reload.
+It is not persisted across closing/reopening the drawing.
+
+AutoCAD 2027 full acad.exe, new isolated process:
+Session: alc-343-20261031-100832-36211a84
+PID: 3980
+Start: 2026-10-31T10:08:32.9953191+07:00
+All 16 suites completed: 334 checks PASS, 0 failures.
+Log counts, suite markers and run.complete matched this session.
+No pre-existing AutoCAD process was controlled.
+
+smoke-test: 5 PASS
+styles-test: 39 PASS
+layer-test: 15 PASS
+assign-test: 12 PASS
+assign-ui-test: 15 PASS
+stat-layer-test: 27 PASS
+stat-detail-test: 27 PASS
+match-test: 20 PASS
+settings-test: 14 PASS
+fixture-test: 6 PASS
+wall-tie-side-test: 6 PASS
+trim-test: 39 PASS
+xtend-test: 32 PASS
+hardening-test: 24 PASS
+wall-schedule-test: 48 PASS
+public-door-test: 5 PASS
+
+Python release-gate tests: 10 PASS.
+Static version/alias/SHA-256 manifest validation: PASS.
+Packaging verifies archive CRC and source-byte agreement.
+
+Last-pick regressions cover empty confirmation, explicit All, replacing All
+with a new sample, deleted layers, deleted sample entities, first-use empty
+selection, and Lisp reload. Prior native scripted Enter/Space checks passed
+on the same implementation before the version bump (validation-stat-lastpick.txt).
+No new physical keyboard or mouse test is claimed here. The VVA managed DLL
+is unchanged from 3.4.2.
+
+Requirements/limits: AutoCAD 2027 for Windows; NGHIA5.SHX not bundled.
+CI repeats static, Python and packaging checks; CAD validation uses the
+isolated process recorded above. Existing geometry limits still apply.

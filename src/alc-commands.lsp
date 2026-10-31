@@ -1,5 +1,5 @@
-(setq *alc-module-version* "3.4.2")
-;;; ALCWALL v3.4.2 - commands module
+(setq *alc-module-version* "3.4.3")
+;;; ALCWALL v3.4.3 - commands module
 
 ;;; --------------------------------------------------------------------------
 ;;; Public commands

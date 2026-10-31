@@ -1,4 +1,4 @@
-(setq *alc-module-version* "3.4.2")
+(setq *alc-module-version* "3.4.3")
 (defun alc--raw-variant-value (value)
   (while (eq (type value) 'VARIANT)
     (setq value (vlax-variant-value value))

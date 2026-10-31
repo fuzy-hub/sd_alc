@@ -1,3 +1,7 @@
+RÀ SOÁT ALCWALL 3.4.3 — 31/10/2026
+
+VVTK/ALCTK nhớ last pick layer trong namespace của bản vẽ. Enter/Space khi chưa chọn mẫu dùng lại lựa chọn trước, kể cả All; chọn mới thay bộ lọc. Chỉ lưu tên layer, bỏ qua layer đã xóa, giữ qua APPLOAD và không ghi vào DWG cho phiên sau. Xem tests/validation-3.4.3.txt.
+
 RÀ SOÁT ALCWALL 3.4.2 — 31/10/2026
 
 Đổi thứ tự VVTK/ALCTK: chiều cao chữ trước, layer mẫu/All, vùng thống kê, điểm chèn. Không đổi lọc layer, thứ tự Xmin/Ymax, chiều dài từng pline hay tổng cuối bảng. Xem tests/validation-3.4.2.txt.

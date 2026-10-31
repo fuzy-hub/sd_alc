@@ -1,4 +1,4 @@
-;;; ALCWALL 3.4.2 â€” pinned root, manifest validation, fail-closed command gate.
+;;; ALCWALL 3.4.3 â€” pinned root, manifest validation, fail-closed command gate.
 (vl-load-com)
 (setq *alc-ready* nil)
 (defun alc--require (condition message)
@@ -35,7 +35,7 @@
 (defun alc--load-module (root name / result)
   (setq *alc-module-version* nil
         result (vl-catch-all-apply 'load (list (strcat root "/src/" name))))
-  (alc--require (and (not (vl-catch-all-error-p result)) (equal *alc-module-version* "3.4.2"))
+  (alc--require (and (not (vl-catch-all-error-p result)) (equal *alc-module-version* "3.4.3"))
     (strcat "Module load/version error: " name)))
 
 
@@ -44,7 +44,7 @@
     (alc--require root "Cannot resolve installation folder.")
     (alc--require (setq stream (open (strcat root "/manifest.lspdata") "r")) "Missing manifest.lspdata.")
     (progn (setq line (read-line stream)) (close stream) (setq manifest (read line))
-      (alc--require (equal (car manifest) "3.4.2") "Manifest version mismatch."))
+      (alc--require (equal (car manifest) "3.4.3") "Manifest version mismatch."))
     (progn
       (setq pass T)
       (foreach item (cdr manifest)
@@ -60,7 +60,7 @@
       (setvar "MEASUREMENT" 1)
       (setq *alc-resource-root* root) (alc--load-settings)
       (alc--init-drawing-resources))
-    (progn (setq *alc-version* "3.4.2" *alc-ready* T) T)))
+    (progn (setq *alc-version* "3.4.3" *alc-ready* T) T)))
 
 (setq *alc-boot-result* (vl-catch-all-apply 'alc--boot (list (alc--loader-root))))
 (if (or (not *alc-boot-result*) (vl-catch-all-error-p *alc-boot-result*))

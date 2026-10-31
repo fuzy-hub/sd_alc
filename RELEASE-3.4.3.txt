@@ -1,0 +1,13 @@
+ALCWALL 3.4.3 — 2026-10-31
+
+- VVTK / ALCTK: bấm Enter hoặc Space ở bước chọn layer khi chưa chọn mẫu sẽ dùng lại các layer đã chọn gần nhất (last pick).
+- Lượt trước chọn A thì dùng lại All; chọn đối tượng mẫu mới sẽ thay last pick.
+- Nhớ tên layer, không phụ thuộc đối tượng mẫu còn tồn tại. Layer đã xóa được bỏ qua; nếu không còn layer nào hoặc chưa có last pick thì hủy, không tự mở rộng thành All.
+- Last pick được nhớ trong phiên bản vẽ hiện tại và giữ qua APPLOAD lại; không lưu sang lần đóng/mở bản vẽ. Esc hủy trước khi cập nhật last pick.
+- Giữ luồng: chiều cao chữ → layer mẫu/last pick/All → vùng thống kê → điểm chèn bảng. Giữ các chức năng VVA và bảng chi tiết từ 3.4.2.
+
+Yêu cầu: AutoCAD 2027 for Windows. Font NGHIA5.SHX không kèm ZIP.
+
+Cài đặt: giải nén toàn bộ, giữ nguyên src và manifest; chạy tools/install.ps1, APPLOAD ALCWALL-LOAD.lsp. DLL VVA không thay đổi ở bản này; đóng AutoCAD trước khi ghi đè DLL đang được nạp.
+
+Kiểm thử: 334 kiểm tra AutoCAD 2027 và 10 kiểm tra Python đều PASS; manifest/ZIP được xác minh. Thông tin phiên CAD riêng: xem tests/validation-3.4.3.txt.

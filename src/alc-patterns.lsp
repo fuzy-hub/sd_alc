@@ -1,4 +1,4 @@
-(setq *alc-module-version* "3.4.2")
+(setq *alc-module-version* "3.4.3")
 ;;; Read installed standard PAT libraries; no hard-coded unavailable patterns.
 
 (defun alc--split-string (text delimiter / position result)

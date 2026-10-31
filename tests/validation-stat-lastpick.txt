@@ -1,0 +1,22 @@
+VVTK/ALCTK last layer pick - 2026-10-31
+
+Confirming an empty sample selection with Enter/Space reuses the previous
+layer-name filter in this drawing's AutoLISP session. An explicit All is
+remembered as All, including layers created later. New samples replace it.
+Deleted sample entities do not invalidate layer names. Deleted layers are
+skipped on reuse; if none remain, selection cancels without expanding to All.
+With no previous pick, empty confirmation still cancels. ESC aborts before
+updating the cache. The cache is not reset by Lisp reload and is not stored
+in the drawing file for later reopen.
+
+AutoCAD 2027 full acad.exe isolated test:
+Label: stat-lastpick-20261031-100631-4b5faf12
+PID: 11992
+Start: 2026-10-31T10:06:31.4870904+07:00
+29 selection/flow checks and 27 detail/ordering/table checks PASS.
+Includes native scripted Enter reuse and Space reuse of All; no physical
+mouse/keyboard run is claimed. Logs and completion markers matched this
+session. Earlier incomplete attempts were rejected.
+Static validation PASS in root and distribution checkout.
+
+Logs: E:\#Supports Files\3. ALC LISP\tests\results\stat-lastpick-20261031-100631-4b5faf12

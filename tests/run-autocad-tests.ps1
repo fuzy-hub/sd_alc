@@ -73,7 +73,7 @@ $taskCommands+="(alc-test--write-lines `"assign-ui-test.log`" (ALC-ASSIGN-UI-TES
 $taskSuites['assign-ui-test']=15
 
 $taskCommands+="`n(alc-test--suite `"stat-layer-test`" `"stat-layer-test.lsp`" 'alc-test-run-stat-layer nil)`n"
-$taskSuites['stat-layer-test']=18
+$taskSuites['stat-layer-test']=27
 $taskCommands+="`n(alc-test--suite `"stat-detail-test`" `"stat-detail-test.lsp`" 'alc-test-run-stat-detail nil)`n"
 $taskSuites['stat-detail-test']=27
 if (!$StylesOnly -and !$PublicDoorOnly) {

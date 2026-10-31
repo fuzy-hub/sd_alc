@@ -1,5 +1,5 @@
-(setq *alc-module-version* "3.4.2")
-;;; ALCWALL v3.4.2 - create missing resources and make them current on load.
+(setq *alc-module-version* "3.4.3")
+;;; ALCWALL v3.4.3 - create missing resources and make them current on load.
 
 (defun alc--ensure-text-style (/ old data)
   ;; Rename the existing STYLE record to retain DIM and entity references.

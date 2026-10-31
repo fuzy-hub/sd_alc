@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.4.3 — 2026-10-31
+
+- VVTK/ALCTK: Enter/Space khi chưa chọn mẫu layer dùng lại last pick của bản vẽ hiện tại, kể cả All; chọn mới thay last pick, bỏ qua layer đã xóa. Lần đầu chưa có last pick vẫn hủy.
+
 ## 3.4.2 — 2026-10-31
 
 - VVTK/ALCTK hỏi chiều cao chữ ngay khi bắt đầu, sau đó chọn layer mẫu/All, chọn vùng thống kê và điểm chèn bảng.

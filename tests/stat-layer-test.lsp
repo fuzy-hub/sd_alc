@@ -4,7 +4,7 @@
   (alc-test--write-lines "stat-layer-test.log"
     (append lines (list (strcat (if pass "PASS " "FAIL ") name)))))
 
-(defun alc-test-run-stat-layer (/ samples selection a b c d totals subset before region-called name entity sample-points sample-picks sample-box corner-calls old-osmode result stat-events)
+(defun alc-test-run-stat-layer (/ samples selection a b c d totals subset before region-called name entity sample-points sample-picks sample-box corner-calls old-osmode result stat-events *alc-stat-last-layers* saved-layers sample-entity)
   (foreach name '("ALC_Filter_A" "ALC_Filter_B" "Other_Filter_C")
     (entmake (list '(0 . "LAYER") '(100 . "AcDbSymbolTableRecord")
       '(100 . "AcDbLayerTableRecord") (cons 2 name) '(70 . 0) '(62 . 7) '(6 . "Continuous"))))
@@ -45,6 +45,39 @@
     (setq stat-events (append stat-events '(layers))) samples)
   (alc-test--stat-check "mouse-sample-choice-returns-sampled-layers"
     (equal (alc--stat-choose-layers) '("ALC_Filter_A" "Other_Filter_C")))
+  (setq saved-layers '("ALC_Filter_A" "Other_Filter_C"))
+  (alc-test--stat-check "explicit-pick-caches-layer-names"
+    (equal *alc-stat-last-layers* saved-layers))
+  (setq samples nil)
+  (alc-test--stat-check "empty-confirmation-reuses-last-layer-pick"
+    (equal (alc--stat-choose-layers) saved-layers))
+  (setq samples 'all)
+  (alc--stat-choose-layers)
+  (setq samples nil)
+  (alc-test--stat-check "All-is-reused-without-converting-to-a-fixed-layer-list"
+    (eq (alc--stat-choose-layers) 'all))
+  (setq samples (ssadd)) (ssadd b samples)
+  (alc--stat-choose-layers)
+  (setq samples nil)
+  (alc-test--stat-check "new-object-pick-replaces-previous-All"
+    (equal (alc--stat-choose-layers) '("ALC_Filter_B")))
+  (setq *alc-stat-last-layers* '("ALC_Filter_A" "MissingLayer"))
+  (alc-test--stat-check "reuse-skips-deleted-layers-without-selecting-All"
+    (equal (alc--stat-choose-layers) '("ALC_Filter_A")))
+  (setq *alc-stat-last-layers* '("MissingLayer"))
+  (alc-test--stat-check "all-deleted-last-layers-cancel-instead-of-expanding-filter"
+    (not (alc--stat-choose-layers)))
+  (setq sample-entity (entmakex '((0 . "LINE") (8 . "ALC_Filter_A")
+    (10 0.0 50.0 0.0) (11 100.0 50.0 0.0))) samples (ssadd))
+  (ssadd sample-entity samples)
+  (alc--stat-choose-layers)
+  (entdel sample-entity)
+  (setq samples nil)
+  (alc-test--stat-check "deleting-sample-object-does-not-delete-last-layer-pick"
+    (equal (alc--stat-choose-layers) '("ALC_Filter_A")))
+  (setq *alc-stat-last-layers* nil)
+  (alc-test--stat-check "first-use-empty-confirmation-has-no-implicit-All"
+    (not (alc--stat-choose-layers)))
   (setq before (list (getvar "CLAYER") (getvar "PLINEWID") (entlast))
         samples nil region-called nil stat-events nil)
   (defun alc--ask-stat-text-height ()
@@ -62,6 +95,8 @@
   (alc-test--stat-check "prompt-order-height-then-layer-then-region"
     (and region-called (equal stat-events '(height layers region))))
   (load (strcat (getenv "ALCWALL_TEST_ROOT") "/src/alc-schedule.lsp"))
+  (alc-test--stat-check "last-layer-pick-survives-module-reload"
+    (equal *alc-stat-last-layers* '("ALC_Filter_A")))
   ;; Exercise the real picker; only the mouse/keyboard input boundary is stubbed.
   (defun alc--stat-read-sample-point (/ value)
     (setq value (car sample-points) sample-points (cdr sample-points)) value)

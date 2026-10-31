@@ -1,65 +1,65 @@
 {
-  "version": "3.4.2",
+  "version": "3.4.3",
   "files": {
     "ALCWALL.lsp": {
       "bytes": 4147,
-      "sha256": "03f1643c8c2d29e03db5c1d5b96c0b7eb12d33c924835225b434a1b4c9b43aad"
+      "sha256": "231c6ab955244ab54bc2b719b24c2f40847819278044d617b552af9231884b50"
     },
     "src/alc-settings.lsp": {
       "bytes": 12193,
-      "sha256": "1fe14cf9569d7bc0bb66ac96646e6f9063b622d47b17a7e6d6556180ca0100d4"
+      "sha256": "8e9a772c4cc32b8e182ce154a41884b4ef27ff09e9b588e6bc689010487ac231"
     },
     "src/alc-styles.lsp": {
       "bytes": 6583,
-      "sha256": "f1eb35c79b883cd6314dee2fd0f46246ac8076820a117c0b29ecfad531d41ba1"
+      "sha256": "6395146b2e54a0d3a879a6634eb4143a5ddf7f5a2d6d1115f642eb27a886fc55"
     },
     "src/alc-patterns.lsp": {
       "bytes": 6999,
-      "sha256": "505c16f81b305c9f2cc0c070ea31dd4d6dd1076132f817e77ed8f48c64895da1"
+      "sha256": "0e044210a728048a7f7541665607fc86fae69e5916895fb946ad98dc86bb10a7"
     },
     "src/alc-geometry.lsp": {
       "bytes": 19251,
-      "sha256": "84304ec0cee89fec2905487207e61be2d8f22144487320ca48f0f4bc6910c9d0"
+      "sha256": "53db813dec1e4c60914337525cc7fdb105d369f9fe72a5ea9804c2e56532795d"
     },
     "src/alc-safety.lsp": {
       "bytes": 7883,
-      "sha256": "1e9b2da2735cb6d38916936549f96298b3ead3c274df414dee45eb1c20e2603a"
+      "sha256": "4aa377ea5ea832fa587311ef3da2839463721123272ab03ca5333864481699ba"
     },
     "src/alc-wall.lsp": {
       "bytes": 22383,
-      "sha256": "97790e07df0571c3ba4f6f9857c94d2692760b748759179a2038058fb75aca0e"
+      "sha256": "8ae4e9f463d0f1ab561c9b9cacbedf650f7558838581b15182b10f29ac0dfc66"
     },
     "src/alc-trim.lsp": {
       "bytes": 9140,
-      "sha256": "d5d7be514ba465433f562b20037e917d6bbfe35fdb035ac4bbfb79e37ae4656f"
+      "sha256": "9992f5012b62cd3d87e1f4f0ab66e46ff2438e8b5ad457adbf3be7dc575241cf"
     },
     "src/alc-schedule.lsp": {
-      "bytes": 29119,
-      "sha256": "d7acf4a0af3d20763339b2e20a1d4d8bd14c4c63f15e5d0b2eadd9917333a162"
+      "bytes": 30188,
+      "sha256": "b1a2e6c2f22696c563339b71c028f9f4c28d77f0986bda8966cd565f8a58028c"
     },
     "src/alc-door-schedule.lsp": {
       "bytes": 12372,
-      "sha256": "8ee41b05a1d946b9d42c4d129a4a580c6c809a0983241c2b58eb7fa7c5177976"
+      "sha256": "b71b88ff1a7683f8da7957966c2093395321114e423f05b393492dbfda3142b6"
     },
     "src/alc-dim-schedule.lsp": {
       "bytes": 5294,
-      "sha256": "960ab87d35cb2a9d494fab166b31e1a32db68a70b2ed4783c9b3b6689982cf3d"
+      "sha256": "f9ab45b039e5ed40f583a621eccabb1d8160c958a1e5c8e0df68c1e50b0f30e0"
     },
     "src/alc-count.lsp": {
       "bytes": 5128,
-      "sha256": "9160e9c329e205f2a9749f8079c7ed811b7776c88a0d8be5eb6f3d3c9cdfc830"
+      "sha256": "bc1ddae71054e26f2079a5f0cc0317cd7eee2184d9fb8205ab9b155ac31201f0"
     },
     "src/alc-text-copy.lsp": {
       "bytes": 4780,
-      "sha256": "52eef085e540785ee2456e6566cdfe5e7c43a9f6167c156d951dedd7d11a2b19"
+      "sha256": "1a206e378c0d6b50f119bca144908186b66fa3e216c0d51f1c36299b61931e07"
     },
     "src/alc-align.lsp": {
       "bytes": 5357,
-      "sha256": "26a6b94147dbf036290eedfcdf85d71abadfd32e11b897c5e1ca5ce265639341"
+      "sha256": "7343b16f89699a8add459394bcb337ceb6b59e816081cedaebc000cdef59d8d0"
     },
     "src/alc-commands.lsp": {
       "bytes": 15801,
-      "sha256": "34881eacd035a3b4918e82344933db3d82f93e2b15fd1a5710455baf25e52d0a"
+      "sha256": "002bc67a9b9b39065a92a5131859716a7a6353e8b217973bf59d50b07205d05f"
     },
     "src/alc-patterns.dcl": {
       "bytes": 560,
