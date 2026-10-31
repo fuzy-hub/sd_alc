@@ -1,3 +1,7 @@
+RÀ SOÁT ALCWALL 3.4.2 — 31/10/2026
+
+Đổi thứ tự VVTK/ALCTK: chiều cao chữ trước, layer mẫu/All, vùng thống kê, điểm chèn. Không đổi lọc layer, thứ tự Xmin/Ymax, chiều dài từng pline hay tổng cuối bảng. Xem tests/validation-3.4.2.txt.
+
 RÀ SOÁT ALCWALL 3.4.1 — 31/10/2026
 
 Phạm vi: phát hành các thay đổi VVA (hộp thoại .NET 10/9 layer mỗi trang), lọc layer và bảng chi tiết/thứ tự VVTK, tạo layer transparency 50% và VVMATCH Multi. Manifest bao gồm DLL, C# và script biên dịch. Xem RELEASE-3.4.1.txt và tests/validation-3.4.1.txt.

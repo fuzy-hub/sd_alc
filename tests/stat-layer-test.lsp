@@ -4,7 +4,7 @@
   (alc-test--write-lines "stat-layer-test.log"
     (append lines (list (strcat (if pass "PASS " "FAIL ") name)))))
 
-(defun alc-test-run-stat-layer (/ samples selection a b c d totals subset before region-called name entity sample-points sample-picks sample-box corner-calls old-osmode result)
+(defun alc-test-run-stat-layer (/ samples selection a b c d totals subset before region-called name entity sample-points sample-picks sample-box corner-calls old-osmode result stat-events)
   (foreach name '("ALC_Filter_A" "ALC_Filter_B" "Other_Filter_C")
     (entmake (list '(0 . "LAYER") '(100 . "AcDbSymbolTableRecord")
       '(100 . "AcDbLayerTableRecord") (cons 2 name) '(70 . 0) '(62 . 7) '(6 . "Continuous"))))
@@ -41,15 +41,26 @@
   (setq subset (ssadd)) (ssadd a subset)
   (alc-test--stat-check "scope-does-not-expand-beyond-region"
     (= (sslength (alc--stat-filter-selection subset 'all)) 1))
-  (defun alc--stat-select-layer-objects () samples)
+  (defun alc--stat-select-layer-objects ()
+    (setq stat-events (append stat-events '(layers))) samples)
   (alc-test--stat-check "mouse-sample-choice-returns-sampled-layers"
     (equal (alc--stat-choose-layers) '("ALC_Filter_A" "Other_Filter_C")))
   (setq before (list (getvar "CLAYER") (getvar "PLINEWID") (entlast))
-        samples nil region-called nil)
-  (defun alc--stat-select-region (layers) (setq region-called T) nil)
+        samples nil region-called nil stat-events nil)
+  (defun alc--ask-stat-text-height ()
+    (setq stat-events (append stat-events '(height))) 150.0)
+  (defun alc--stat-select-region (layers)
+    (setq stat-events (append stat-events '(region)) region-called T) nil)
   (alc--stat-loop)
   (alc-test--stat-check "cancel-layer-choice-skips-region-and-preserves-drawing"
     (and (not region-called) (equal before (list (getvar "CLAYER") (getvar "PLINEWID") (entlast)))))
+  (alc-test--stat-check "height-is-asked-before-layer-selection-even-if-cancelled"
+    (equal stat-events '(height layers)))
+  (setq samples (ssadd) stat-events nil region-called nil)
+  (ssadd a samples)
+  (alc--stat-loop)
+  (alc-test--stat-check "prompt-order-height-then-layer-then-region"
+    (and region-called (equal stat-events '(height layers region))))
   (load (strcat (getenv "ALCWALL_TEST_ROOT") "/src/alc-schedule.lsp"))
   ;; Exercise the real picker; only the mouse/keyboard input boundary is stubbed.
   (defun alc--stat-read-sample-point (/ value)

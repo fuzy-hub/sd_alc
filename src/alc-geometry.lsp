@@ -1,5 +1,5 @@
-(setq *alc-module-version* "3.4.1")
-;;; ALCWALL v3.4.1 - geometry module
+(setq *alc-module-version* "3.4.2")
+;;; ALCWALL v3.4.2 - geometry module
 
 ;;; --------------------------------------------------------------------------
 ;;; Geometry helpers

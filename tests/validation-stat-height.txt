@@ -1,0 +1,16 @@
+VVTK/ALCTK initial text-height prompt - 2026-10-31
+
+New order: text height, sample-layer selection or All, statistics region,
+then insertion point. Enter at the first prompt retains the current height.
+Removed the later height prompt. Filtering, spatial ordering and totals are
+unchanged.
+
+AutoCAD 2027 full acad.exe, isolated session:
+Label: stat-height-20261031-094426-160cc644
+PID: 18228
+Start: 2026-10-31T09:44:32.6026431+07:00
+20 selection/flow checks and 27 detail-table checks PASS.
+Includes actual VVTK -> 150 -> A -> empty region and ALCTK -> Enter -> A
+-> empty region. Both suite markers and run.complete matched the session.
+Static validation PASS in root and distribution checkout.
+Logs: E:\#Supports Files\3. ALC LISP\tests\results\stat-height-20261031-094426-160cc644

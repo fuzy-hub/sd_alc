@@ -1,5 +1,5 @@
-(setq *alc-module-version* "3.4.1")
-;;; ALCWALL v3.4.1 - schedule module
+(setq *alc-module-version* "3.4.2")
+;;; ALCWALL v3.4.2 - schedule module
 
 ;;; --------------------------------------------------------------------------
 ;;; Length schedule
@@ -321,6 +321,7 @@
 
 (defun alc--stat-loop
   (/ text-height selection totals insertion result total-length layers)
+  (setq text-height (alc--ask-stat-text-height))
   (if (setq layers (alc--stat-choose-layers))
     (setq selection (alc--stat-select-region layers)))
   (if (and layers (not selection))
@@ -329,38 +330,20 @@
     (progn
       (setq totals (alc--collect-length-rows selection))
       (if totals
-        (progn
-          (setq text-height (alc--ask-stat-text-height))
-          (if (setq insertion (getpoint "\nChon diem chen bang: "))
+        (if (setq insertion (getpoint "\nChon diem chen bang: "))
           (progn
             (setq result
-              (vl-catch-all-apply
-                'alc--add-length-detail-table
+              (vl-catch-all-apply 'alc--add-length-detail-table
                 (list totals (trans insertion 1 0) text-height)))
             (if (vl-catch-all-error-p result)
-              (prompt
-                (strcat
-                  "\nKhong the tao bang thong ke: "
-                  (vl-catch-all-error-message result)))
+              (prompt (strcat "\nKhong the tao bang thong ke: "
+                (vl-catch-all-error-message result)))
               (progn
                 (setq total-length (alc--total-layer-length totals))
-                (prompt
-                  (strcat
-                    "\nDa tao bang cho "
-                    (itoa (length totals))
-                    " doi tuong. Tong chieu dai="
-                    (rtos (/ total-length 1000.0) 2 3)
-                    " m."))
-              )
-            )
-          )
-        )
-        )
-        (prompt "\nKhong tim thay LINE/POLYLINE co chieu dai hop le.")
-      )
-    )
-  )
-)
+                (prompt (strcat "\nDa tao bang cho " (itoa (length totals))
+                  " doi tuong. Tong chieu dai="
+                  (rtos (/ total-length 1000.0) 2 3) " m."))))))
+        (prompt "\nKhong tim thay LINE/POLYLINE co chieu dai hop le.")))))
 
 ;;; --------------------------------------------------------------------------
 ;;; Door-block schedule

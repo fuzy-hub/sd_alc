@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.4.2 — 2026-10-31
+
+- VVTK/ALCTK hỏi chiều cao chữ ngay khi bắt đầu, sau đó chọn layer mẫu/All, chọn vùng thống kê và điểm chèn bảng.
+
 ## 3.4.1 — 2026-10-31
 
 - VVA/ALCASSIGN/VVASSIGN dùng hộp thoại nhận trực tiếp phím 1–9/numpad: đổi dòng và PLINEWID ngay; Enter/Space xác nhận, Esc hủy. Tối đa 9 layer mỗi trang, Trước/Sau hoặc PageUp/PageDown để truy cập layer còn lại; vẫn chọn chuột và sửa width.

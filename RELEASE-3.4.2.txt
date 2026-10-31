@@ -1,0 +1,12 @@
+ALCWALL 3.4.2 — 2026-10-31
+
+- VVTK / ALCTK hỏi chiều cao chữ ngay khi bắt đầu.
+- Luồng mới: chiều cao chữ → chọn layer mẫu hoặc A (All) → chọn vùng thống kê → chọn điểm chèn bảng.
+- Enter ở bước đầu giữ chiều cao chữ hiện tại.
+- Giữ các chức năng từ 3.4.1: mỗi LINE/pline một dòng và tổng cuối bảng, lọc layer, sắp Xmin theo nhóm dưới 10 đơn vị rồi Ymax cao trước; VVA chọn ngay bằng 1–9 và Enter/Space.
+
+Yêu cầu: AutoCAD 2027 for Windows. Font NGHIA5.SHX không kèm ZIP.
+
+Cài đặt: giải nén toàn bộ, giữ nguyên src và manifest; chạy tools/install.ps1, APPLOAD ALCWALL-LOAD.lsp. Nếu DLL của bản cũ đang được nạp, đóng/mở AutoCAD trước khi ghi đè DLL. Thư viện VVA không thay đổi ở bản này.
+
+Kiểm thử: 325 kiểm tra AutoCAD 2027 và 10 kiểm tra Python đều PASS; manifest/ZIP được xác minh. Thông tin phiên CAD riêng: xem tests/validation-3.4.2.txt.

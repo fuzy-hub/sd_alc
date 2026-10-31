@@ -1,17 +1,21 @@
-# ALCWALL 3.4.1
+# ALCWALL 3.4.2
 
-ALCWALL là bộ công cụ AutoLISP hỗ trợ triển khai tường ALC 2D trên AutoCAD for Windows. Bản 3.4.1 được kiểm thử bằng AutoCAD 2027.
+ALCWALL là bộ công cụ AutoLISP hỗ trợ triển khai tường ALC 2D trên AutoCAD for Windows. Bản 3.4.2 được kiểm thử bằng AutoCAD 2027.
 
 ## Cài đặt
 
 1. Giữ nguyên toàn bộ cấu trúc thư mục, đặc biệt là `ALCWALL.lsp` và thư mục `src`.
 2. Trong AutoCAD, mở `OPTIONS > Files > Support File Search Path` và thêm thư mục ALCWALL.
 3. Chạy PowerShell `./tools/install.ps1`, rồi `APPLOAD` tệp `ALCWALL-LOAD.lsp` được tạo trong thư mục cài. Thêm tệp này vào `APPLOAD > Startup Suite > Contents > Add` để tự nạp mỗi lần mở CAD/bản vẽ. Loader này ghim đúng thư mục khi máy có nhiều bản ALCWALL. Nếu chỉ có một bản trong Support Path, vẫn có thể nạp trực tiếp `ALCWALL.lsp`.
-4. Khi thấy thông báo `ALCWALL v3.4.1 modules loaded`, bộ lệnh đã sẵn sàng.
+4. Khi thấy thông báo `ALCWALL v3.4.2 modules loaded`, bộ lệnh đã sẵn sàng.
 
 Khi cập nhật, APPLOAD lại `ALCWALL-LOAD.lsp`; loader gỡ định nghĩa lệnh cũ `ALCCUT20` còn trong phiên làm việc, chỉ dùng `ALCTRIM`.
 
 Không nạp riêng các tệp trong `src`; `ALCWALL.lsp` là loader duy nhất.
+
+## Thay đổi 3.4.2
+
+- VVTK/ALCTK hỏi chiều cao chữ đầu tiên, tiếp theo chọn layer mẫu hoặc A, chọn vùng thống kê rồi điểm chèn bảng. Enter giữ chiều cao chữ hiện tại.
 
 ## Thay đổi 3.4.1
 
@@ -76,7 +80,7 @@ lựa chọn khác trong `ALCSET` có hiệu lực trong phiên hiện tại.
 
 ## Thống kê theo loại tường ALC
 
-Gõ `ALCTK` hoặc `VVTK`: bấm chọn đối tượng mẫu hoặc bấm vào khoảng trống rồi quét vùng trực tiếp, không cần gõ W; Enter để kết thúc chọn mẫu. Quét trái sang phải chọn đối tượng nằm trọn trong khung; phải sang trái lấy cả đối tượng cắt khung. Các layer có trong tập đối tượng này sẽ được dùng làm bộ lọc thống kê. Nhập `A` (All) ở bước chọn đối tượng để lấy mọi layer như trước. Enter khi chưa chọn đối tượng nào sẽ hủy lệnh. Sau đó quét vùng cần thống kê, nhập chiều cao chữ rồi chọn điểm chèn bảng. Chỉ LINE/POLYLINE trong vùng thống kê thuộc các layer đã lấy từ đối tượng mẫu được ghi vào bảng. Mỗi LINE hoặc pline là một dòng riêng (STT, layer, đơn vị m, chiều dài toàn bộ đối tượng), kể cả cùng layer hoặc cùng chiều dài; pline nhiều đỉnh không bị tách thành nhiều dòng. Các dòng chia nhóm theo Xmin từ trái sang phải (tọa độ WCS). Mỗi nhóm lấy Xmin nhỏ nhất làm mốc; các đối tượng chênh Xmin dưới 10 đơn vị so với mốc được coi là cùng cột và xếp Ymax từ cao xuống thấp. Chênh đúng 10 đơn vị mở nhóm mới. Trong cùng nhóm, nếu Ymax bằng nhau thì xét Xmin rồi handle cố định của đối tượng. Ví dụ Xmin 0, 9, 18 tạo hai nhóm [0, 9] và [18], không gộp dây chuyền. Không phụ thuộc hướng vẽ pline hay thứ tự chọn. Dòng cuối cộng tổng chiều dài. Các đối tượng mẫu chỉ xác định layer, không giới hạn các đối tượng được tính trong vùng thống kê. All vẫn chỉ tính trong vùng thống kê đã quét.
+Gõ `ALCTK` hoặc `VVTK`: chọn chiều cao chữ trước (Enter giữ giá trị hiện tại), rồi bấm chọn đối tượng mẫu hoặc bấm vào khoảng trống rồi quét vùng trực tiếp, không cần gõ W; Enter để kết thúc chọn mẫu. Quét trái sang phải chọn đối tượng nằm trọn trong khung; phải sang trái lấy cả đối tượng cắt khung. Các layer có trong tập đối tượng này sẽ được dùng làm bộ lọc thống kê. Nhập `A` (All) ở bước chọn đối tượng để lấy mọi layer như trước. Enter khi chưa chọn đối tượng nào sẽ hủy lệnh. Sau đó quét vùng cần thống kê rồi chọn điểm chèn bảng. Chỉ LINE/POLYLINE trong vùng thống kê thuộc các layer đã lấy từ đối tượng mẫu được ghi vào bảng. Mỗi LINE hoặc pline là một dòng riêng (STT, layer, đơn vị m, chiều dài toàn bộ đối tượng), kể cả cùng layer hoặc cùng chiều dài; pline nhiều đỉnh không bị tách thành nhiều dòng. Các dòng chia nhóm theo Xmin từ trái sang phải (tọa độ WCS). Mỗi nhóm lấy Xmin nhỏ nhất làm mốc; các đối tượng chênh Xmin dưới 10 đơn vị so với mốc được coi là cùng cột và xếp Ymax từ cao xuống thấp. Chênh đúng 10 đơn vị mở nhóm mới. Trong cùng nhóm, nếu Ymax bằng nhau thì xét Xmin rồi handle cố định của đối tượng. Ví dụ Xmin 0, 9, 18 tạo hai nhóm [0, 9] và [18], không gộp dây chuyền. Không phụ thuộc hướng vẽ pline hay thứ tự chọn. Dòng cuối cộng tổng chiều dài. Các đối tượng mẫu chỉ xác định layer, không giới hạn các đối tượng được tính trong vùng thống kê. All vẫn chỉ tính trong vùng thống kê đã quét.
 
 Gõ `ALCTKT` (hoặc `VVTKT`), quét chọn vùng có tường rồi Enter, nhập tên bảng và chọn điểm chèn. Enter ở tên bảng dùng “BẢNG THỐNG KÊ TƯỜNG ALC”. Bảng gồm STT, loại tường (ALC 100, ALC 150, ALC 200…), đơn vị m, chiều dài và dòng tổng cộng. Ngay bên dưới là phần “CỬA ĐÃ TÍNH TRONG CHIỀU DÀI TƯỜNG”: nhóm theo rộng cửa (mm), số lượng (cái) và chi tiết số cửa “Đã lưu / Suy ra”. Cuối phần cửa có tổng số cửa và tổng chiều rộng được cộng (m). Ví dụ 2 cửa 900 mm và 1 cửa 1200 mm sẽ hiển thị 2 loại, tổng 3 cửa và tổng rộng 3.000 m. Các cửa cùng rộng được gom chung dù thuộc loại tường khác nhau. Chỉ những lỗ mở đã được cộng vào chiều dài tường mới xuất hiện ở phần cửa; không có cửa thì bảng ghi rõ trạng thái này. Cỡ chữ dùng thiết lập thống kê hiện tại. Một lần Undo xóa bảng vừa tạo.
 
