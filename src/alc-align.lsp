@@ -1,5 +1,5 @@
-(setq *alc-module-version* "3.3.6")
-;;; ALCWALL v3.3.6 - alignment module
+(setq *alc-module-version* "3.4.1")
+;;; ALCWALL v3.4.1 - alignment module
 
 ;;; --------------------------------------------------------------------------
 ;;; Text alignment

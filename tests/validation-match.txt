@@ -1,0 +1,11 @@
+VVMATCH Multi — 2026-10-30
+
+Session: alc-336-20261030-142404-488a59fe
+AutoCAD 2027 PID: 5536
+Start: 2026-10-30T14:24:04.3405580+07:00
+
+Full AutoCAD regression: 268 checks PASS; match suite: 20 checks PASS.
+PASS: sequential selections in one native VVMATCH command create two separate local centerline polylines.
+PASS: invalid/repeated picks do not add extra polylines; Enter ends Multi.
+PASS: one native UNDO removes all outputs from Multi and preserves both original walls/hatches.
+Existing current-layer, width, local-only/no-global-scan, rotation/plane and source-preservation cases also pass.

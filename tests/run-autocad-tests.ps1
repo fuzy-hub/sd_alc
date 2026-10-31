@@ -1,4 +1,4 @@
-param([int]$TimeoutSeconds=240, [switch]$FullAutoCAD, [switch]$StylesOnly, [switch]$TrimOnly, [switch]$HardeningOnly, [string]$InputDrawing, [switch]$PublicDoorOnly, [switch]$PublicDoorReopen)
+param([int]$TimeoutSeconds=240, [switch]$FullAutoCAD, [switch]$StylesOnly, [switch]$TrimOnly, [switch]$HardeningOnly, [string]$InputDrawing, [switch]$PublicDoorOnly, [switch]$PublicDoorReopen, [switch]$AssignEnterUI)
 $ErrorActionPreference='Stop'
 if (([int]$StylesOnly.IsPresent+[int]$TrimOnly.IsPresent+[int]$HardeningOnly.IsPresent) -gt 1) { throw 'Choose one suite mode.' }
 if ($PublicDoorOnly -and ($StylesOnly -or $TrimOnly -or $HardeningOnly)) { throw 'PublicDoorOnly cannot be combined with another suite mode.' }
@@ -13,6 +13,7 @@ $taskRun=Join-Path $PSScriptRoot ('results/'+$taskLabel)
 New-Item -ItemType Directory -Path (Join-Path $taskRun 'fixtures') -Force | Out-Null
 if (!$InputDrawing) { $InputDrawing=Join-Path $PSScriptRoot 'fixtures/straight-wall.dwg' }
 $taskDwg=Join-Path $taskRun 'input.dwg'
+if ($AssignEnterUI) { $taskDwg=Join-Path $taskRun ($taskLabel+'.dwg') }
 Copy-Item -LiteralPath $InputDrawing -Destination $taskDwg
 $taskCommands=@'
 (setq alc-test-saved-secureload (getvar "SECURELOAD") alc-test-saved-acad (getenv "ACAD"))
@@ -35,8 +36,88 @@ $taskCommands=@'
 (alc-test--suite "styles-test" "styles-test.lsp" 'alc-test-run-styles nil)
 '@
 $taskSuites=[ordered]@{'smoke-test'=5;'styles-test'=39}
+$taskCommands+="`n"+@'
+(alc-test--suite "layer-test" "layer-test.lsp" 'alc-test-run-layer T)
+ALCLAYER
+CodexLayerA
+(alc-test--step 'alc-test-layer-check-a "layer-test")
+_.UNDO
+1
+(alc-test--step 'alc-test-layer-check-undo "layer-test")
+(setq *alc-layer-test-color* 5)
+VVLAYER
+ALC_wall_CodexLayerB
+(alc-test--step 'alc-test-layer-check-b "layer-test")
+(setq *alc-layer-test-color* nil)
+ALCLAYER
+CodexCancelled
+(alc-test--step 'alc-test-layer-check-cancel "layer-test")
+ALCLAYER
+
+(alc-test--step 'alc-test-layer-check-blank "layer-test")
+(setq *alc-layer-test-color* 1)
+ALCLAYER
+CodexLayerB
+CodexLayerC
+(alc-test--step 'alc-test-layer-check-duplicate "layer-test")
+(alc-test--finish "layer-test")
+'@
+$taskSuites['layer-test']=15
+$taskCommands+="`n(alc-test--suite `"assign-test`" `"assign-test.lsp`" 'alc-test-run-assign nil)`n"
+$taskSuites['assign-test']=12
+$taskUiTest=Join-Path $taskRun 'assign-ui-test.dll'
+& (Join-Path $taskRoot 'tools/build-assign-ui.ps1') -TestOutput $taskUiTest
+$taskCommands+="`n(command-s `"_.NETLOAD`" (strcat (getenv `"ALCWALL_TEST_ROOT`") `"/src/alc-assign-ui.dll`"))`n"
+$taskCommands+="(command-s `"_.NETLOAD`" (strcat (getenv `"ALCWALL_TEST_RUN`") `"/assign-ui-test.dll`"))`n"
+$taskCommands+="(alc-test--write-lines `"assign-ui-test.log`" (ALC-ASSIGN-UI-TEST))`n(alc-test--finish `"assign-ui-test`")`n"
+$taskSuites['assign-ui-test']=15
+
+$taskCommands+="`n(alc-test--suite `"stat-layer-test`" `"stat-layer-test.lsp`" 'alc-test-run-stat-layer nil)`n"
+$taskSuites['stat-layer-test']=16
+$taskCommands+="`n(alc-test--suite `"stat-detail-test`" `"stat-detail-test.lsp`" 'alc-test-run-stat-detail nil)`n"
+$taskSuites['stat-detail-test']=27
 if (!$StylesOnly -and !$PublicDoorOnly) {
     $taskCommands+="`n(load (strcat (getenv `"ALCWALL_TEST_ROOT`") `"/tests/generate-fixtures.lsp`"))`n"
+    $taskCommands+=@'
+(alc-test--suite "match-test" "match-test.lsp" 'alc-test-run-match T)
+(alc-test--step 'alc-test-match-prepare "match-test")
+VV
+0,0
+6000,0
+
+0,100
+ALCDOOR
+900
+500,0
+0,50
+1000,50
+VVMATCH
+500,0
+
+(alc-test--step 'alc-test-match-public-check "match-test")
+_.UNDO
+1
+(alc-test--step 'alc-test-match-undo-check "match-test")
+VVMATCH
+500,50
+
+(alc-test--step 'alc-test-match-public-check "match-test")
+_.UNDO
+1
+(alc-test--step 'alc-test-match-add-invalid "match-test")
+VVMATCH
+500,0
+6500,2000
+500,50
+2500,0
+
+(alc-test--step 'alc-test-match-multi-check "match-test")
+_.UNDO
+1
+(alc-test--step 'alc-test-match-undo-check "match-test")
+(alc-test--finish "match-test")
+'@
+    $taskSuites['match-test']=20
     if (!$TrimOnly -and !$HardeningOnly) {
         $taskCommands+=@'
 (alc-test--suite "settings-test" "settings-test.lsp" 'alc-test-run-settings nil)
@@ -187,6 +268,30 @@ PUBLIC WALL DOORS
     $taskSuites['public-door-test']=5
 }
 $taskCommands=$taskCommands.TrimEnd("`r","`n")+"`n(setenv `"ACAD`" alc-test-saved-acad)`n(setvar `"SECURELOAD`" alc-test-saved-secureload)`n(setq alc-test-end-file (open (alc-test--result-path `"run.complete`") `"w`"))`n(write-line (getenv `"ALCWALL_TEST_LABEL`") alc-test-end-file)`n(close alc-test-end-file)`n(command-s `"_.QSAVE`")`n_.QUIT`n_Y`n"
+if ($AssignEnterUI) {
+    $taskCommands=$taskCommands.Substring(0,$taskCommands.IndexOf('(setenv "ACAD" alc-test-saved-acad)'))+@'
+(alc-test-enter-prepare)
+ALCASSIGN
+(alc-test-enter-check "Enter-from-number" "ALC_Enter_150" 150.0)
+ALCASSIGN
+(alc-test-enter-check "Enter-from-width" "ALC_Enter_150" 125.0)
+VVASSIGN
+(alc-test-enter-check "Enter-from-list" "ALC_Enter_100" 100.0)
+(alc-test--finish "assign-enter-test")
+'@+"`n"+$taskCommands.Substring($taskCommands.IndexOf('(setenv "ACAD" alc-test-saved-acad)'))
+    $taskSuites['assign-enter-test']=3
+}
+$taskExplicitEnv=@"
+(setq alc-test-env-before (mapcar 'getenv '("ALCWALL_TEST_ROOT" "ALCWALL_TEST_RUN" "ALCWALL_TEST_LABEL")))
+(setenv "ALCWALL_TEST_ROOT" "$($taskRoot.Replace('\','/'))")
+(setenv "ALCWALL_TEST_RUN" "$($taskRun.Replace('\','/'))")
+(setenv "ALCWALL_TEST_LABEL" "$taskLabel")
+"@
+$taskCommands=$taskExplicitEnv+"`n"+$taskCommands
+$taskCommands=$taskCommands.Replace('(close alc-test-end-file)', '(close alc-test-end-file)'+"`n"+'(mapcar ''(lambda (key value) (setenv key (if value value ""))) ''("ALCWALL_TEST_ROOT" "ALCWALL_TEST_RUN" "ALCWALL_TEST_LABEL") alc-test-env-before)')
+# A blank command after a Lisp expression repeats the last native CAD command.
+# Keep deliberate blanks after native commands/coordinates, remove Lisp separators.
+$taskCommands=[regex]::Replace($taskCommands, '(?m)^(\([^\r\n]*\))\r?\n(?:[ \t]*\r?\n)+', "`$1`n")
 $taskScript=Join-Path $taskRun 'run.scr'
 Set-Content -LiteralPath $taskScript -Value $taskCommands -Encoding ascii
 [pscustomobject]@{session=$taskLabel;suites=$taskSuites} | ConvertTo-Json | Set-Content (Join-Path $taskRun 'expected.json')
@@ -197,7 +302,8 @@ try {
     $env:ALCWALL_TEST_RUN=$taskRun.Replace('\','/')
     $env:ALCWALL_TEST_LABEL=$taskLabel
     $taskArgs=@('/nologo',('"'+$taskDwg+'"'),'/b',('"'+$taskScript+'"'))
-    $taskProcess=Start-Process -FilePath $taskExe -ArgumentList $taskArgs -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $taskRun 'stdout.log') -RedirectStandardError (Join-Path $taskRun 'stderr.log')
+    $taskWindowStyle=if ($AssignEnterUI) { 'Normal' } else { 'Hidden' }
+    $taskProcess=Start-Process -FilePath $taskExe -ArgumentList $taskArgs -WindowStyle $taskWindowStyle -PassThru -RedirectStandardOutput (Join-Path $taskRun 'stdout.log') -RedirectStandardError (Join-Path $taskRun 'stderr.log')
     $taskStart=$taskProcess.StartTime
     [pscustomobject]@{Label=$taskLabel;ProcessId=$taskProcess.Id;StartTime=$taskStart.ToString('o');Executable=$taskExe} | ConvertTo-Json | Set-Content (Join-Path $taskRun 'session.json')
     Write-Output "Session $taskLabel PID=$($taskProcess.Id) Start=$($taskStart.ToString('o'))"

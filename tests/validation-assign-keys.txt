@@ -1,0 +1,22 @@
+VVA / VVASSIGN / ALCASSIGN keyboard picker - 2026-10-30
+
+Managed .NET 10 modal dialog replaces the DCL number edit field.
+1-9 and numpad immediately select/highlight a row and synchronize PLINEWID.
+Enter and Space confirm. Escape cancels without changing CAD state.
+At most 9 layers per page, with Previous/Next and PageUp/PageDown.
+Click/Tab into PLINEWID to edit it; invalid/unknown/negative widths cannot
+be submitted. Width 0 is supported. The Lisp layer still validates apply.
+VVA is now an explicit public alias, included in the fail-closed loader gate.
+FILEDIA is restored around the first NETLOAD. No user CAD process was used.
+
+AutoCAD 2027 automation: 12 assign checks and 15 managed-dialog checks PASS.
+Actual Computer Use keyboard: 4 checks PASS, with no mouse focus step:
+3 then Enter; 9 then Space; PageDown,1,Enter; Escape preservation.
+Physical tests verified highlighted row and immediate PLINEWID updates.
+
+Automated run: E:\#Supports Files\3. ALC LISP\tests\results\assign-keys-20261030-163911-22de5ac0
+Live keyboard run: E:\#Supports Files\3. ALC LISP\tests\results\assign-live-20261030-164043-c3f876a4
+Session.json records exact process IDs/start times. Markers and run.complete
+were checked against each run label. Static validation and distribution
+manifest validation PASS. Obsolete DCL UI tests/layout were removed.
+The DLL and C# source/build script are included in integrity manifests.

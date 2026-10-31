@@ -1,69 +1,81 @@
 {
-  "version": "3.3.6",
+  "version": "3.4.1",
   "files": {
     "ALCWALL.lsp": {
-      "bytes": 4082,
-      "sha256": "c00b1729adaa3c4698565f605a514e287f3d5f0238a65c3f9bff21f01a52cb4f"
+      "bytes": 4147,
+      "sha256": "a04085a5f69a3a285a40e86426cae0a4671921233da9988f6276cedf9174187d"
     },
     "src/alc-settings.lsp": {
       "bytes": 12193,
-      "sha256": "b3a4d32b5b6b18227fd8a77aa6103a937b1cbc8e9e7af34d74a5b7efc748cf10"
+      "sha256": "9e2b015b892f32250c750aca8d8b6e9fe93084188c9965f7219d5eab4df5d3aa"
     },
     "src/alc-styles.lsp": {
       "bytes": 6583,
-      "sha256": "bd237a80a20f5b96ecc39f63e9abf36c5e2dd2489c35a63b43f3b171d69bb9c4"
+      "sha256": "484c83e0b88ee04d1bcd9e38bb3042a254048d82310530b0a14d6c78ffddeb82"
     },
     "src/alc-patterns.lsp": {
       "bytes": 6999,
-      "sha256": "8fa0d8f128807c6412e9aaa318563785800eb959bb7f21120b4ee76f3fa5ea1f"
+      "sha256": "b74ea64dae3c9a996cf13b06cee865bf21d3ddc4871e0363165d35435ae1d237"
     },
     "src/alc-geometry.lsp": {
       "bytes": 19251,
-      "sha256": "13ae2510da1a29c17c2c23627f0ac9051f708b2836165059ea300286fd975dbc"
+      "sha256": "5ce4b3a026a2ae90ffbd7bc771b590d87e9f3339a6f5254e9ed24bd51a9478c4"
     },
     "src/alc-safety.lsp": {
       "bytes": 7883,
-      "sha256": "b133993feac0275b56dd11772e2a4ecb47f4679a0e159deee9d0c6d49626c267"
+      "sha256": "b20158a03053941fb3c9b0ebbf1263c0882f443ab61792651ca19dc323637418"
     },
     "src/alc-wall.lsp": {
       "bytes": 22383,
-      "sha256": "355c6407e0f812da27f1db1b725a40b5a7e733de394f1da75431e8400fdd4830"
+      "sha256": "6b0eae75e83480497725e46ceb699733d7b998559aefeba3f746a907bd72cb81"
     },
     "src/alc-trim.lsp": {
       "bytes": 9140,
-      "sha256": "6d5b0bfad1e136057bb1d70f9e4e3a3ee2f95ee3a7bc4fa4676710152aa18422"
+      "sha256": "220006666cb4e41784f7c01193881705f736f64973a148590b8e5c797853788b"
     },
     "src/alc-schedule.lsp": {
-      "bytes": 23187,
-      "sha256": "fb85c900f922854fed43d5e9853ed1c6bcb1e558313a15dfed392cb4bfecf25d"
+      "bytes": 29352,
+      "sha256": "f501a152125d5377ae077233fe2e923c4be22719af626796e41080d79bf852ba"
     },
     "src/alc-door-schedule.lsp": {
       "bytes": 12372,
-      "sha256": "922f33feb64048408b3ffacd611150abc200dfb94cec9f0ec805c381851197b7"
+      "sha256": "89282b30d7cd854eecc831f1c2c6cf6e436c7e319f9698f548a034fd282baa0f"
     },
     "src/alc-dim-schedule.lsp": {
       "bytes": 5294,
-      "sha256": "80b2c7c0cc51133ad4810014a778e691ee7bf32f4a4ff0b02fb7fccbf117d294"
+      "sha256": "68cc7c79afc8f64a277d14dd826296cdaadbb5b1e0727b6ca936c341fb3e3d6b"
     },
     "src/alc-count.lsp": {
       "bytes": 5128,
-      "sha256": "c668935c9713394bcbb8d5e8791e3e652247d5a0b798784bcda7dc7e02dd9a74"
+      "sha256": "b9acd03caf69a93871e58a91ed73c233f968aa93d014e998948dd49830cc9ff0"
     },
     "src/alc-text-copy.lsp": {
       "bytes": 4780,
-      "sha256": "56cc0b09ce2ecd79cd412b96729d96a0014d507a1edb1391ca2d00e704b2aa7a"
+      "sha256": "4b3924b10a209a3cd7511dc8b30560e7092e5b2b36d5149e7f4232ae575e2d46"
     },
     "src/alc-align.lsp": {
       "bytes": 5357,
-      "sha256": "2fa6ffca5442f7aed300cf1cc4ccbb1c7e45ffa9ad57092b5625a0f746de6cb3"
+      "sha256": "fcc4e890c4cc436e2de17f9dbefe9d6c389e1389f489576eb2632098f0ecfe18"
     },
     "src/alc-commands.lsp": {
-      "bytes": 5381,
-      "sha256": "731bfbd41023f687fd4c878576428e2438faa69019fc6de0111d7286fcf30ae1"
+      "bytes": 15801,
+      "sha256": "4eeb66d339b3f29a97ba26103a3019256fa07324e95d92b30f900419ad166551"
     },
     "src/alc-patterns.dcl": {
       "bytes": 560,
       "sha256": "7a34c83a1359f8b95c14e8a21ec65eb80e3def3ac149027e1abb6c44e7efaf01"
+    },
+    "src/alc-assign-ui.cs": {
+      "bytes": 8008,
+      "sha256": "3d16b1805fdaa7c29ce7e051e976e6c2cd97f0d6600d0672fabde3feb196dfd1"
+    },
+    "src/alc-assign-ui.dll": {
+      "bytes": 10752,
+      "sha256": "4e1b734763471a9b90926089ddd1e220882d316cfb8c079b3f792fbcdc8029b6"
+    },
+    "tools/build-assign-ui.ps1": {
+      "bytes": 2442,
+      "sha256": "dfb7025d2edeca45a82b21c1d3da539fdaa8c10c0ef052cb409dbc282181efef"
     }
   }
 }

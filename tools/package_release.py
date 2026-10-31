@@ -18,7 +18,7 @@ names+=sorted(name for name in manifest['files'] if name!='ALCWALL.lsp')
 if (ROOT/f'tests/validation-{VERSION}.txt').exists(): names.append(f'tests/validation-{VERSION}.txt')
 with zipfile.ZipFile(out,'w',zipfile.ZIP_DEFLATED) as z:
     for name in names:
-        info=zipfile.ZipInfo(f'ALCWALL-{VERSION}/'+name,date_time=(2026,10,16,0,0,0))
+        info=zipfile.ZipInfo(f'ALCWALL-{VERSION}/'+name,date_time=(2026,10,31,0,0,0))
         info.compress_type=zipfile.ZIP_DEFLATED
         z.writestr(info,(ROOT/name).read_bytes())
 with zipfile.ZipFile(out) as z:

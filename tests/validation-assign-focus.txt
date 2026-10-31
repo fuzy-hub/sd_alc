@@ -1,0 +1,17 @@
+VVASSIGN initial keyboard focus fix - 2026-10-30
+
+Change: alc--assign-dialog-run focuses the number edit box (mode_tile 2)
+and selects its existing contents (mode_tile 3) immediately before start_dialog.
+Typing a number replaces the current selection without first clicking a row.
+Focus is set only at initialization, preserving mouse and Tab navigation.
+
+Static validation: PASS for root and github-publish-3.0 checkout.
+AutoCAD 2027 assign suite: 15 unique checks PASS, repeated twice.
+The log appends across these two launches (30 PASS entries, 0 failures).
+Direct keyboard UI test: NOT VERIFIED. The visible test window stopped
+responding and Computer Use activate_window timed out; no keystroke result
+is claimed. All launched test processes were stopped only after checking
+the exact recorded PID and start time. No pre-existing CAD process was used.
+
+Sessions and script/logs:
+E:\#Supports Files\3. ALC LISP\tests\results\assign-focus-20261030-144235-bc8c16cb

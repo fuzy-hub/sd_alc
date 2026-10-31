@@ -1,0 +1,22 @@
+ALCTK/VVTK: one LINE/polyline per table row - 2026-10-30
+
+Detail rows retain separate objects even when layer and length are equal.
+A multi-vertex polyline is one row with its full curve length. Closed and
+bulged polylines use actual curve length. Final row sums all positive-length
+objects after the existing layer and spatial filters.
+The original aggregate table wrapper remains available to other schedules.
+
+AutoCAD 2027 (full acad.exe), isolated labeled process:
+Session: stat-detail-20261030-152002-077e6438
+PID: 5324
+Start: 2026-10-30T15:20:02.5851702+07:00
+12 detail checks PASS, including actual table row/text/grand-total checks.
+16 layer-selection regression checks PASS.
+Both completion markers and run.complete match the labeled session.
+Static validation PASS in root and distribution checkout.
+
+Full-run attempt alc-336-20261030-151745-e615b73f was not accepted as a
+verified run because CAD environment values sent logs to an earlier run.
+The targeted run above sets explicit paths and verifies all result markers.
+
+Logs: E:\#Supports Files\3. ALC LISP\tests\results\stat-detail-20261030-152002-077e6438

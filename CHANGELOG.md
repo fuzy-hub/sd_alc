@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.4.1 — 2026-10-31
+
+- VVA/ALCASSIGN/VVASSIGN dùng hộp thoại nhận trực tiếp phím 1–9/numpad: đổi dòng và PLINEWID ngay; Enter/Space xác nhận, Esc hủy. Tối đa 9 layer mỗi trang, Trước/Sau hoặc PageUp/PageDown để truy cập layer còn lại; vẫn chọn chuột và sửa width.
+- VVTK/ALCTK lấy layer từ đối tượng mẫu được bấm/quét trực tiếp; A bỏ lọc. Sau đó chọn vùng thống kê. Mỗi LINE/pline một dòng, giữ chiều dài toàn bộ pline và dòng tổng cuối bảng.
+- Thứ tự VVTK: nhóm Xmin tăng, các Xmin chênh dưới 10 đơn vị so với mốc trái nhất cùng nhóm; Ymax giảm dần trong nhóm. Chênh đúng 10 mở nhóm mới, không gộp dây chuyền. Handle giữ thứ tự ổn định khi trùng tọa độ; không thay extents bằng điểm đầu khi lỗi đọc khung bao.
+- Thêm ALCLAYER/VVLAYER: đặt tên với tiền tố ALC_wall_, chọn màu, tạo layer/current trong một Undo; Transparency mặc định 50%.
+- Thêm VVMATCH: tạo pline tim từng đoạn tường thẳng được chọn, dùng layer current và width theo chiều dày; Multi mặc định, Enter kết thúc, bỏ qua chọn sai/lặp, một Undo hoàn tác cả lượt. Giữ tường và khe cửa.
+- Manifest và ZIP bao gồm mã nguồn/hộp thoại .NET 10, DLL và công cụ biên dịch cho AutoCAD 2027. Bộ kiểm tra bổ sung layer, assign, phím tắt, lọc/thứ tự và bảng chi tiết.
+
 ## 3.3.6 — 2026-10-17
 
 - Sửa phần cửa trông như trống: đặt rõ cỡ chữ/căn giữa cho từng ô mới sau InsertRows. Bổ sung hồi quy dùng VV/VVC → ALCDOOR/VVDOOR → ALCTKT, kiểm tra chiều cao chữ, xuất PNG và kiểm tra lại DWG sau mở lại.

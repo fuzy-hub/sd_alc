@@ -1,0 +1,47 @@
+ALCWALL 3.4.1 release validation — 2026-10-31
+
+AutoCAD: Autodesk AutoCAD 2027 (acad.exe), a new isolated process.
+Session: alc-341-20261031-093700-48ca7989
+PID: 7752
+Start: 2026-10-31T09:37:01.3058841+07:00
+All 16 selected suites complete: 323 checks PASS, 0 failures.
+Every log count, completion marker and run.complete matched the session.
+The owned test process exited; no pre-existing AutoCAD process was used.
+
+smoke-test: 5 PASS
+styles-test: 39 PASS
+layer-test: 15 PASS
+assign-test: 12 PASS
+assign-ui-test: 15 PASS
+stat-layer-test: 16 PASS
+stat-detail-test: 27 PASS
+match-test: 20 PASS
+settings-test: 14 PASS
+fixture-test: 6 PASS
+wall-tie-side-test: 6 PASS
+trim-test: 39 PASS
+xtend-test: 32 PASS
+hardening-test: 24 PASS
+wall-schedule-test: 48 PASS
+public-door-test: 5 PASS
+
+Static integrity/version/alias validation PASS.
+Python release-gate unit tests: 10 PASS.
+CAD tests use explicit per-run paths and remove blank Lisp separators that
+would repeat AutoCAD's previous native command. Initial failed/incomplete
+release attempts were rejected; only the verified session above is accepted.
+
+Managed keyboard tests exercise the actual shipped .NET 10 dialog class.
+Earlier physical Computer Use checks on the same UI implementation passed
+3+Enter, 9+Space, PageDown+1+Enter and Escape (2026-10-30; see
+validation-assign-keys.txt). No new physical-input run is claimed here.
+
+Limits: AutoCAD 2027 for Windows; font NGHIA5.SHX is not bundled. Existing
+wall/door geometry limits still apply. VVTK ordering uses WCS extents and
+X groups spanning strictly less than 10 units from the leftmost Xmin.
+When a UI DLL is already loaded, restart AutoCAD before replacing that DLL.
+
+Package: versioned source, module loader manifest, SHA-256 manifest, C# and
+managed DLL, installation/build tools, release notes and this validation report.
+Packaging checks ZIP integrity and source-byte agreement. CI repeats static,
+Python and packaging checks; it does not run AutoCAD.

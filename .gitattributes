@@ -12,3 +12,6 @@
 *.yml text eol=lf
 VERSION text eol=lf
 
+
+*.dll binary
+*.cs text eol=lf

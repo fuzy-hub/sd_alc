@@ -1,0 +1,12 @@
+ALCWALL 3.4.1 — 2026-10-31
+
+- VVA / VVASSIGN / ALCASSIGN: bấm 1–9/numpad để chọn dòng ngay; Enter/Space xác nhận, Esc hủy. Mỗi trang tối đa 9 layer, chuyển trang bằng Trước/Sau hoặc PageUp/PageDown. Có thể sửa PLINEWID và lưu theo layer trong DWG.
+- VVTK / ALCTK: chọn đối tượng mẫu để lấy layer (A nếu không lọc), rồi chọn vùng thống kê. Mỗi LINE hoặc pline một dòng, chiều dài toàn bộ đối tượng, đơn vị m; cuối bảng cộng tổng.
+- Sắp VVTK từ trái sang phải theo Xmin; các Xmin chênh dưới 10 đơn vị so với mốc trái nhất cùng nhóm và được xếp Ymax cao trước. Chênh đúng 10 mở nhóm mới. Không gộp dây chuyền và không bỏ đối tượng trùng vị trí/chiều dài.
+- ALCLAYER/VVLAYER tạo layer với Transparency 50%. VVMATCH mặc định Multi, tạo pline tim từng đoạn tường được chọn và một Undo hoàn tác cả lượt.
+
+Yêu cầu: AutoCAD 2027 for Windows; hộp thoại chọn nhanh dùng .NET 10 có sẵn trong AutoCAD 2027. Font NGHIA5.SHX không kèm ZIP.
+
+Cài đặt: giải nén toàn bộ ZIP, giữ nguyên src và manifest; chạy tools/install.ps1, APPLOAD ALCWALL-LOAD.lsp rồi thêm vào Startup Suite. DLL chọn nhanh được NETLOAD ở lần đầu dùng VVA. Nếu đang chạy bản đã nạp DLL cũ, đóng/mở AutoCAD trước khi cập nhật DLL.
+
+Kiểm thử: 323 assertion AutoCAD 2027 và 10 kiểm thử Python đều PASS; manifest/đóng gói được kiểm tra. Xem tests/validation-3.4.1.txt. Các phiên CAD thử nghiệm được tạo riêng và ghi PID/thời điểm khởi động; không dùng hay dừng phiên CAD có sẵn của người dùng.

@@ -1,0 +1,22 @@
+ALCTK/VVTK exact Xmin/Ymax audit - 2026-10-30
+
+User confirmed strict priority even for very small differences:
+WCS Xmin ascending; only equal Xmin compares WCS Ymax descending.
+No tolerance or column clustering. Exact ties use the permanent entity handle
+so changing selection order cannot reorder coincident objects.
+Removed the former start-point fallback when extents cannot be obtained:
+that case now reports an explicit failure instead of silently sorting wrongly.
+The previous X/Y comparison itself already matched the strict rule.
+No user drawing was supplied, so the reported drawing-specific discrepancy
+has not been reproduced or attributed to a proven cause.
+
+AutoCAD 2027 full acad.exe isolated test:
+Session: stat-exact-20261030-153805-779813af
+PID: 8528
+Start: 2026-10-30T15:38:21.8869015+07:00
+22 detail/ordering checks PASS, including actual table cells and totals.
+16 layer-selection regression checks PASS.
+New coverage includes X/Y differences of 0.0000001, non-initial highest
+vertex, reversed direction, repeated selections, and missing-extents failure.
+Suite and run.complete markers verified against the recorded session.
+Logs: E:\#Supports Files\3. ALC LISP\tests\results\stat-exact-20261030-153805-779813af

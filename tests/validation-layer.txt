@@ -1,0 +1,10 @@
+ALCLAYER/VVLAYER transparency default — 2026-10-30
+
+Session: alc-336-20261030-115104-0d1f388b
+AutoCAD 2027 PID: 14016
+Start: 2026-10-30T11:51:04.1811744+07:00
+
+Full AutoCAD: 248 checks PASS; layer suite: 15 checks PASS.
+Confirmed actual layer transparency XData decodes to 50 percent after creation by helper/ALCLAYER/VVLAYER.
+Existing-layer attempt preserves custom 20 percent transparency. One Undo removes new layer and restores previous current.
+Transparency is set using native -LAYER Transparency 50 on only the newly current layer; layer names are not interpreted as wildcard patterns.

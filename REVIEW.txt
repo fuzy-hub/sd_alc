@@ -1,3 +1,11 @@
+RÀ SOÁT ALCWALL 3.4.1 — 31/10/2026
+
+Phạm vi: phát hành các thay đổi VVA (hộp thoại .NET 10/9 layer mỗi trang), lọc layer và bảng chi tiết/thứ tự VVTK, tạo layer transparency 50% và VVMATCH Multi. Manifest bao gồm DLL, C# và script biên dịch. Xem RELEASE-3.4.1.txt và tests/validation-3.4.1.txt.
+
+Các giới hạn hình học và font của bản trước vẫn áp dụng. Phép sắp xếp dùng WCS, nhóm Xmin có khoảng cách nhỏ hơn 10 từ Xmin trái nhất của nhóm. CI chỉ kiểm tra tĩnh/Python/đóng gói; kiểm tra AutoCAD chạy riêng.
+
+--- Ghi chú rà soát lịch sử ---
+
 RÀ SOÁT ALCWALL 3.4.0 — 16/10/2026
 
 Đã triển khai: kiểm tra đầu vào DOOR và hình tự giao; bảo toàn thuộc tính; rollback khi lỗi tạo hatch/thay tường; chỉ mục hatch theo lượt TRIM/XTEND; đo text theo UCS; loader có manifest/cổng ready; test marker hoàn tất/log riêng; đóng gói từ một Git checkout.

@@ -1,5 +1,5 @@
-(setq *alc-module-version* "3.3.6")
-;;; ALCWALL v3.3.6 - schedule module
+(setq *alc-module-version* "3.4.1")
+;;; ALCWALL v3.4.1 - schedule module
 
 ;;; --------------------------------------------------------------------------
 ;;; Length schedule
@@ -63,6 +63,55 @@
   totals
 )
 
+(defun alc--stat-position-before-p (a b / ha hb)
+  ;; Exact ordering used to build deterministic Xmin groups.
+  (cond
+    ((/= (car a) (car b)) (< (car a) (car b)))
+    ((/= (cadr a) (cadr b)) (> (cadr a) (cadr b)))
+    (T
+      ;; Permanent handles make exact spatial ties independent of pick order.
+      (setq ha (caddr a) hb (caddr b))
+      (if (/= (strlen ha) (strlen hb)) (< (strlen ha) (strlen hb))
+        (and (/= ha hb) (= ha (car (acad_strlsort (list ha hb)))))))))
+
+(defun alc--stat-top-before-p (a b)
+  (if (/= (cadr a) (cadr b)) (> (cadr a) (cadr b))
+    (alc--stat-position-before-p a b)))
+
+(defun alc--stat-sort-entries (entries / pending anchor group result item)
+  ;; Each group spans strictly less than 10 units from its leftmost Xmin.
+  ;; Anchoring prevents non-transitive pairwise ties (e.g. X=0,9,18).
+  (setq pending (vl-sort entries 'alc--stat-position-before-p))
+  (while pending
+    (setq anchor (caar pending) group nil)
+    (while (and pending (< (- (caar pending) anchor) 10.0))
+      (setq group (cons (car pending) group) pending (cdr pending)))
+    (foreach item (vl-sort group 'alc--stat-top-before-p)
+      (setq result (cons item result))))
+  (reverse result))
+
+(defun alc--stat-length-entry (entity layer length-value / bounds)
+  (setq bounds (alc--object-bounds entity))
+  (if bounds
+    (list (caar bounds) (cadadr bounds) (cdr (assoc 5 (entget entity)))
+      (cons layer length-value))
+    ;; A start point is not an extent: never silently substitute it for Xmin/Ymax.
+    (vl-exit-with-error
+      (strcat "Khong doc duoc Xmin/Ymax cua doi tuong " (cdr (assoc 5 (entget entity)))
+        "; dung thong ke de tranh sap xep sai."))))
+
+(defun alc--collect-length-rows (selection / index entity layer length-value rows)
+  ;; WCS bounding extents are independent of vertex direction and pick order.
+  (setq index 0)
+  (if selection
+    (repeat (sslength selection)
+      (setq entity (ssname selection index) index (1+ index)
+            layer (cdr (assoc 8 (entget entity)))
+            length-value (alc--curve-length entity))
+      (if (and layer length-value)
+        (setq rows (cons (alc--stat-length-entry entity layer length-value) rows)))))
+  (mapcar 'cadddr (alc--stat-sort-entries rows)))
+
 (defun alc--sort-layer-lengths (totals / names)
   (setq names (acad_strlsort (mapcar 'car totals)))
   (mapcar '(lambda (name) (assoc name totals)) names)
@@ -98,12 +147,11 @@
   (vla-SetText table row column value)
 )
 
-(defun alc--add-length-table
-  (totals insertion text-height
+(defun alc--add-length-table-rows
+  (totals insertion text-height detail
     / space table table-ename row-count row table-row item total-length
       layer-width data-row-height)
-  (setq totals (alc--sort-layer-lengths totals)
-        row-count (+ (length totals) 3)
+  (setq row-count (+ (length totals) 3)
         data-row-height (* text-height 1.8)
         layer-width
           (max
@@ -150,12 +198,12 @@
 
   (vla-MergeCells table 0 0 0 3)
   (alc--set-table-text table 0 0
-    "BẢNG THỐNG KÊ CHIỀU DÀI TƯỜNG")
+    (if detail "BẢNG THỐNG KÊ CHIỀU DÀI TỪNG ĐỐI TƯỢNG" "BẢNG THỐNG KÊ CHIỀU DÀI TƯỜNG"))
   (alc--set-table-text table 1 0 "STT")
   (alc--set-table-text table 1 1 "TÊN LAYER")
   (alc--set-table-text table 1 2 "ĐƠN VỊ")
   (alc--set-table-text table 1 3
-    "CHIỀU DÀI TỔNG THEO LAYER")
+    (if detail "CHIỀU DÀI (m)" "CHIỀU DÀI TỔNG THEO LAYER"))
 
   (setq row 1
         table-row 2
@@ -183,21 +231,111 @@
   table
 )
 
+(defun alc--add-length-table (totals insertion text-height)
+  (alc--add-length-table-rows (alc--sort-layer-lengths totals) insertion text-height nil))
+
+(defun alc--add-length-detail-table (rows insertion text-height)
+  (alc--add-length-table-rows rows insertion text-height T))
+
+(defun alc--stat-sample-layers (selection / index entity name names)
+  (setq index 0)
+  (if selection
+    (repeat (sslength selection)
+      (setq entity (ssname selection index) index (1+ index)
+            name (cdr (assoc 8 (entget entity))))
+      (if (and name (not (member name names))) (setq names (cons name names)))))
+  (if names (acad_strlsort names)))
+
+(defun alc--stat-sample-at-point (point)
+  (ssget point))
+
+(defun alc--stat-sample-in-box (first second)
+  ;; Match the normal left-to-right Window / right-to-left Crossing gesture.
+  (ssget (if (< (car (trans first 1 2)) (car (trans second 1 2))) "_W" "_C") first second))
+
+(defun alc--stat-read-sample-point ()
+  (initget "All")
+  (getpoint "\nChon doi tuong lay layer [All(A)] <Enter xong>: "))
+
+(defun alc--stat-read-sample-corner (first)
+  (getcorner first "\nGoc doi dien: "))
+
+(defun alc--stat-select-layer-objects-run (/ first second picked index entity done answer)
+  (while (not done)
+    (setq first (alc--stat-read-sample-point) picked nil)
+    (cond
+      ((equal first "All") (setq answer 'all done T))
+      ((not first) (setq answer (if (> (sslength selection) 0) selection) done T))
+      (T
+        (setq picked (alc--stat-sample-at-point first))
+        ;; Clicking empty space starts the selection rectangle immediately.
+        (if (and (not picked) (setq second (alc--stat-read-sample-corner first)))
+          (setq picked (alc--stat-sample-in-box first second)))
+        (if picked
+          (progn
+            (setq index 0)
+            (repeat (sslength picked)
+              (setq entity (ssname picked index) index (1+ index))
+              (if (not (ssmemb entity selection))
+                (progn (ssadd entity selection) (redraw entity 3))))
+            (prompt (strcat "\nDa chon " (itoa (sslength selection)) " doi tuong mau.")))))))
+  answer)
+
+(defun alc--stat-select-layer-objects (/ selection old-osmode result index)
+  ;; Restore snaps and sample highlights on Enter, All, ESC, or any input error.
+  (setq selection (ssadd) old-osmode (getvar "OSMODE"))
+  (setvar "OSMODE" (logior old-osmode 16384))
+  (setq result (vl-catch-all-apply 'alc--stat-select-layer-objects-run nil) index 0)
+  (repeat (sslength selection)
+    (redraw (ssname selection index) 4)
+    (setq index (1+ index)))
+  (setvar "OSMODE" old-osmode)
+  (if (vl-catch-all-error-p result)
+    (vl-exit-with-error (vl-catch-all-error-message result)) result))
+
+(defun alc--stat-choose-layers (/ selection layers)
+  (setq selection (alc--stat-select-layer-objects))
+  (if (eq selection 'all) 'all
+    (progn
+      (setq layers (alc--stat-sample-layers selection))
+      (if layers
+        (prompt (strcat "\nDa chon " (itoa (length layers)) " layer de thong ke.")))
+      layers)))
+
+(defun alc--stat-filter-selection (selection layers / index entity result wanted)
+  (setq index 0 result (ssadd))
+  (if (= layers 'all) selection
+    (progn
+      (setq wanted (mapcar 'strcase layers))
+      (if selection
+        (repeat (sslength selection)
+          (setq entity (ssname selection index) index (1+ index))
+          (if (member (strcase (cdr (assoc 8 (entget entity)))) wanted)
+            (ssadd entity result))))
+      (if (> (sslength result) 0) result))))
+
+(defun alc--stat-select-region (layers / selection)
+  (prompt "\nChon vung LINE/POLYLINE can thong ke: ")
+  (setq selection (ssget '((0 . "LINE,LWPOLYLINE,POLYLINE"))))
+  (alc--stat-filter-selection selection layers))
+
 (defun alc--stat-loop
-  (/ text-height selection totals insertion result total-length)
-  (setq text-height (alc--ask-stat-text-height))
-  (prompt "\nChon LINE/POLYLINE can thong ke theo layer: ")
-  (setq selection
-    (ssget '((0 . "LINE,LWPOLYLINE,POLYLINE"))))
+  (/ text-height selection totals insertion result total-length layers)
+  (if (setq layers (alc--stat-choose-layers))
+    (setq selection (alc--stat-select-region layers)))
+  (if (and layers (not selection))
+    (prompt "\nKhong co LINE/POLYLINE thuoc layer da chon trong vung chon."))
   (if selection
     (progn
-      (setq totals (alc--collect-layer-lengths selection))
+      (setq totals (alc--collect-length-rows selection))
       (if totals
-        (if (setq insertion (getpoint "\nChon diem chen bang: "))
+        (progn
+          (setq text-height (alc--ask-stat-text-height))
+          (if (setq insertion (getpoint "\nChon diem chen bang: "))
           (progn
             (setq result
               (vl-catch-all-apply
-                'alc--add-length-table
+                'alc--add-length-detail-table
                 (list totals (trans insertion 1 0) text-height)))
             (if (vl-catch-all-error-p result)
               (prompt
@@ -210,12 +348,13 @@
                   (strcat
                     "\nDa tao bang cho "
                     (itoa (length totals))
-                    " layer. Tong chieu dai="
+                    " doi tuong. Tong chieu dai="
                     (rtos (/ total-length 1000.0) 2 3)
                     " m."))
               )
             )
           )
+        )
         )
         (prompt "\nKhong tim thay LINE/POLYLINE co chieu dai hop le.")
       )

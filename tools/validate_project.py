@@ -6,6 +6,7 @@ import re
 
 ROOT = Path(__file__).resolve().parents[1]
 VERSION = (ROOT / 'VERSION').read_text(encoding='utf-8').strip()
+EXTRA_FILES = ['src/alc-assign-ui.cs', 'src/alc-assign-ui.dll', 'tools/build-assign-ui.ps1']
 MODULES = ['alc-settings.lsp', 'alc-styles.lsp', 'alc-patterns.lsp',
            'alc-geometry.lsp', 'alc-safety.lsp', 'alc-wall.lsp', 'alc-trim.lsp',
            'alc-schedule.lsp', 'alc-door-schedule.lsp', 'alc-dim-schedule.lsp',
@@ -39,7 +40,7 @@ def validate():
                 raise ValueError(f'Missing alias: {alias}')
     manifest = json.loads((ROOT/'manifest.json').read_text(encoding='utf-8'))
     if manifest['version'] != VERSION: raise ValueError('Manifest version mismatch')
-    expected = ['ALCWALL.lsp', *['src/'+m for m in MODULES], 'src/alc-patterns.dcl']
+    expected = ['ALCWALL.lsp', *['src/'+m for m in MODULES], 'src/alc-patterns.dcl', *EXTRA_FILES]
     if set(manifest['files']) != set(expected): raise ValueError('Manifest file set mismatch')
     for name, info in manifest['files'].items():
         data=(ROOT/name).read_bytes()

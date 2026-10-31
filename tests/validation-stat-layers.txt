@@ -1,0 +1,21 @@
+ALCTK/VVTK direct sample selection - 2026-10-30
+
+Flow: click sample objects or click empty space then opposite corner;
+Enter completes the sample selection, then select the statistics region.
+No W keyword is required. Left-to-right uses Window; right-to-left uses
+Crossing. A/All bypasses the layer filter. Text height is asked after the
+statistics region. Snaps and sample highlights are restored on completion
+or errors.
+
+AutoCAD 2027 Core Console: 17/17 checks PASS; completion marker verified.
+16 regression checks plus actual native A keyword input.
+New checks cover automatic box selection without W, combined point/box
+samples, duplicate removal, All after samples, and OSMODE preservation.
+Input/selection boundaries are stubbed for automated mouse-flow checks;
+no physical mouse UI test or GUI table insertion is claimed.
+Static validation PASS for root and distribution checkout.
+
+Session: stat-normal-20261030-151202-c65d31ba
+PID: 8772
+Start: 2026-10-30T15:12:19.1852626+07:00
+Logs: E:\#Supports Files\3. ALC LISP\tests\results\stat-normal-20261030-151202-c65d31ba

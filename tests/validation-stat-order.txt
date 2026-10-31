@@ -1,0 +1,17 @@
+ALCTK/VVTK spatial row order - 2026-10-30
+
+Priority: minimum WCS X ascending (left edge), then maximum WCS Y descending
+(top edge). Selection index breaks exact spatial ties, preserving overlapping
+objects with equal layer/length. Bounding extents make row order independent
+of polyline vertex direction. Other schedules retain their existing ordering.
+
+AutoCAD 2027 full acad.exe, isolated session:
+Label: stat-order-20261030-152727-2cb4ca01
+PID: 17060
+Start: 2026-10-30T15:27:27.3297890+07:00
+16 detail/order/table checks PASS; 16 selection/filter regression checks PASS.
+Verified both suite markers and run.complete against the recorded session.
+Includes left-before-right even if right is higher; same-left-edge top-first;
+reversed vertex direction; coincident duplicates; actual table cells/totals.
+
+Logs: E:\#Supports Files\3. ALC LISP\tests\results\stat-order-20261030-152727-2cb4ca01

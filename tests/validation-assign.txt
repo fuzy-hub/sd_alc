@@ -1,0 +1,11 @@
+ALCASSIGN Enter fix — 2026-10-30
+
+Session: alc-336-20261030-111943-c50c8a56
+AutoCAD 2027 PID: 8240
+Start: 2026-10-30T11:19:43.9418922+07:00
+
+Full AutoCAD regression: 245 checks PASS; assign suite: 15 checks PASS.
+Confirmed in real loaded DCL: layers/number/width allow_accept=true; accept is_default=true.
+Dialog interaction remains validated before applying current layer/PLINEWID.
+A separate keyboard UI attempt was blocked by Computer Use detecting user input. No real keystroke completion is claimed.
+Owned UI test PID 22288 was stopped only after exact DateTime/PID verification; no existing user CAD process was controlled.

@@ -1,0 +1,20 @@
+ALCTK/VVTK Xmin tolerance - 2026-10-30
+
+Sort exact Xmin ascending to establish deterministic groups. Each group's
+leftmost Xmin is the anchor; members differ from it by strictly less than
+10 drawing units. Within a group sort Ymax descending, then Xmin and handle.
+Exactly 10 starts a new group. Anchoring avoids non-transitive pairwise
+comparisons or chain-merging X=0,9,18 into one group.
+Length rows, layer filters and final totals are preserved.
+
+AutoCAD 2027 full acad.exe isolated session:
+Label: stat-tolerance-20261030-162521-3937b9f3
+PID: 18596
+Start: 2026-10-30T16:25:32.8223917+07:00
+27 detail/order/table checks PASS; 16 layer-selection checks PASS.
+Verified both suite markers and run.complete against the session label.
+New coverage: under 10 vs exactly 10; negative X; reversed selection order;
+chain grouping; actual geometry with nearly equal Xmin and different Ymax.
+Static validation PASS for root and distribution checkout.
+
+Logs: E:\#Supports Files\3. ALC LISP\tests\results\stat-tolerance-20261030-162521-3937b9f3
