@@ -1,5 +1,5 @@
-(setq *alc-module-version* "3.4.3")
-;;; ALCWALL v3.4.3 - schedule module
+(setq *alc-module-version* "3.4.4")
+;;; ALCWALL v3.4.4 - schedule module
 
 ;;; --------------------------------------------------------------------------
 ;;; Length schedule
@@ -47,13 +47,24 @@
   )
 )
 
+(defun alc--revcloud-p (entity / data value)
+  (setq data (entget entity '("RevcloudProps")))
+  (or (= (cdr (assoc 0 data)) "REVCLOUD")
+      (and (member (cdr (assoc 0 data)) '("LWPOLYLINE" "POLYLINE"))
+        (or (assoc -3 data)
+            ;; AutoCAD's revcloud facet can identify clouds without relying on layer.
+            (progn
+              (setq value (vl-catch-all-apply 'getpropertyvalue
+                (list entity "RevcloudArcLength")))
+              (and (not (vl-catch-all-error-p value)) (numberp value) (> value 0.0)))))))
+
 (defun alc--collect-layer-lengths
   (selection / index entity layer length-value totals)
   (setq index 0)
   (while (< index (sslength selection))
     (setq entity (ssname selection index)
           layer (cdr (assoc 8 (entget entity)))
-          length-value (alc--curve-length entity))
+          length-value (if (not (alc--revcloud-p entity)) (alc--curve-length entity)))
     (if (and layer length-value)
       (setq totals
         (alc--add-layer-length totals layer length-value))
@@ -107,7 +118,7 @@
     (repeat (sslength selection)
       (setq entity (ssname selection index) index (1+ index)
             layer (cdr (assoc 8 (entget entity)))
-            length-value (alc--curve-length entity))
+            length-value (if (not (alc--revcloud-p entity)) (alc--curve-length entity)))
       (if (and layer length-value)
         (setq rows (cons (alc--stat-length-entry entity layer length-value) rows)))))
   (mapcar 'cadddr (alc--stat-sort-entries rows)))
@@ -306,7 +317,7 @@
           ;; AutoLISP variables belong to this drawing; do not clear on reload.
           ;; Cache layer names, not sample entities, so deleted samples are safe.
           (setq *alc-stat-last-layers* layers)
-          (prompt (strcat "\nDa chon " (itoa (length layers)) " layer de thong ke."))))
+          (prompt (strcat "\nDa chon " (itoa (length layers)) " layer lam bo loc."))))
       layers)
     (T
       (if (boundp '*alc-stat-last-layers*) (setq last *alc-stat-last-layers*))
@@ -324,7 +335,7 @@
               (prompt (strcat "\nDung lai last pick: " (itoa (length layers)) " layer.")))
             (prompt "\nCac layer trong last pick khong con ton tai. Hay chon mau moi."))
           layers)
-        (T (prompt "\nChua co last pick layer. Huy thong ke.") nil)))))
+        (T (prompt "\nChua co last pick layer. Huy lenh.") nil)))))
 
 (defun alc--stat-filter-selection (selection layers / index entity result wanted)
   (setq index 0 result (ssadd))
@@ -367,7 +378,7 @@
                 (prompt (strcat "\nDa tao bang cho " (itoa (length totals))
                   " doi tuong. Tong chieu dai="
                   (rtos (/ total-length 1000.0) 2 3) " m."))))))
-        (prompt "\nKhong tim thay LINE/POLYLINE co chieu dai hop le.")))))
+        (prompt "\nKhong tim thay LINE/POLYLINE hop le (REVCLOUD duoc bo qua).")))))
 
 ;;; --------------------------------------------------------------------------
 ;;; Door-block schedule

@@ -1,17 +1,22 @@
-# ALCWALL 3.4.3
+# ALCWALL 3.4.4
 
-ALCWALL là bộ công cụ AutoLISP hỗ trợ triển khai tường ALC 2D trên AutoCAD for Windows. Bản 3.4.3 được kiểm thử bằng AutoCAD 2027.
+ALCWALL là bộ công cụ AutoLISP hỗ trợ triển khai tường ALC 2D trên AutoCAD for Windows. Bản 3.4.4 được kiểm thử bằng AutoCAD 2027.
 
 ## Cài đặt
 
 1. Giữ nguyên toàn bộ cấu trúc thư mục, đặc biệt là `ALCWALL.lsp` và thư mục `src`.
 2. Trong AutoCAD, mở `OPTIONS > Files > Support File Search Path` và thêm thư mục ALCWALL.
 3. Chạy PowerShell `./tools/install.ps1`, rồi `APPLOAD` tệp `ALCWALL-LOAD.lsp` được tạo trong thư mục cài. Thêm tệp này vào `APPLOAD > Startup Suite > Contents > Add` để tự nạp mỗi lần mở CAD/bản vẽ. Loader này ghim đúng thư mục khi máy có nhiều bản ALCWALL. Nếu chỉ có một bản trong Support Path, vẫn có thể nạp trực tiếp `ALCWALL.lsp`.
-4. Khi thấy thông báo `ALCWALL v3.4.3 modules loaded`, bộ lệnh đã sẵn sàng.
+4. Khi thấy thông báo `ALCWALL v3.4.4 modules loaded`, bộ lệnh đã sẵn sàng.
 
 Khi cập nhật, APPLOAD lại `ALCWALL-LOAD.lsp`; loader gỡ định nghĩa lệnh cũ `ALCCUT20` còn trong phiên làm việc, chỉ dùng `ALCTRIM`.
 
 Không nạp riêng các tệp trong `src`; `ALCWALL.lsp` là loader duy nhất.
+
+## Thay đổi 3.4.4
+
+- Thêm VVFILTER: chọn layer mẫu hoặc dùng last pick chung với VVTK/ALCTK, chọn đối tượng rồi giữ lại tập chọn đúng layer để dùng tiếp với Copy/Move/Properties. Hỗ trợ mọi loại đối tượng; All không lọc layer.
+- VVTK/ALCTK bỏ qua REVCLOUD được AutoCAD nhận diện, kể cả cùng layer hoặc dùng All; giữ pline cong thông thường. Không sửa các đối tượng nguồn.
 
 ## Thay đổi 3.4.3
 
@@ -63,6 +68,7 @@ Không nạp riêng các tệp trong `src`; `ALCWALL.lsp` là loader duy nhất.
 | `ALCGTS`, `VVGTS` | Đặt chiều rộng và màu cho `ALCGT` |
 | `ALCLAYER`, `VVLAYER` | Tạo layer mới có tiền tố ALC_wall_, chọn màu và đặt current ngay |
 | `ALCASSIGN`, `VVASSIGN`, `VVA` | Chọn layer bắt đầu ALC bằng số hoặc chuột; đặt current và PLINEWID đã lưu |
+| `VVFILTER` | Chọn đối tượng theo layer mẫu hoặc last pick; giữ kết quả trong tập chọn |
 | `VVMATCH` | Tạo pline tim riêng đoạn tường chọn, trên layer current; width theo chiều dày |
 | `ALCTK`, `VVTK` | Chọn layer (hoặc All/A), quét vùng; mỗi LINE/pline một dòng và cuối bảng cộng tổng |
 | `ALCTKT`, `VVTKT` | Quét chọn tường ALC, đặt tên bảng và cộng chiều dài tim theo chiều dày |
@@ -84,7 +90,7 @@ lựa chọn khác trong `ALCSET` có hiệu lực trong phiên hiện tại.
 
 ## Thống kê theo loại tường ALC
 
-Gõ `ALCTK` hoặc `VVTK`: chọn chiều cao chữ trước (Enter giữ giá trị hiện tại), rồi bấm chọn đối tượng mẫu hoặc bấm vào khoảng trống rồi quét vùng trực tiếp, không cần gõ W; Enter để kết thúc chọn mẫu. Quét trái sang phải chọn đối tượng nằm trọn trong khung; phải sang trái lấy cả đối tượng cắt khung. Các layer có trong tập đối tượng này sẽ được dùng làm bộ lọc thống kê. Nhập `A` (All) ở bước chọn đối tượng để lấy mọi layer như trước. Enter hoặc Space khi chưa chọn đối tượng mẫu sẽ dùng lại danh sách layer đã chọn gần nhất (last pick) trong bản vẽ hiện tại; nếu lượt trước chọn A thì dùng lại All. Lần đầu chưa có last pick sẽ hủy. Chọn mẫu mới sẽ thay lựa chọn đã nhớ; các layer đã xóa được bỏ qua, không tự chuyển sang All. Last pick giữ trong phiên bản vẽ và qua APPLOAD lại, không lưu sang lần đóng/mở bản vẽ. Sau đó quét vùng cần thống kê rồi chọn điểm chèn bảng. Chỉ LINE/POLYLINE trong vùng thống kê thuộc các layer đã lấy từ đối tượng mẫu được ghi vào bảng. Mỗi LINE hoặc pline là một dòng riêng (STT, layer, đơn vị m, chiều dài toàn bộ đối tượng), kể cả cùng layer hoặc cùng chiều dài; pline nhiều đỉnh không bị tách thành nhiều dòng. Các dòng chia nhóm theo Xmin từ trái sang phải (tọa độ WCS). Mỗi nhóm lấy Xmin nhỏ nhất làm mốc; các đối tượng chênh Xmin dưới 10 đơn vị so với mốc được coi là cùng cột và xếp Ymax từ cao xuống thấp. Chênh đúng 10 đơn vị mở nhóm mới. Trong cùng nhóm, nếu Ymax bằng nhau thì xét Xmin rồi handle cố định của đối tượng. Ví dụ Xmin 0, 9, 18 tạo hai nhóm [0, 9] và [18], không gộp dây chuyền. Không phụ thuộc hướng vẽ pline hay thứ tự chọn. Dòng cuối cộng tổng chiều dài. Các đối tượng mẫu chỉ xác định layer, không giới hạn các đối tượng được tính trong vùng thống kê. All vẫn chỉ tính trong vùng thống kê đã quét.
+Gõ `ALCTK` hoặc `VVTK`: chọn chiều cao chữ trước (Enter giữ giá trị hiện tại), rồi bấm chọn đối tượng mẫu hoặc bấm vào khoảng trống rồi quét vùng trực tiếp, không cần gõ W; Enter để kết thúc chọn mẫu. Quét trái sang phải chọn đối tượng nằm trọn trong khung; phải sang trái lấy cả đối tượng cắt khung. Các layer có trong tập đối tượng này sẽ được dùng làm bộ lọc thống kê. Nhập `A` (All) ở bước chọn đối tượng để lấy mọi layer như trước. Enter hoặc Space khi chưa chọn đối tượng mẫu sẽ dùng lại danh sách layer đã chọn gần nhất (last pick) trong bản vẽ hiện tại; nếu lượt trước chọn A thì dùng lại All. Lần đầu chưa có last pick sẽ hủy. Chọn mẫu mới sẽ thay lựa chọn đã nhớ; các layer đã xóa được bỏ qua, không tự chuyển sang All. Last pick giữ trong phiên bản vẽ và qua APPLOAD lại, không lưu sang lần đóng/mở bản vẽ. Sau đó quét vùng cần thống kê rồi chọn điểm chèn bảng. Chỉ LINE/POLYLINE trong vùng thống kê thuộc các layer đã lấy từ đối tượng mẫu được ghi vào bảng. Mỗi LINE hoặc pline là một dòng riêng (STT, layer, đơn vị m, chiều dài toàn bộ đối tượng), kể cả cùng layer hoặc cùng chiều dài; pline nhiều đỉnh không bị tách thành nhiều dòng. Các dòng chia nhóm theo Xmin từ trái sang phải (tọa độ WCS). Mỗi nhóm lấy Xmin nhỏ nhất làm mốc; các đối tượng chênh Xmin dưới 10 đơn vị so với mốc được coi là cùng cột và xếp Ymax từ cao xuống thấp. Chênh đúng 10 đơn vị mở nhóm mới. Trong cùng nhóm, nếu Ymax bằng nhau thì xét Xmin rồi handle cố định của đối tượng. Ví dụ Xmin 0, 9, 18 tạo hai nhóm [0, 9] và [18], không gộp dây chuyền. Không phụ thuộc hướng vẽ pline hay thứ tự chọn. REVCLOUD được bỏ qua, kể cả nằm trên layer đã chọn hoặc dùng All; pline cong thông thường vẫn được tính. Dòng cuối cộng tổng chiều dài. Các đối tượng mẫu chỉ xác định layer, không giới hạn các đối tượng được tính trong vùng thống kê. All vẫn chỉ tính trong vùng thống kê đã quét.
 
 Gõ `ALCTKT` (hoặc `VVTKT`), quét chọn vùng có tường rồi Enter, nhập tên bảng và chọn điểm chèn. Enter ở tên bảng dùng “BẢNG THỐNG KÊ TƯỜNG ALC”. Bảng gồm STT, loại tường (ALC 100, ALC 150, ALC 200…), đơn vị m, chiều dài và dòng tổng cộng. Ngay bên dưới là phần “CỬA ĐÃ TÍNH TRONG CHIỀU DÀI TƯỜNG”: nhóm theo rộng cửa (mm), số lượng (cái) và chi tiết số cửa “Đã lưu / Suy ra”. Cuối phần cửa có tổng số cửa và tổng chiều rộng được cộng (m). Ví dụ 2 cửa 900 mm và 1 cửa 1200 mm sẽ hiển thị 2 loại, tổng 3 cửa và tổng rộng 3.000 m. Các cửa cùng rộng được gom chung dù thuộc loại tường khác nhau. Chỉ những lỗ mở đã được cộng vào chiều dài tường mới xuất hiện ở phần cửa; không có cửa thì bảng ghi rõ trạng thái này. Cỡ chữ dùng thiết lập thống kê hiện tại. Một lần Undo xóa bảng vừa tạo.
 
@@ -211,6 +217,10 @@ Gõ `VVA`, `ALCASSIGN` hoặc `VVASSIGN`. Bảng liệt kê layer nội bộ b�
 
 Độ rộng được lưu trong layer của chính DWG, giữ khi nạp lại Lisp hoặc đổi tên layer. Khi chưa có giá trị lưu, lấy số ở cuối tên nếu được ngăn bởi dấu gạch dưới/khoảng trắng/gạch nối: `ALC_wall_100` → 100, `ALC_wall_150` → 150. Tên như `ALC_wall_Tang1` không tự hiểu 1 là độ rộng; nhập một lần trong ô PLINEWID. Giá trị cho phép từ 0 trở lên và có thể ghi đè số suy ra từ tên. Layer xref không được liệt kê; layer đóng băng cần thaw trước khi chọn. Lệnh đổi độ rộng mặc định cho polyline vẽ sau đó, không sửa polyline đã có và không đổi chiều dày tường của VV/VVC.
 
+## Chọn đối tượng theo layer — VVFILTER
+
+Gõ `VVFILTER`, bấm/quét chọn đối tượng mẫu để lấy các layer cần lọc rồi Enter. Enter/Space khi chưa chọn mẫu sẽ dùng last pick chung với VVTK/ALCTK; `A` chọn All. Sau đó bấm/quét chọn các đối tượng cần lọc và Enter. Kết quả chỉ giữ các đối tượng thuộc bộ lọc trong tập chọn hiện hành để dùng tiếp với Copy, Move, Properties… Không giới hạn loại đối tượng, không chỉ các layer ALC và không quét toàn bản vẽ ngoài vùng/tập đối tượng bạn chọn. Với block, lọc theo layer của chính block, không đi sâu các đối tượng bên trong. Không thay đổi hình học, layer hay PLINEWID. Nếu không có đối tượng khớp, tập chọn được xóa. Chưa có last pick và không chọn mẫu thì hủy trước bước chọn đối tượng.
+
 ## Tạo pline tim tường — VVMATCH
 
 Gõ `VVMATCH` để vào chế độ Multi, chọn liên tiếp biên hoặc hatch các đoạn tường ALC thẳng; Enter kết thúc lượt chọn. Chọn sai đối tượng được yêu cầu chọn lại; mỗi tường chỉ tạo một pline trong cùng lượt. Lệnh tạo một LWPOLYLINE mở hai đỉnh trùng tim, chỉ từ đầu này đến đầu kia của chính đoạn được chọn. Pline dùng layer đang current, màu và transparency ByLayer; width lấy theo chiều dày tường. Không đổi current layer hoặc PLINEWID, giữ nguyên tường/hatch gốc; một Undo xóa toàn bộ pline đã tạo trong lượt Multi.
@@ -218,3 +228,5 @@ Gõ `VVMATCH` để vào chế độ Multi, chọn liên tiếp biên hoặc hat
 Lệnh chỉ đọc dữ liệu của đối tượng được chọn: không ssget toàn bản vẽ, không quét hatch hoặc tạo chỉ mục hatch, không ghép tường lân cận và không nối qua cửa. Sau khi cắt cửa, chọn bên nào chỉ tạo pline cho bên đó. Chiều dày ưu tiên dấu ALC lưu trên tường, sau đó độ rộng lưu/suy ra từ layer nguồn nếu khớp hình học; tường cũ thiếu thông tin dùng cạnh ngắn của hình chữ nhật. Layer nguồn cũ cần bắt đầu ALC hoặc có tên `0. Tuong ALC`; tường có dấu ALC dùng được trên layer khác. Tường gấp khúc/cong/hình học không hợp lệ bị từ chối. Layer current cần mở khóa; layer nguồn khóa vẫn có thể được đọc vì nguồn không bị sửa.
 
 Kiểm thử mã nguồn: dùng PowerShell 7.6 (.NET 10) để chạy `./tests/run-autocad-tests.ps1 -FullAutoCAD`. Công cụ biên dịch hộp thoại chỉ phục vụ phát triển; người dùng dùng DLL đã đi kèm bản ZIP.
+
+REVCLOUD đã bị mất cả dấu `RevcloudProps` lẫn thuộc tính nhận diện của AutoCAD không được suy đoán chỉ từ hình dạng, để tránh loại nhầm pline cong thông thường.

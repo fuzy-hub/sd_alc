@@ -1,0 +1,13 @@
+ALCWALL 3.4.4 — 2026-10-31
+
+- Thêm VVFILTER: chọn đối tượng mẫu để lấy layer lọc, hoặc Enter/Space dùng last pick chung với VVTK/ALCTK; A chọn All. Sau đó chọn đối tượng, Enter kết thúc; chỉ các đối tượng đúng layer được giữ trong tập chọn để dùng tiếp với Copy, Move, Properties…
+- VVFILTER hỗ trợ mọi loại đối tượng và layer bất kỳ. Lọc block theo layer của block reference, không đi sâu nội dung. Không sửa hình học, layer current hoặc PLINEWID. Kết quả không khớp sẽ xóa tập chọn; hủy bước chọn đối tượng giữ tập chọn trước đó.
+- VVTK/ALCTK bỏ qua REVCLOUD được AutoCAD nhận diện trong các dòng chi tiết và tổng cuối bảng, kể cả cùng layer được chọn hoặc dùng All. Pline cong thông thường vẫn được tính; nguồn không bị sửa. VVFILTER vẫn chọn được REVCLOUD như các đối tượng khác.
+
+Nhận diện REVCLOUD dựa vào RevcloudProps hoặc thuộc tính RevcloudArcLength của AutoCAD. Không suy đoán từ hình dạng khi đối tượng đã mất cả hai dấu nhận diện.
+
+Yêu cầu: AutoCAD 2027 for Windows. Font NGHIA5.SHX không kèm ZIP.
+
+Cài đặt: giải nén toàn bộ, giữ nguyên src và manifest; chạy tools/install.ps1, APPLOAD ALCWALL-LOAD.lsp. DLL VVA không đổi so với 3.4.3; đóng AutoCAD trước khi ghi đè DLL đang được nạp.
+
+Kiểm thử: 359 kiểm tra AutoCAD 2027 và 10 kiểm tra Python đều PASS; manifest/ZIP được xác minh. Thông tin phiên CAD riêng: xem tests/validation-3.4.4.txt.

@@ -1,5 +1,5 @@
-(setq *alc-module-version* "3.4.3")
-;;; ALCWALL v3.4.3 - commands module
+(setq *alc-module-version* "3.4.4")
+;;; ALCWALL v3.4.4 - commands module
 
 ;;; --------------------------------------------------------------------------
 ;;; Public commands
@@ -229,6 +229,40 @@
   (prompt (strcat "\nDa tao " (itoa count) " pline tim tuong.")))
 (defun c:VVMATCH () (alc--run-command 'alc--match-loop "VVMATCH") (princ))
 
+(defun alc--filter-select-objects (/ previous result)
+  ;; ssget otherwise consumes an existing Pickfirst set without prompting.
+  (setq previous (cadr (ssgetfirst)))
+  (sssetfirst nil nil)
+  (prompt "\nChon cac doi tuong can loc theo layer: ")
+  (setq result (vl-catch-all-apply 'ssget nil))
+  (if (or (not result) (vl-catch-all-error-p result))
+    (sssetfirst nil previous))
+  (if (vl-catch-all-error-p result)
+    (vl-exit-with-error (vl-catch-all-error-message result)) result))
+
+(defun alc--filter-loop (/ layers source matched)
+  (if (setq layers (alc--stat-choose-layers))
+    (if (setq source (alc--filter-select-objects))
+      (progn
+        (setq matched (alc--stat-filter-selection source layers))
+        (prompt (strcat "\nDa chon " (itoa (if matched (sslength matched) 0))
+          " doi tuong thuoc bo loc layer."))
+        ;; A wrapped nil means a completed selection with no matches: clear it.
+        (list matched)))))
+
+(defun c:VVFILTER (/ result message)
+  ;; Read-only selection command: do not start an Undo group or modify entities.
+  (if (alc--ready-p)
+    (progn
+      (setq result (vl-catch-all-apply 'alc--filter-loop nil))
+      (if (vl-catch-all-error-p result)
+        (progn
+          (setq message (vl-catch-all-error-message result))
+          (if (not (wcmatch (strcase message) "*BREAK*,*CANCEL*,*EXIT*"))
+            (prompt (strcat "\nVVFILTER error: " message))))
+        (if result (sssetfirst nil (car result))))))
+  (princ))
+
 (defun alc--run-command-unsafe
   (loop-function command-name
     / *error* document document-result old-cmdecho undo-open message)
@@ -423,7 +457,7 @@
 (defun c:VVDIM () (c:ALCDIM))
 
 (princ
-  "\nALCWALL loaded. Commands: ALCWALL, VV, ALCCENTRAL, VVC, ALCDOOR, ALCTRIM, ALCXTEND, ALCLT, ALCGT, ALCGTS, ALCLAYER, ALCASSIGN, VVMATCH, ALCTK, ALCTKT, ALCTKC, TKDIM, TKCOUNT, TKMS, TKALIGN, ALCDIM, ALCSET, ALCS, ALSC. ALCxxx aliases: VVxxx.")
+  "\nALCWALL loaded. Commands: ALCWALL, VV, ALCCENTRAL, VVC, ALCDOOR, ALCTRIM, ALCXTEND, ALCLT, ALCGT, ALCGTS, ALCLAYER, ALCASSIGN, VVA, VVFILTER, VVMATCH, ALCTK, ALCTKT, ALCTKC, TKDIM, TKCOUNT, TKMS, TKALIGN, ALCDIM, ALCSET, ALCS, ALSC. ALCxxx aliases: VVxxx.")
 (princ)
 
 (defun alc--run-command (fn name) (if (alc--ready-p) (alc--run-command-unsafe fn name)))

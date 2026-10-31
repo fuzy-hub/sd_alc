@@ -1,0 +1,27 @@
+VVFILTER layer-filtered selection - 2026-10-31
+
+Select sample objects to obtain layer names, or confirm an empty sample
+selection to reuse the shared VVTK/ALCTK last pick. All is supported.
+Then select target objects; only matching-layer entities remain in Pickfirst.
+Supports all selectable entity types and arbitrary layer names; block
+filtering uses the layer of the block reference itself.
+The target prompt temporarily clears an existing Pickfirst set so ssget
+cannot silently reuse it. Empty/cancelled target input restores that set.
+A completed non-empty target selection with no matches clears Pickfirst.
+No entity geometry, CLAYER or PLINEWID is modified.
+
+AutoCAD 2027 full acad.exe isolated test:
+Label: vvfilter-20261031-110606-6f87b11c
+PID: 26316
+Start: 2026-10-31T11:06:06.4356281+07:00
+15 filter/command checks and 27 shared layer-picker regression checks PASS.
+Native command tests: point sample + All targets; repeat with empty sample
+(last pick) and fresh target prompt; no-match clears selection. Checked the
+actual Pickfirst set after native VVFILTER completed. Scripted coordinates
+were used, not physical mouse input. Log counts, suite markers and
+run.complete all matched the recorded session.
+
+Read-only state debug: same entity data, current layer, PLINEWID and
+last entity all TRUE. Initial failed/incomplete test attempts were rejected.
+Static version/alias/manifest validation PASS in both source copies.
+Logs: E:\#Supports Files\3. ALC LISP\tests\results\vvfilter-20261031-110606-6f87b11c

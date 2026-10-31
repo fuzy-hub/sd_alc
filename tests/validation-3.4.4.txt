@@ -1,0 +1,53 @@
+ALCWALL 3.4.4 release validation — 2026-10-31
+
+Changes: VVFILTER creates a layer-filtered Pickfirst selection using samples
+or the shared VVTK last pick. Target selection always prompts afresh; no-match
+clears selection and cancelled target input restores previous Pickfirst.
+VVTK/ALCTK excludes recognized REVCLOUDs without excluding ordinary curved
+polylines. Shared layer selection still allows clouds for VVFILTER.
+
+AutoCAD 2027 full acad.exe, new isolated process:
+Session: alc-344-20261031-115040-9d8bffa9
+PID: 22280
+Start: 2026-10-31T11:50:41.2389641+07:00
+All 18 suites completed: 359 checks PASS, 0 failures.
+Log counts, suite markers and run.complete matched this session.
+No pre-existing AutoCAD process was controlled.
+
+smoke-test: 5 PASS
+styles-test: 39 PASS
+layer-test: 15 PASS
+assign-test: 12 PASS
+assign-ui-test: 15 PASS
+stat-layer-test: 27 PASS
+stat-detail-test: 27 PASS
+revcloud-test: 13 PASS
+filter-test: 12 PASS
+match-test: 20 PASS
+settings-test: 14 PASS
+fixture-test: 6 PASS
+wall-tie-side-test: 6 PASS
+trim-test: 39 PASS
+xtend-test: 32 PASS
+hardening-test: 24 PASS
+wall-schedule-test: 48 PASS
+public-door-test: 5 PASS
+
+Python release-gate tests: 10 PASS.
+Static version/alias/SHA-256 manifest validation: PASS.
+Packaging verifies archive CRC and source-byte agreement.
+
+Native REVCLOUD fixtures use the latest command version. Checks include
+same-layer and copied clouds, All and cloud-only selections, ordinary
+open/closed curves, source preservation, table rows and final total.
+VVFILTER checks include mixed types, non-ALC layers, shared last pick,
+All, empty/missing filters, selection persistence and source preservation.
+Prior scripted native VVFILTER checks also passed on the same implementation
+before the version bump (validation-vvfilter.txt); no physical mouse run is
+claimed for this release. VVA managed DLL is unchanged from 3.4.3.
+
+Limits: AutoCAD 2027 for Windows; NGHIA5.SHX not bundled. A cloud stripped
+of both RevcloudProps and its recognized AutoCAD property is not inferred
+from shape alone, to avoid false exclusion of ordinary curved polylines.
+CI repeats static, Python and packaging checks; CAD tests are the isolated
+local validation recorded above.

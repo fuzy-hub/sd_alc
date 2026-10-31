@@ -76,6 +76,10 @@ $taskCommands+="`n(alc-test--suite `"stat-layer-test`" `"stat-layer-test.lsp`" '
 $taskSuites['stat-layer-test']=27
 $taskCommands+="`n(alc-test--suite `"stat-detail-test`" `"stat-detail-test.lsp`" 'alc-test-run-stat-detail nil)`n"
 $taskSuites['stat-detail-test']=27
+$taskCommands+="`n(alc-test--suite `"revcloud-test`" `"revcloud-test.lsp`" 'alc-test-run-revcloud nil)`n"
+$taskSuites['revcloud-test']=13
+$taskCommands+="`n(alc-test--suite `"filter-test`" `"filter-test.lsp`" 'alc-test-run-filter nil)`n"
+$taskSuites['filter-test']=12
 if (!$StylesOnly -and !$PublicDoorOnly) {
     $taskCommands+="`n(load (strcat (getenv `"ALCWALL_TEST_ROOT`") `"/tests/generate-fixtures.lsp`"))`n"
     $taskCommands+=@'

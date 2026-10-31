@@ -1,0 +1,27 @@
+VVTK/ALCTK excludes REVCLOUD - 2026-10-31
+
+Collectors exclude native revclouds using the RevcloudProps XData regapp,
+with AutoCAD's RevcloudArcLength property as a fallback. Layer names and
+bulge geometry alone are not used for identification, so ordinary open and
+closed curved polylines remain eligible. Exclusion is applied at collection,
+so layer-filtered and All selections behave consistently. Both detail rows
+and aggregate totals exclude recognized clouds. VVFILTER's general layer
+filter is unchanged and can still select them.
+
+AutoCAD 2027 full acad.exe, new isolated test:
+Label: revcloud-stat-20261031-114200-874b4e14
+PID: 12440
+Start: 2026-10-31T11:42:03.8632933+07:00
+13 native-revcloud/table checks and 27 detail/ordering checks PASS.
+Native clouds were created with (initcommandversion) for the latest command
+version. Probes confirmed version-1/2 legacy output can lack RevcloudProps;
+untagged legacy lookalikes are not identified solely by shape.
+No claim is made for a cloud stripped of both its tag and recognized
+AutoCAD revcloud property.
+
+Tests cover same-layer clouds, copied clouds, All, cloud-only selection,
+ordinary open/closed arcs, unrelated XData, source preservation, and actual
+table row count/total. Completion markers and run.complete matched the run.
+Initial failed/incomplete probes/tests were rejected. Static validation PASS
+in root and distribution checkout.
+Logs: E:\#Supports Files\3. ALC LISP\tests\results\revcloud-stat-20261031-114200-874b4e14

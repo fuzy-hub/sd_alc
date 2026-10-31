@@ -1,3 +1,7 @@
+RÀ SOÁT ALCWALL 3.4.4 — 31/10/2026
+
+Thêm VVFILTER giữ tập chọn đúng layer, dùng chung last pick với VVTK/ALCTK. Luôn hỏi chọn đối tượng mới, không tự dùng tập Pickfirst trước; hủy bước chọn đối tượng khôi phục tập chọn cũ. VVTK loại REVCLOUD theo metadata/thuộc tính AutoCAD nhưng vẫn giữ pline cong thông thường. Xem tests/validation-3.4.4.txt.
+
 RÀ SOÁT ALCWALL 3.4.3 — 31/10/2026
 
 VVTK/ALCTK nhớ last pick layer trong namespace của bản vẽ. Enter/Space khi chưa chọn mẫu dùng lại lựa chọn trước, kể cả All; chọn mới thay bộ lọc. Chỉ lưu tên layer, bỏ qua layer đã xóa, giữ qua APPLOAD và không ghi vào DWG cho phiên sau. Xem tests/validation-3.4.3.txt.

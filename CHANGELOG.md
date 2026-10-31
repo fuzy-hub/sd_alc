@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.4.4 — 2026-10-31
+
+- VVTK/ALCTK bỏ qua REVCLOUD theo dấu/thuộc tính nhận diện của AutoCAD, không tính vào dòng chi tiết hoặc tổng, kể cả cùng layer được chọn/All. Giữ pline cong thông thường.
+
+- Thêm VVFILTER: lấy layer từ đối tượng mẫu hoặc last pick chung với VVTK/ALCTK, chọn đối tượng rồi chỉ giữ các đối tượng khớp trong tập chọn hiện hành. Hỗ trợ mọi loại đối tượng, All, không sửa bản vẽ.
+
 ## 3.4.3 — 2026-10-31
 
 - VVTK/ALCTK: Enter/Space khi chưa chọn mẫu layer dùng lại last pick của bản vẽ hiện tại, kể cả All; chọn mới thay last pick, bỏ qua layer đã xóa. Lần đầu chưa có last pick vẫn hủy.
