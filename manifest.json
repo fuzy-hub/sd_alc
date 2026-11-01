@@ -2,16 +2,16 @@
   "version": "3.4.4",
   "files": {
     "ALCWALL.lsp": {
-      "bytes": 4158,
-      "sha256": "6243fecd613874921954b27f1fb0ef816df4e0f1936143228581979fe96f28c8"
+      "bytes": 4171,
+      "sha256": "b92e975f5bb2327f7ad77bdef9485fa31a304cec8c30831220f31500c6e18ded"
     },
     "src/alc-settings.lsp": {
-      "bytes": 12193,
-      "sha256": "01b071300c9072187c514f573542831a3262ad06e03bd3117965767a06db4b26"
+      "bytes": 12205,
+      "sha256": "9bde914fa60b89b4ddc7633132cc96d54319e7fa1d00a9a24e255b3fcc9a3971"
     },
     "src/alc-styles.lsp": {
-      "bytes": 6583,
-      "sha256": "578816c9032b2a3c509a81c877924197ca5a7a4119f31d0a6a3c68473c2264c5"
+      "bytes": 6591,
+      "sha256": "efe029d64c405dd62d9cc73e2d03c303aab6471b69245591811eb7308aa08bbd"
     },
     "src/alc-patterns.lsp": {
       "bytes": 6999,
@@ -34,8 +34,8 @@
       "sha256": "3fb177a82366c97bea52bee76650f9f525d0065fd7ca3c00de770a0d7dce6e95"
     },
     "src/alc-schedule.lsp": {
-      "bytes": 30809,
-      "sha256": "9443a97330bc546f95d8dddf6f088c401c916a55492b6939bba0f0adcaedf5e2"
+      "bytes": 41806,
+      "sha256": "b42428610f75132097a03a1fd3ad061ad2c817a0db339e3d5d84424353072f4d"
     },
     "src/alc-door-schedule.lsp": {
       "bytes": 12372,
@@ -58,8 +58,8 @@
       "sha256": "8ea271ab23bd89e6230b1454b53bad2afd5a3ccca9ab64674783d78f4731e7c2"
     },
     "src/alc-commands.lsp": {
-      "bytes": 17287,
-      "sha256": "5760c7e2fc9566d8caef74bceb3016d0c13b8c3ed794f92fced9df3d920bd124"
+      "bytes": 21620,
+      "sha256": "2f74e8886567eff01529729f2283a8392a79e77a00d4ef4ddd34317233af4111"
     },
     "src/alc-patterns.dcl": {
       "bytes": 560,

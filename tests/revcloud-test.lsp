@@ -35,20 +35,20 @@
   (alc-test--revcloud-check "ordinary-closed-curved-pline-is-not-a-revcloud"
     (not (alc--revcloud-p closed-arc)))
   (setq selection (ssadd) only-clouds (ssadd)
-        expected (+ 1000.0 (* pi 500.0) (* pi 1000.0))
+        expected (+ 1000.0 (* pi 500.0))
         before (list (entget cloud '("*")) (entget cloud2 '("*")) (entget arc '("*"))))
   (foreach entity (list line arc closed-arc cloud cloud2) (ssadd entity selection))
   (ssadd cloud only-clouds) (ssadd cloud2 only-clouds)
   (setq rows (alc--collect-length-rows selection))
   (alc-test--revcloud-check "detail-rows-exclude-both-clouds-even-on-the-selected-layer"
-    (= (length rows) 3))
+    (= (length rows) 2))
   (alc-test--revcloud-check "grand-total-excludes-cloud-lengths-but-includes-real-arcs"
     (equal (alc--total-layer-length rows) expected 1e-6))
   (setq totals (alc--collect-layer-lengths selection))
   (alc-test--revcloud-check "aggregate-length-collector-also-excludes-clouds"
     (and (= (length totals) 1) (equal (cdar totals) expected 1e-6)))
   (alc-test--revcloud-check "All-mode-still-excludes-revclouds-from-statistics"
-    (= (length (alc--collect-length-rows (alc--stat-filter-selection selection 'all))) 3))
+    (= (length (alc--collect-length-rows (alc--stat-filter-selection selection 'all))) 2))
   (alc-test--revcloud-check "cloud-only-selection-produces-no-length-rows"
     (and (not (alc--collect-length-rows only-clouds)) (not (alc--collect-layer-lengths only-clouds))))
   (alc-test--revcloud-check "shared-layer-filter-still-allows-clouds-for-VVFILTER"
@@ -56,11 +56,11 @@
   (setq cloud-copy (alc--vla-object-ename (vla-Copy (vlax-ename->vla-object cloud))))
   (ssadd cloud-copy selection)
   (alc-test--revcloud-check "copied-native-revcloud-is-also-excluded"
-    (and (alc--revcloud-p cloud-copy) (= (length (alc--collect-length-rows selection)) 3)))
+    (and (alc--revcloud-p cloud-copy) (= (length (alc--collect-length-rows selection)) 2)))
   (setq table (alc--add-length-detail-table rows '(20000.0 0.0 0.0) 100.0))
-  (alc-test--revcloud-check "actual-table-has-only-three-data-rows-and-the-correct-total"
-    (and (= (vla-get-Rows table) 6)
-      (= (vla-GetText table 5 3) (rtos (/ expected 1000.0) 2 3))))
+  (alc-test--revcloud-check "actual-table-has-only-two-open-data-rows-and-the-correct-total"
+    (and (= (vla-get-Rows table) 5)
+      (= (vla-GetText table 4 3) (rtos (/ expected 1000.0) 2 3))))
   (alc-test--revcloud-check "source-revclouds-and-ordinary-pline-are-not-modified"
     (equal before (list (entget cloud '("*")) (entget cloud2 '("*")) (entget arc '("*")))))
   (vla-Delete table)

@@ -1,0 +1,36 @@
+VVSUMTABLE validation - 2026-10-31
+
+Local addition on ALCWALL 3.4.4:
+- Select existing VVTK/ALCTK tables, including older layer-summary tables.
+- Read each displayed TONG CONG cell in metres once; do not add detail rows.
+- One source per output row, with title/handle labels and VVTK spatial ordering.
+- Reuse VVTK table rendering: STT, TEN BANG, DON VI, CHIEU DAI (m), grand total.
+- Keep the reduced length-column width; size the name column for source labels.
+- Skip unrelated tables, malformed totals, wrong units, and VVSUMTABLE output.
+- Preserve source tables; one Undo removes the new output table.
+- Gate VVSUMTABLE after incomplete loader failure; include it in smoke checks.
+
+Successful AutoCAD 2027 full acad.exe isolated test:
+Session: alc-344-20261031-165430-cf84ead4
+PID: 9068
+Start: 2026-10-31T16:54:30.6597728+07:00
+Command: tests/run-autocad-tests.ps1 -FullAutoCAD -HardeningOnly -TimeoutSeconds 240
+Exit code: 0; recorded test process exited.
+sumtable-test: 31 PASS, 0 failures.
+All 14 selected suites: 329 checks PASS, 0 failures.
+Completion markers and run.complete matched this session.
+
+Cases: rounded displayed totals, zero, signed decimal parser, comma decimals,
+invalid whole-cell text, legacy/renamed tables, repeated equal totals, source
+handles/order, metre conversion, actual output cells/columns/text height,
+readability of Vietnamese labels, invalid-only/empty selection, edited totals,
+source preservation, native public command, Pickfirst, Undo, selection cancel
+and insertion cancel. Native tests used scripted input, not physical mouse use.
+Earlier dimension-check runs were rejected; AutoCAD adjusts minimum row height
+to fit Vietnamese source labels. Name-column sizing now avoids line wrapping.
+No pre-existing AutoCAD process was controlled.
+
+Static Lisp/version/SHA-256 manifest checks: PASS.
+Output is a snapshot of current source-table totals, not a live field link.
+Previous VVTK closed-polyline exclusion and VVMATCH updates are retained.
+These are local source edits; no GitHub release or ZIP was published.

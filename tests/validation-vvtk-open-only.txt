@@ -1,0 +1,28 @@
+VVTK / ALCTK excludes closed polylines - 2026-10-31
+
+Local changes on ALCWALL 3.4.4:
+- Both length collectors exclude LWPOLYLINE/POLYLINE with Closed = Yes.
+- Check the closed bit independently of 3D/linetype-generation flags.
+- Exclude closed straight and curved polylines from detail rows and totals.
+- Keep LINE and open straight/curved/legacy 2D/3D polylines.
+- Layer/All selection remains unchanged; source objects are not modified.
+- Retain the VVTK length-column width at 60% and prior VVMATCH changes.
+
+Successful isolated AutoCAD 2027 full acad.exe test:
+Session: alc-344-20261031-163126-24434edc
+PID: 16612
+Start: 2026-10-31T16:31:27.0646588+07:00
+Command: tests/run-autocad-tests.ps1 -FullAutoCAD -HardeningOnly -TimeoutSeconds 240
+Exit code: 0
+stat-detail-test: 37 PASS; stat-layer-test: 27 PASS; revcloud-test: 13 PASS.
+All 13 selected suites: 298 checks PASS, 0 failures.
+Actual table row count and final total were checked after closed-row exclusion.
+Additional cases: legacy closed 2D/3D, closed curved LWPOLYLINE with flag 129,
+open flag 128, open legacy 2D/3D lengths, All mixed selection, closed-only
+selection, source preservation and unchanged VVFILTER selection semantics.
+The earlier incomplete legacy-fixture construction run was rejected.
+Native tests used scripted coordinates; no physical mouse test is claimed.
+No pre-existing AutoCAD process was controlled.
+
+Static Lisp/version/manifest validation: PASS.
+These are local edits; the published GitHub ZIP is unchanged.

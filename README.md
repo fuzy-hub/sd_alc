@@ -31,7 +31,7 @@ Không nạp riêng các tệp trong `src`; `ALCWALL.lsp` là loader duy nhất.
 - VVA/ALCASSIGN/VVASSIGN: chọn dòng ngay bằng phím 1–9/numpad, Enter hoặc Space xác nhận; tối đa 9 layer mỗi trang, có chuyển trang và sửa PLINEWID.
 - VVTK/ALCTK: chọn đối tượng mẫu để lọc layer hoặc A để bỏ lọc, rồi chọn vùng thống kê. Mỗi LINE/pline một dòng, cuối bảng cộng tổng.
 - Sắp VVTK theo Xmin, gom nhóm chênh dưới 10 đơn vị so với mép trái nhất rồi xếp Ymax giảm dần. Giữ đủ các đối tượng trùng vị trí/chiều dài.
-- ALCLAYER/VVLAYER: layer mới mặc định Transparency 50%. VVMATCH mặc định Multi và một Undo cho cả lượt.
+- ALCLAYER/VVLAYER: layer mới mặc định Transparency 50%. VVMATCH hỗ trợ pick/quét chọn nhiều tường và một Undo cho cả lượt.
 - Kèm thư viện chọn nhanh .NET 10 cho AutoCAD 2027. Khi cập nhật từ bản đã nạp DLL cũ, đóng/mở AutoCAD trước khi nạp bản mới; không ghi đè file DLL đang được sử dụng.
 
 ## Thay đổi 3.3.6
@@ -71,6 +71,8 @@ Không nạp riêng các tệp trong `src`; `ALCWALL.lsp` là loader duy nhất.
 | `VVFILTER` | Chọn đối tượng theo layer mẫu hoặc last pick; giữ kết quả trong tập chọn |
 | `VVMATCH` | Tạo pline tim riêng đoạn tường chọn, trên layer current; width theo chiều dày |
 | `ALCTK`, `VVTK` | Chọn layer (hoặc All/A), quét vùng; mỗi LINE/pline một dòng và cuối bảng cộng tổng |
+| `VVTK` / `ALCTK` → `Find` (`F`) | Bấm dòng bảng để tô sáng LINE/pline gốc; giữ nguyên 4 cột |
+| `VVSUMTABLE` | Cộng tổng các bảng VVTK đã chọn; mỗi bảng nguồn một dòng, cuối bảng cộng tổng |
 | `ALCTKT`, `VVTKT` | Quét chọn tường ALC, đặt tên bảng và cộng chiều dài tim theo chiều dày |
 | `ALCTKC`, `VVTKC` | Thống kê block cửa |
 | `TKDIM` | Cộng kích thước và tạo bảng |
@@ -90,7 +92,7 @@ lựa chọn khác trong `ALCSET` có hiệu lực trong phiên hiện tại.
 
 ## Thống kê theo loại tường ALC
 
-Gõ `ALCTK` hoặc `VVTK`: chọn chiều cao chữ trước (Enter giữ giá trị hiện tại), rồi bấm chọn đối tượng mẫu hoặc bấm vào khoảng trống rồi quét vùng trực tiếp, không cần gõ W; Enter để kết thúc chọn mẫu. Quét trái sang phải chọn đối tượng nằm trọn trong khung; phải sang trái lấy cả đối tượng cắt khung. Các layer có trong tập đối tượng này sẽ được dùng làm bộ lọc thống kê. Nhập `A` (All) ở bước chọn đối tượng để lấy mọi layer như trước. Enter hoặc Space khi chưa chọn đối tượng mẫu sẽ dùng lại danh sách layer đã chọn gần nhất (last pick) trong bản vẽ hiện tại; nếu lượt trước chọn A thì dùng lại All. Lần đầu chưa có last pick sẽ hủy. Chọn mẫu mới sẽ thay lựa chọn đã nhớ; các layer đã xóa được bỏ qua, không tự chuyển sang All. Last pick giữ trong phiên bản vẽ và qua APPLOAD lại, không lưu sang lần đóng/mở bản vẽ. Sau đó quét vùng cần thống kê rồi chọn điểm chèn bảng. Chỉ LINE/POLYLINE trong vùng thống kê thuộc các layer đã lấy từ đối tượng mẫu được ghi vào bảng. Mỗi LINE hoặc pline là một dòng riêng (STT, layer, đơn vị m, chiều dài toàn bộ đối tượng), kể cả cùng layer hoặc cùng chiều dài; pline nhiều đỉnh không bị tách thành nhiều dòng. Các dòng chia nhóm theo Xmin từ trái sang phải (tọa độ WCS). Mỗi nhóm lấy Xmin nhỏ nhất làm mốc; các đối tượng chênh Xmin dưới 10 đơn vị so với mốc được coi là cùng cột và xếp Ymax từ cao xuống thấp. Chênh đúng 10 đơn vị mở nhóm mới. Trong cùng nhóm, nếu Ymax bằng nhau thì xét Xmin rồi handle cố định của đối tượng. Ví dụ Xmin 0, 9, 18 tạo hai nhóm [0, 9] và [18], không gộp dây chuyền. Không phụ thuộc hướng vẽ pline hay thứ tự chọn. REVCLOUD được bỏ qua, kể cả nằm trên layer đã chọn hoặc dùng All; pline cong thông thường vẫn được tính. Dòng cuối cộng tổng chiều dài. Các đối tượng mẫu chỉ xác định layer, không giới hạn các đối tượng được tính trong vùng thống kê. All vẫn chỉ tính trong vùng thống kê đã quét.
+Gõ `ALCTK` hoặc `VVTK`: chọn chiều cao chữ trước (Enter giữ giá trị hiện tại), rồi bấm chọn đối tượng mẫu hoặc bấm vào khoảng trống rồi quét vùng trực tiếp, không cần gõ W; Enter để kết thúc chọn mẫu. Quét trái sang phải chọn đối tượng nằm trọn trong khung; phải sang trái lấy cả đối tượng cắt khung. Các layer có trong tập đối tượng này sẽ được dùng làm bộ lọc thống kê. Nhập `A` (All) ở bước chọn đối tượng để lấy mọi layer như trước. Enter hoặc Space khi chưa chọn đối tượng mẫu sẽ dùng lại danh sách layer đã chọn gần nhất (last pick) trong bản vẽ hiện tại; nếu lượt trước chọn A thì dùng lại All. Lần đầu chưa có last pick sẽ hủy. Chọn mẫu mới sẽ thay lựa chọn đã nhớ; các layer đã xóa được bỏ qua, không tự chuyển sang All. Last pick giữ trong phiên bản vẽ và qua APPLOAD lại, không lưu sang lần đóng/mở bản vẽ. Sau đó quét vùng cần thống kê rồi chọn điểm chèn bảng. Chỉ LINE/POLYLINE trong vùng thống kê thuộc các layer đã lấy từ đối tượng mẫu được ghi vào bảng. Mỗi LINE hoặc pline là một dòng riêng (STT, layer, đơn vị m, chiều dài toàn bộ đối tượng), kể cả cùng layer hoặc cùng chiều dài; pline nhiều đỉnh không bị tách thành nhiều dòng. Các dòng chia nhóm theo Xmin từ trái sang phải (tọa độ WCS). Mỗi nhóm lấy Xmin nhỏ nhất làm mốc; các đối tượng chênh Xmin dưới 10 đơn vị so với mốc được coi là cùng cột và xếp Ymax từ cao xuống thấp. Chênh đúng 10 đơn vị mở nhóm mới. Trong cùng nhóm, nếu Ymax bằng nhau thì xét Xmin rồi handle cố định của đối tượng. Ví dụ Xmin 0, 9, 18 tạo hai nhóm [0, 9] và [18], không gộp dây chuyền. Không phụ thuộc hướng vẽ pline hay thứ tự chọn. Mọi LWPOLYLINE/POLYLINE có thuộc tính Closed = Yes đều bị loại khỏi các dòng chi tiết và tổng chiều dài, gồm polyline 2D/3D và dạng có cung, kể cả trên layer đã chọn hoặc dùng All. REVCLOUD cũng được bỏ qua; LINE và polyline mở (kể cả có cung) vẫn được tính. Dòng cuối cộng tổng chiều dài. Các đối tượng mẫu chỉ xác định layer, không giới hạn các đối tượng được tính trong vùng thống kê. All vẫn chỉ tính trong vùng thống kê đã quét.
 
 Gõ `ALCTKT` (hoặc `VVTKT`), quét chọn vùng có tường rồi Enter, nhập tên bảng và chọn điểm chèn. Enter ở tên bảng dùng “BẢNG THỐNG KÊ TƯỜNG ALC”. Bảng gồm STT, loại tường (ALC 100, ALC 150, ALC 200…), đơn vị m, chiều dài và dòng tổng cộng. Ngay bên dưới là phần “CỬA ĐÃ TÍNH TRONG CHIỀU DÀI TƯỜNG”: nhóm theo rộng cửa (mm), số lượng (cái) và chi tiết số cửa “Đã lưu / Suy ra”. Cuối phần cửa có tổng số cửa và tổng chiều rộng được cộng (m). Ví dụ 2 cửa 900 mm và 1 cửa 1200 mm sẽ hiển thị 2 loại, tổng 3 cửa và tổng rộng 3.000 m. Các cửa cùng rộng được gom chung dù thuộc loại tường khác nhau. Chỉ những lỗ mở đã được cộng vào chiều dài tường mới xuất hiện ở phần cửa; không có cửa thì bảng ghi rõ trạng thái này. Cỡ chữ dùng thiết lập thống kê hiện tại. Một lần Undo xóa bảng vừa tạo.
 
@@ -164,13 +166,13 @@ CI chạy kiểm tra tĩnh, kiểm thử cổng xác nhận kết quả và đó
 
 - Gõ `ALCS` hoặc `ALSC`, chọn `Angle` (A), nhập số độ thập phân. Góc mặc định 0°, lưu theo bản vẽ, góc âm hoặc trên 360° được chuẩn hóa. Đây là góc xoay thêm của hatch, không phải góc của mép tường. Hatch khi cắt cửa giữ góc ban đầu; lanh tô và giằng giữ thiết lập riêng.
 - Gõ `ALSC`, chọn `Pattern` (P): bảng danh sách mẫu từ `acad.pat`/`acadiso.pat` có hình xem trước. Chọn mẫu rồi OK; Cancel giữ giá trị cũ. Preview minh họa mẫu ở góc hiện tại, không phản ánh tỷ lệ in. Giữ file `src/alc-patterns.dcl` cùng các module. PAT tùy chỉnh ngoài hai thư viện này chưa nằm trong bảng chọn.
-- Mỗi lần load kiểm tra và chỉ tạo layer còn thiếu `0. Tuong ALC`: Blue (ACI 4), Continuous, lineweight 0.09 mm. Sau load, layer này được đặt làm current. Layer có sẵn được giữ nguyên toàn bộ thuộc tính, kể cả màu/nét/lineweight. Có thể bắt đầu vẽ trên layer này ngay sau load.
+- Mỗi lần load kiểm tra và chỉ tạo layer còn thiếu `ALC_wall default`: Blue (ACI 4), Continuous, lineweight 0.09 mm. Sau load, layer này được đặt làm current. Layer có sẵn được giữ nguyên toàn bộ thuộc tính, kể cả màu/nét/lineweight. Có thể bắt đầu vẽ trên layer này ngay sau load.
 
 XRecord schema 4 bổ sung DXF 44 cho góc, giữ thiết lập của bản vẽ schema 2. Xem `REVIEW.txt` để biết các điểm cần cải tiến tiếp và giới hạn kiểm thử giao diện.
 
 ## Khởi tạo style — 3.2.9
 
-Khi nạp `ALCWALL.lsp`, kiểm tra riêng từng tên layer, text style và dim style. Chỉ tạo tài nguyên chưa tồn tại; tên đã có được giữ nguyên thông số, dim style `ALC Dim TL` được bật nền chữ Background cả khi đã tồn tại; riêng `alc text note` được cập nhật font Arial (TT) và height 0.0. Sau khi kiểm tra/tạo, lập tức đặt `0. Tuong ALC`, `alc text note` và `ALC Dim TL` làm current. Dim style được Restore để áp dụng thông số đã lưu và xóa các override của dim style hiện hành trước đó.
+Khi nạp `ALCWALL.lsp`, kiểm tra riêng từng tên layer, text style và dim style. Chỉ tạo tài nguyên chưa tồn tại; tên đã có được giữ nguyên thông số, dim style `ALC Dim TL` được bật nền chữ Background cả khi đã tồn tại; riêng `alc text note` được cập nhật font Arial (TT) và height 0.0. Sau khi kiểm tra/tạo, lập tức đặt `ALC_wall default`, `alc text note` và `ALC Dim TL` làm current. Dim style được Restore để áp dụng thông số đã lưu và xóa các override của dim style hiện hành trước đó.
 
 Text style `alc text dim`: font `NGHIA5.SHX`, width factor 0.65, height 0 để dùng chiều cao của đối tượng/dim. Font cần có trong thư mục Fonts hoặc Support Path; bộ Lisp không kèm file font.
 
@@ -202,7 +204,7 @@ Bản 3.2.9 dùng tên `ALC Dim TL`. Khi tên mới chưa có, tạo với scale
 ## Text ghi chú và hatch — 3.2.9
 
 - `alc text note`: Arial (TT), file `arial.ttf`, đặt đầy đủ typeface TrueType bằng SetFont, width factor 0.75, height 0.00. Font Arial (TT) và height 0.0 cũng được cập nhật khi style đã tồn tại. Đây là text style current sau load.
-- Màu đối tượng hiện hành được đặt ByLayer (`CECOLOR=BYLAYER`) khi kích hoạt style note. Text mới lấy màu của layer `0. Tuong ALC` đang current; layer tạo mới vẫn Blue (ACI 4).
+- Màu đối tượng hiện hành được đặt ByLayer (`CECOLOR=BYLAYER`) khi kích hoạt style note. Text mới lấy màu của layer `ALC_wall default` đang current; layer tạo mới vẫn Blue (ACI 4).
 - `alc text` cũ được đổi tên thành `alc text dim` trên cùng STYLE record để giữ liên kết DIM đã có. `ALC Dim TL` tham chiếu `alc text dim`; font NGHIA5.SHX và width factor 0.65 được giữ. Nếu cả hai tên đã có, giữ các style có sẵn và cho ALC Dim TL tham chiếu alc text dim.
 - Hatch Scale mặc định là 25. Với XRecord trước schema 4, giá trị mặc định cũ 250 được chuyển sang 25 một lần; các giá trị tùy chỉnh khác giữ nguyên. Sau nâng cấp schema 4, giá trị 250 do người dùng chọn được giữ nguyên.
 - Tỷ lệ dim vẫn 100 và chiều cao text dim vẫn 3. Text ghi chú/dim chỉ tạo mới khi tên tương ứng chưa tồn tại.
@@ -221,11 +223,31 @@ Gõ `VVA`, `ALCASSIGN` hoặc `VVASSIGN`. Bảng liệt kê layer nội bộ b�
 
 Gõ `VVFILTER`, bấm/quét chọn đối tượng mẫu để lấy các layer cần lọc rồi Enter. Enter/Space khi chưa chọn mẫu sẽ dùng last pick chung với VVTK/ALCTK; `A` chọn All. Sau đó bấm/quét chọn các đối tượng cần lọc và Enter. Kết quả chỉ giữ các đối tượng thuộc bộ lọc trong tập chọn hiện hành để dùng tiếp với Copy, Move, Properties… Không giới hạn loại đối tượng, không chỉ các layer ALC và không quét toàn bản vẽ ngoài vùng/tập đối tượng bạn chọn. Với block, lọc theo layer của chính block, không đi sâu các đối tượng bên trong. Không thay đổi hình học, layer hay PLINEWID. Nếu không có đối tượng khớp, tập chọn được xóa. Chưa có last pick và không chọn mẫu thì hủy trước bước chọn đối tượng.
 
+## Tìm đối tượng của dòng VVTK — Find
+
+Gõ `VVTK` (hoặc `ALCTK`), nhập `F` / `Find` ngay tại lời nhắc chiều cao chữ, rồi bấm vào một dòng chi tiết của bảng. LINE/pline gốc được tô sáng; có thể bấm tiếp dòng khác, Enter kết thúc. Khi kết thúc, đối tượng cuối cùng được giữ trong tập chọn. Find không thay đổi hình học, nội dung bảng hoặc tạo bước Undo cho việc tìm. Bắt điểm được tạm tắt khi bấm ô và khôi phục sau đó.
+
+Màu highlight trong Find mặc định là đỏ (ACI 1). Tại lời nhắc bấm dòng, nhập `C` / `Color` để chọn màu ACI 1–255 trong hộp chọn màu. Màu đã chọn được nhớ trong phiên bản vẽ, kể cả khi APPLOAD lại; Cancel giữ màu hiện tại. Chỉ màu hiệu ứng chọn thay đổi trong lượt Find; màu thật, layer và thuộc tính LINE/pline được giữ nguyên. Khi Enter/ESC kết thúc, các thiết lập highlight chung được khôi phục.
+
+Bảng VVTK tạo mới tự lưu liên kết nguồn trong từng dòng, giữ nguyên 4 cột và chiều rộng cột chiều dài đã chỉnh. Liên kết không dựa vào việc so khớp chiều dài/layer nên phân biệt được các đối tượng trùng số liệu; vẫn tìm được sau khi di chuyển đối tượng, di chuyển/xoay bảng, chèn dòng hoặc lưu/mở lại DWG. Find không tự đổi góc nhìn; có thể pan/zoom để xem đối tượng được tô sáng.
+
+Bảng tạo trước bản cập nhật này cần chạy lại VVTK để có liên kết. Nếu đối tượng gốc đã xóa, dữ liệu dòng đã chỉnh hoặc bảng được đưa sang bản vẽ khác, Find sẽ báo và không đoán đối tượng thay thế. Copy riêng bảng trong cùng DWG giữ liên kết tới các đối tượng gốc; tạo lại VVTK nếu muốn thống kê các đối tượng vừa copy. Bảng thống kê vẫn là kết quả tại thời điểm tạo, không tự cập nhật số liệu.
+
+## Cộng các bảng VVTK — VVSUMTABLE
+
+Gõ `VVSUMTABLE`, nhập chiều cao chữ (Enter giữ giá trị hiện tại), pick/quét chọn các bảng VVTK rồi Enter và chọn điểm chèn. Có thể chọn sẵn bảng trước khi gọi lệnh. Bảng mới có STT, TÊN BẢNG, ĐƠN VỊ, CHIỀU DÀI (m), mỗi dòng lấy giá trị đang hiển thị ở ô TỔNG CỘNG của một bảng nguồn; cuối bảng cộng tổng các dòng đó. Không cộng lại các dòng chi tiết. Bố cục, cỡ chữ và chiều rộng cột chiều dài bằng 60% ban đầu giống VVTK hiện tại. Cột tên bảng được mở rộng theo nhãn nguồn để dễ đọc; AutoCAD tự điều chỉnh chiều cao tối thiểu theo nội dung chữ.
+
+Các dòng được sắp theo vị trí Xmin/Ymax như VVTK. Nhãn kèm handle của bảng nguồn trong dấu vuông để phân biệt các bảng cùng tên; tên mặc định được rút gọn thành BẢNG. Bảng đổi tiêu đề vẫn được nhận diện nếu giữ các cột STT/TÊN LAYER/ĐƠN VỊ/CHIỀU DÀI và dòng TỔNG CỘNG đơn vị m. Hỗ trợ bảng VVTK cũ gộp theo layer. Bảng khác cấu trúc, ô tổng không phải số thập phân hoặc bảng tổng hợp VVSUMTABLE sẽ bị báo bỏ qua. Dấu chấm hoặc dấu phẩy được hiểu là dấu thập phân; không dùng dấu phân nhóm hàng nghìn trong ô tổng.
+
+Giữ nguyên các bảng nguồn; một Undo xóa bảng tổng hợp mới. Enter ở bước chọn bảng hoặc điểm chèn sẽ hủy. Bảng tổng hợp lưu kết quả tại thời điểm chạy lệnh, không tự cập nhật khi sửa bảng nguồn; chạy lại VVSUMTABLE để tổng hợp giá trị mới.
+
 ## Tạo pline tim tường — VVMATCH
 
-Gõ `VVMATCH` để vào chế độ Multi, chọn liên tiếp biên hoặc hatch các đoạn tường ALC thẳng; Enter kết thúc lượt chọn. Chọn sai đối tượng được yêu cầu chọn lại; mỗi tường chỉ tạo một pline trong cùng lượt. Lệnh tạo một LWPOLYLINE mở hai đỉnh trùng tim, chỉ từ đầu này đến đầu kia của chính đoạn được chọn. Pline dùng layer đang current, màu và transparency ByLayer; width lấy theo chiều dày tường. Không đổi current layer hoặc PLINEWID, giữ nguyên tường/hatch gốc; một Undo xóa toàn bộ pline đã tạo trong lượt Multi.
+Gõ `VVMATCH`, pick hoặc quét chọn nhiều biên/hatch các đoạn tường ALC thẳng bằng Window/Crossing; Enter xác nhận để tạo pline. Có thể dùng tập chọn sẵn trước khi gọi lệnh. Đối tượng không hợp lệ được bỏ qua; chọn cả biên và hatch của cùng tường chỉ tạo một pline. Lệnh tạo một LWPOLYLINE mở hai đỉnh trùng tim, chỉ từ đầu này đến đầu kia của chính đoạn được chọn. Pline dùng layer đang current, màu và transparency ByLayer; width lấy theo chiều dày tường. Không đổi current layer hoặc PLINEWID, giữ nguyên tường/hatch gốc; một Undo xóa toàn bộ pline đã tạo trong lượt.
 
-Lệnh chỉ đọc dữ liệu của đối tượng được chọn: không ssget toàn bản vẽ, không quét hatch hoặc tạo chỉ mục hatch, không ghép tường lân cận và không nối qua cửa. Sau khi cắt cửa, chọn bên nào chỉ tạo pline cho bên đó. Chiều dày ưu tiên dấu ALC lưu trên tường, sau đó độ rộng lưu/suy ra từ layer nguồn nếu khớp hình học; tường cũ thiếu thông tin dùng cạnh ngắn của hình chữ nhật. Layer nguồn cũ cần bắt đầu ALC hoặc có tên `0. Tuong ALC`; tường có dấu ALC dùng được trên layer khác. Tường gấp khúc/cong/hình học không hợp lệ bị từ chối. Layer current cần mở khóa; layer nguồn khóa vẫn có thể được đọc vì nguồn không bị sửa.
+Trước khi tạo, lệnh kiểm tra các pline mở hai đỉnh trong Model/Layout đang làm việc một lần mỗi lượt chọn. Tường đã có pline thẳng trùng hai đầu tim, chiều rộng và mặt phẳng (sai số vị trí/chiều rộng 0.00001 mm) được bỏ qua, kể cả pline trên layer khác hoặc tạo từ phiên bản cũ. Pline đảo thứ tự hai đầu vẫn được nhận diện. Pline đã xóa, di chuyển, đổi chiều dài/chiều rộng hoặc uốn cong không ngăn tạo pline mới. Lệnh báo số pline tạo mới và số tường đã có pline tim. Lượt chỉ bỏ qua đối tượng không tạo bước Undo rỗng.
+
+Lệnh không quét hatch hoặc tạo chỉ mục hatch, không ghép tường lân cận và không nối qua cửa. Sau khi cắt cửa, chọn bên nào chỉ tạo pline cho bên đó. Chiều dày ưu tiên dấu ALC lưu trên tường, sau đó độ rộng lưu/suy ra từ layer nguồn nếu khớp hình học; tường cũ thiếu thông tin dùng cạnh ngắn của hình chữ nhật. Layer nguồn cũ cần bắt đầu ALC hoặc có tên `0. Tuong ALC`; tường có dấu ALC dùng được trên layer khác. Tường gấp khúc/cong/hình học không hợp lệ bị từ chối. Layer current cần mở khóa; layer nguồn khóa vẫn có thể được đọc vì nguồn không bị sửa.
 
 Kiểm thử mã nguồn: dùng PowerShell 7.6 (.NET 10) để chạy `./tests/run-autocad-tests.ps1 -FullAutoCAD`. Công cụ biên dịch hộp thoại chỉ phục vụ phát triển; người dùng dùng DLL đã đi kèm bản ZIP.
 

@@ -58,12 +58,12 @@
 )
 
 (defun alc--ensure-wall-layer (/ layer)
-  (or (tblobjname "LAYER" "0. Tuong ALC")
+  (or (tblobjname "LAYER" "ALC_wall default")
       (progn
         (entmakex '((0 . "LAYER") (100 . "AcDbSymbolTableRecord")
-                        (100 . "AcDbLayerTableRecord") (2 . "0. Tuong ALC")
+                        (100 . "AcDbLayerTableRecord") (2 . "ALC_wall default")
                         (70 . 0) (62 . 4) (6 . "Continuous") (370 . 9)))
-        (tblobjname "LAYER" "0. Tuong ALC")))
+        (tblobjname "LAYER" "ALC_wall default")))
 )
 
 

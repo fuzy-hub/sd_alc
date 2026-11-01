@@ -58,13 +58,21 @@
                 (list entity "RevcloudArcLength")))
               (and (not (vl-catch-all-error-p value)) (numberp value) (> value 0.0)))))))
 
+(defun alc--stat-curve-length (entity / data flags)
+  (setq data (entget entity) flags (cdr (assoc 70 data)))
+  (if (and
+        (not (and (member (cdr (assoc 0 data)) '("LWPOLYLINE" "POLYLINE"))
+                  flags (= (logand flags 1) 1)))
+        (not (alc--revcloud-p entity)))
+    (alc--curve-length entity)))
+
 (defun alc--collect-layer-lengths
   (selection / index entity layer length-value totals)
   (setq index 0)
   (while (< index (sslength selection))
     (setq entity (ssname selection index)
           layer (cdr (assoc 8 (entget entity)))
-          length-value (if (not (alc--revcloud-p entity)) (alc--curve-length entity)))
+          length-value (alc--stat-curve-length entity))
     (if (and layer length-value)
       (setq totals
         (alc--add-layer-length totals layer length-value))
@@ -111,17 +119,20 @@
       (strcat "Khong doc duoc Xmin/Ymax cua doi tuong " (cdr (assoc 5 (entget entity)))
         "; dung thong ke de tranh sap xep sai."))))
 
-(defun alc--collect-length-rows (selection / index entity layer length-value rows)
+(defun alc--collect-length-entries (selection / index entity layer length-value rows)
   ;; WCS bounding extents are independent of vertex direction and pick order.
   (setq index 0)
   (if selection
     (repeat (sslength selection)
       (setq entity (ssname selection index) index (1+ index)
             layer (cdr (assoc 8 (entget entity)))
-            length-value (if (not (alc--revcloud-p entity)) (alc--curve-length entity)))
+            length-value (alc--stat-curve-length entity))
       (if (and layer length-value)
         (setq rows (cons (alc--stat-length-entry entity layer length-value) rows)))))
-  (mapcar 'cadddr (alc--stat-sort-entries rows)))
+  (alc--stat-sort-entries rows))
+
+(defun alc--collect-length-rows (selection)
+  (mapcar 'cadddr (alc--collect-length-entries selection)))
 
 (defun alc--sort-layer-lengths (totals / names)
   (setq names (acad_strlsort (mapcar 'car totals)))
@@ -161,14 +172,18 @@
 (defun alc--add-length-table-rows
   (totals insertion text-height detail
     / space table table-ename row-count row table-row item total-length
-      layer-width data-row-height)
+      layer-width data-row-height source-handles)
+  (if (and (listp detail) (eq (car detail) 'linked))
+    (setq source-handles (cadr detail)))
   (setq row-count (+ (length totals) 3)
         data-row-height (* text-height 1.8)
         layer-width
           (max
             (* text-height 16.0)
             (* text-height
-               (+ 2.0 (* 0.8 (alc--maximum-layer-name-length totals)))))
+               (if (eq detail 'sumtables)
+                 (+ 4.0 (* 1.2 (alc--maximum-layer-name-length totals)))
+                 (+ 2.0 (* 0.8 (alc--maximum-layer-name-length totals))))))
         space (alc--current-space)
         table
           (vla-AddTable
@@ -190,7 +205,7 @@
   (vla-SetColumnWidth table 0 (* text-height 5.0))
   (vla-SetColumnWidth table 1 layer-width)
   (vla-SetColumnWidth table 2 (* text-height 6.0))
-  (vla-SetColumnWidth table 3 (* text-height 25.0))
+  (vla-SetColumnWidth table 3 (* text-height (if detail 15.0 25.0)))
 
   (vla-SetRowHeight table 0 (* text-height 2.2))
   (vla-SetRowHeight table 1 (* text-height 2.0))
@@ -209,9 +224,12 @@
 
   (vla-MergeCells table 0 0 0 3)
   (alc--set-table-text table 0 0
-    (if detail "BẢNG THỐNG KÊ CHIỀU DÀI TỪNG ĐỐI TƯỢNG" "BẢNG THỐNG KÊ CHIỀU DÀI TƯỜNG"))
+    (cond
+      ((eq detail 'sumtables) "BẢNG TỔNG HỢP CHIỀU DÀI CÁC BẢNG VVTK")
+      (detail "BẢNG THỐNG KÊ CHIỀU DÀI TỪNG ĐỐI TƯỢNG")
+      (T "BẢNG THỐNG KÊ CHIỀU DÀI TƯỜNG")))
   (alc--set-table-text table 1 0 "STT")
-  (alc--set-table-text table 1 1 "TÊN LAYER")
+  (alc--set-table-text table 1 1 (if (eq detail 'sumtables) "TÊN BẢNG" "TÊN LAYER"))
   (alc--set-table-text table 1 2 "ĐƠN VỊ")
   (alc--set-table-text table 1 3
     (if detail "CHIỀU DÀI (m)" "CHIỀU DÀI TỔNG THEO LAYER"))
@@ -225,6 +243,13 @@
     (alc--set-table-text table table-row 2 "m")
     (alc--set-table-text
       table table-row 3 (rtos (/ (cdr item) 1000.0) 2 3))
+    (if source-handles
+      (vla-SetCustomData table table-row 0 "ALC_VVTK_ROW"
+        (vlax-make-variant
+          (vl-prin1-to-string (list "VVTK1" (getvar "FINGERPRINTGUID")
+            (nth (1- row) source-handles)
+            (vla-GetText table table-row 0) (vla-GetText table table-row 1)
+            (vla-GetText table table-row 3))) vlax-vbString)))
     (setq total-length (+ total-length (cdr item))
           row (1+ row)
           table-row (1+ table-row))
@@ -247,6 +272,190 @@
 
 (defun alc--add-length-detail-table (rows insertion text-height)
   (alc--add-length-table-rows rows insertion text-height T))
+
+(defun alc--add-length-source-table (entries insertion text-height)
+  (alc--add-length-table-rows (mapcar 'cadddr entries) insertion text-height
+    (list 'linked (mapcar 'caddr entries))))
+
+(defun alc--stat-cell-link-value (table row / value)
+  (vla-GetCustomData table row 0 "ALC_VVTK_ROW" 'value)
+  (if (= (type value) 'VARIANT) (setq value (vlax-variant-value value)))
+  (if (= (type value) 'STR) (read value)))
+
+(defun alc--stat-row-source (table row / link entity data)
+  (cond
+    ((or (< row 2) (>= row (1- (vla-get-Rows table))))
+      (prompt "\nHay bam vao dong chi tiet, khong phai tieu de hoac tong cong.") nil)
+    (T
+      (setq link (vl-catch-all-apply 'alc--stat-cell-link-value (list table row)))
+      (cond
+        ((or (vl-catch-all-error-p link) (not (listp link)) (/= (length link) 6)
+             (not (equal (car link) "VVTK1")))
+          (prompt "\nDong nay chua co lien ket doi tuong. Hay tao lai bang bang VVTK.") nil)
+        ((not (equal (cadr link) (getvar "FINGERPRINTGUID")))
+          (prompt "\nBang nay lien ket voi ban ve khac. Hay tao lai VVTK trong ban ve hien tai.") nil)
+        ((not (equal (cdddr link) (list (vla-GetText table row 0)
+                (vla-GetText table row 1) (vla-GetText table row 3))))
+          (prompt "\nNoi dung dong da thay doi; hay tao lai VVTK de tranh tim sai doi tuong.") nil)
+        (T
+          (setq entity (vl-catch-all-apply 'handent (list (caddr link))))
+          (if (and (not (vl-catch-all-error-p entity)) entity (setq data (entget entity))
+                   (member (cdr (assoc 0 data)) '("LINE" "LWPOLYLINE" "POLYLINE")))
+            entity
+            (progn (prompt "\nDoi tuong goc khong con ton tai. Hay tao lai bang VVTK.") nil)))))))
+
+(defun alc--stat-find-at-pick (picked / entity table row column hit source)
+  (setq entity (car picked))
+  (if (= (cdr (assoc 0 (entget entity))) "ACAD_TABLE")
+    (progn
+      (setq table (vlax-ename->vla-object entity)
+            hit (vla-HitTest table (vlax-3d-point (trans (cadr picked) 1 0))
+              (vlax-3d-point (trans '(0.0 0.0 1.0) 2 0 T)) 'row 'column))
+      (if (= hit :vlax-true)
+        (if (setq source (alc--stat-row-source table row))
+          (if (= (cdr (assoc 410 (entget source)))
+                 (if (= (getvar "CVPORT") 1) (getvar "CTAB") "Model"))
+            source
+            (progn (prompt "\nDoi tuong goc nam trong Model/Layout khac.") nil)))))
+    (progn (prompt "\nHay chon mot dong cua bang VVTK.") nil)))
+
+(defun alc--stat-find-color ()
+  (if (not (and (boundp '*alc-stat-find-color*) (= (type *alc-stat-find-color*) 'INT)
+                (>= *alc-stat-find-color* 1) (<= *alc-stat-find-color* 255)))
+    (setq *alc-stat-find-color* 1))
+  *alc-stat-find-color*)
+
+(defun alc--stat-find-pick-color () (acad_colordlg (alc--stat-find-color) nil))
+
+(defun alc--stat-find-change-color (/ color)
+  (if (setq color (alc--stat-find-pick-color))
+    (if (and (= (type color) 'INT) (>= color 1) (<= color 255))
+      (progn
+        (setq *alc-stat-find-color* color)
+        (setvar "SELECTIONEFFECTCOLOR" color)
+        (if (and *alc-stat-find-highlight* (entget *alc-stat-find-highlight*))
+          (progn (redraw *alc-stat-find-highlight* 4) (redraw *alc-stat-find-highlight* 3)))
+        (prompt (strcat "\nMau Find: ACI " (itoa color) ".")))
+      (prompt "\nHay chon mau ACI 1-255, khong dung ByLayer/ByBlock."))))
+
+(defun alc--stat-find-read-point ()
+  (initget "Color")
+  (getpoint "\nBam dong VVTK hoac [Color] <Enter ket thuc>: "))
+
+(defun alc--stat-find-picks (/ tables point index entity table row column picked source)
+  ;; Test the cell area, including empty space between text and grid lines.
+  (setq tables (ssget "_X" (list '(0 . "ACAD_TABLE")
+    (cons 410 (if (= (getvar "CVPORT") 1) (getvar "CTAB") "Model")))))
+  (while (setq point (alc--stat-find-read-point))
+    (if (= (type point) 'STR)
+      (alc--stat-find-change-color)
+      (progn
+    (setq index 0 picked nil source nil)
+    (if tables
+      (while (and (< index (sslength tables)) (not picked))
+        (setq entity (ssname tables index) index (1+ index) table (vlax-ename->vla-object entity))
+        (if (= (vla-HitTest table (vlax-3d-point (trans point 1 0))
+                 (vlax-3d-point (trans '(0.0 0.0 1.0) 2 0 T)) 'row 'column) :vlax-true)
+          (setq picked T source (alc--stat-find-at-pick (list entity point))))))
+    (if source
+      (progn
+        (if (and *alc-stat-find-highlight* (entget *alc-stat-find-highlight*))
+          (redraw *alc-stat-find-highlight* 4))
+        (setq *alc-stat-find-highlight* source)
+        (redraw source 3)
+        (prompt "\nDa to sang doi tuong goc cua dong vua chon.")))
+    (if (not picked) (prompt "\nKhong co o bang tai diem bam. Hay chon lai."))))))
+
+(defun alc--stat-find-loop (/ result previous old-osmode old-effect old-color *alc-stat-find-highlight*)
+  (setq previous (cadr (ssgetfirst)) old-osmode (getvar "OSMODE")
+        old-effect (getvar "SELECTIONEFFECT") old-color (getvar "SELECTIONEFFECTCOLOR"))
+  (sssetfirst nil nil)
+  (setvar "OSMODE" 0)
+  (setq result (vl-catch-all-apply
+    '(lambda ()
+      (setvar "SELECTIONEFFECT" 1)
+      (setvar "SELECTIONEFFECTCOLOR" (alc--stat-find-color))
+      (alc--stat-find-picks)) nil))
+  (setvar "OSMODE" old-osmode)
+  (if (and *alc-stat-find-highlight* (entget *alc-stat-find-highlight*))
+    (redraw *alc-stat-find-highlight* 4))
+  (setvar "SELECTIONEFFECTCOLOR" old-color)
+  (setvar "SELECTIONEFFECT" old-effect)
+  (if (vl-catch-all-error-p result)
+    (progn (sssetfirst nil previous)
+      (prompt (strcat "\nVVTK Find: " (vl-catch-all-error-message result))) nil)
+    (sssetfirst nil (if *alc-stat-find-highlight* (ssadd *alc-stat-find-highlight*) previous))))
+
+(defun alc--stat-command (/ value *alc-stat-command-height*)
+  (initget 6 "Find")
+  (setq value (getdist (strcat "\nChieu cao chu hoac [Find] <"
+    (rtos *alc-stat-text-height* 2 0) ">: ")))
+  (if (= (type value) 'STR)
+    (alc--stat-find-loop)
+    (progn
+      (setq *alc-stat-command-height* (if value value *alc-stat-text-height*))
+      (alc--run-command 'alc--stat-loop "ALCTK"))))
+
+(defun alc--sumtable-number (text / codes code index digits separator valid)
+  ;; Parse the whole displayed decimal, never silently accept a numeric prefix.
+  (setq text (vl-string-trim " \t\r\n" text) codes (vl-string->list text)
+        index 0 digits 0 valid T)
+  (foreach code codes
+    (cond
+      ((and (>= code 48) (<= code 57)) (setq digits (1+ digits)))
+      ((and (= index 0) (member code '(43 45))) nil)
+      ((and (member code '(44 46)) (not separator)) (setq separator T))
+      (T (setq valid nil)))
+    (setq index (1+ index)))
+  (if (and valid (> digits 0)) (distof (vl-string-translate "," "." text) 2)))
+
+(defun alc--sumtable-cell (table row column)
+  (vl-string-trim " \t\r\n" (vla-GetText table row column)))
+
+(defun alc--sumtable-source-entry (entity / table last-row value title handle)
+  (if (= (cdr (assoc 0 (entget entity))) "ACAD_TABLE")
+    (progn
+      (setq table (vlax-ename->vla-object entity) last-row (1- (vla-get-Rows table)))
+      ;; Header recognition also supports existing, untagged VVTK tables.
+      (if (and (= (vla-get-Columns table) 4) (>= last-row 3)
+               (= (strcase (alc--sumtable-cell table 1 0)) "STT")
+               (= (strcase (alc--sumtable-cell table 1 1)) "TÊN LAYER")
+               (= (strcase (alc--sumtable-cell table 1 2)) "ĐƠN VỊ")
+               (member (strcase (alc--sumtable-cell table 1 3))
+                 '("CHIỀU DÀI (M)" "CHIỀU DÀI TỔNG THEO LAYER"))
+               (= (strcase (alc--sumtable-cell table last-row 1)) "TỔNG CỘNG")
+               (= (strcase (alc--sumtable-cell table last-row 2)) "M")
+               (setq value (alc--sumtable-number (alc--sumtable-cell table last-row 3))))
+        (progn
+          (setq title (alc--sumtable-cell table 0 0) handle (cdr (assoc 5 (entget entity))))
+          (if (member title '("" "BẢNG THỐNG KÊ CHIỀU DÀI TỪNG ĐỐI TƯỢNG" "BẢNG THỐNG KÊ CHIỀU DÀI TƯỜNG"))
+            (setq title "BẢNG"))
+          ;; The shared VVTK renderer expects millimetres and displays metres.
+          (alc--stat-length-entry entity (strcat title " [" handle "]") (* value 1000.0)))))))
+
+(defun alc--sumtable-rows (selection / index entity result entries)
+  (setq index 0)
+  (if selection
+    (repeat (sslength selection)
+      (setq entity (ssname selection index) index (1+ index)
+            result (vl-catch-all-apply 'alc--sumtable-source-entry (list entity)))
+      (if (and result (not (vl-catch-all-error-p result)))
+        (setq entries (cons result entries))
+        (prompt (strcat "\nBo qua bang [" (cdr (assoc 5 (entget entity)))
+          "]: khong dung cau truc VVTK hoac tong khong phai so thap phan hop le.")))))
+  (mapcar 'cadddr (alc--stat-sort-entries entries)))
+
+(defun alc--sumtable-loop (/ text-height selection rows insertion)
+  (setq text-height (alc--ask-stat-text-height))
+  (prompt "\nPick hoac quet chon cac bang VVTK can cong <Enter xac nhan>: ")
+  (if (setq selection (ssget '((0 . "ACAD_TABLE"))))
+    (if (setq rows (alc--sumtable-rows selection))
+      (if (setq insertion (getpoint "\nChon diem chen bang tong hop: "))
+        (progn
+          (alc--add-length-table-rows rows (trans insertion 1 0) text-height 'sumtables)
+          (prompt (strcat "\nDa tong hop " (itoa (length rows)) " bang VVTK. Tong = "
+            (rtos (/ (alc--total-layer-length rows) 1000.0) 2 3) " m."))))
+      (prompt "\nKhong co bang VVTK hop le de tong hop."))))
 
 (defun alc--stat-sample-layers (selection / index entity name names)
   (setq index 0)
@@ -355,21 +564,25 @@
   (alc--stat-filter-selection selection layers))
 
 (defun alc--stat-loop
-  (/ text-height selection totals insertion result total-length layers)
-  (setq text-height (alc--ask-stat-text-height))
+  (/ text-height selection entries totals insertion result total-length layers)
+  (setq text-height
+    (if (and (boundp '*alc-stat-command-height*) (numberp *alc-stat-command-height*))
+      *alc-stat-command-height* (alc--ask-stat-text-height)))
+  (if (/= text-height *alc-stat-text-height*)
+    (progn (setq *alc-stat-text-height* text-height) (alc--save-settings)))
   (if (setq layers (alc--stat-choose-layers))
     (setq selection (alc--stat-select-region layers)))
   (if (and layers (not selection))
     (prompt "\nKhong co LINE/POLYLINE thuoc layer da chon trong vung chon."))
   (if selection
     (progn
-      (setq totals (alc--collect-length-rows selection))
+      (setq entries (alc--collect-length-entries selection) totals (mapcar 'cadddr entries))
       (if totals
         (if (setq insertion (getpoint "\nChon diem chen bang: "))
           (progn
             (setq result
-              (vl-catch-all-apply 'alc--add-length-detail-table
-                (list totals (trans insertion 1 0) text-height)))
+              (vl-catch-all-apply 'alc--add-length-source-table
+                (list entries (trans insertion 1 0) text-height)))
             (if (vl-catch-all-error-p result)
               (prompt (strcat "\nKhong the tao bang thong ke: "
                 (vl-catch-all-error-message result)))
@@ -378,7 +591,7 @@
                 (prompt (strcat "\nDa tao bang cho " (itoa (length totals))
                   " doi tuong. Tong chieu dai="
                   (rtos (/ total-length 1000.0) 2 3) " m."))))))
-        (prompt "\nKhong tim thay LINE/POLYLINE hop le (REVCLOUD duoc bo qua).")))))
+        (prompt "\nKhong tim thay LINE/POLYLINE mo hop le (bo qua polyline khep kin va REVCLOUD).")))))
 
 ;;; --------------------------------------------------------------------------
 ;;; Door-block schedule
@@ -433,7 +646,8 @@
 (defun alc--legacy-stat-wall-p (wall / hatches hatch data pattern)
   ;; Pre-marker drawings are recognizable only by their original layer/style.
   ;; ANSI31 is reserved here for lintels/ties and must never become a wall.
-  (and (= (strcase (cdr (assoc 8 (entget wall)))) "0. TUONG ALC")
+  (and (member (strcase (cdr (assoc 8 (entget wall))))
+               '("0. TUONG ALC" "ALC_WALL DEFAULT"))
        (setq hatches (alc--find-boundary-hatches wall)) (= (length hatches) 1)
        (setq hatch (car hatches) data (entget hatch)
              pattern (strcase (cdr (assoc 2 data))))

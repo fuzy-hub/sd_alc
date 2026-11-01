@@ -1,0 +1,32 @@
+VVMATCH existing centerline detection - 2026-10-31
+
+Local changes on ALCWALL 3.4.4:
+- Scan open two-vertex LWPOLYLINE candidates once in the active Model/Layout.
+- Compare owner space, WCS endpoints in either order, plane and constant width.
+- Skip matching output on any layer, including older untagged output.
+- Recreate when the former output was erased, moved, resized, curved or closed.
+- Keep source walls/hatches and existing polylines unchanged.
+- Cache newly created output within the batch to prevent coincident duplicates.
+- Report created/skipped counts; open one Undo group only for actual creation.
+
+Successful AutoCAD 2027 full acad.exe isolated test:
+Session: alc-344-20261031-161650-8c49fbb7
+PID: 30884
+Start: 2026-10-31T16:16:50.8912388+07:00
+Command: tests/run-autocad-tests.ps1 -FullAutoCAD -HardeningOnly -TimeoutSeconds 240
+Exit code: 0; the recorded process exited.
+VVMATCH: 46 checks PASS. All 13 selected suites: 288 checks PASS, 0 failures.
+Completion markers and run.complete matched the recorded session.
+Tests include legacy/reversed output, Lisp reload, layer independence, moved/
+erased/changed-width/shorter/curved/raised/tilted/closed candidates, separate
+paper/model spaces, repeated native Window selection, no-op Undo, hatch/boundary
+deduplication, Pickfirst and original wall/door geometry regressions.
+Native command tests used scripted coordinates, not physical mouse input.
+No pre-existing AutoCAD process was controlled.
+
+Earlier failed diagnostic runs were rejected. They exposed redundant per-vertex
+width storage, hatch reactor group 330 preceding the true owner, and empty Undo
+groups; all three cases are covered by the successful run above.
+Static version/Lisp/SHA-256 manifest validation: PASS.
+The previous VVTK 60% length-column adjustment is retained.
+These are local edits; no release or ZIP has been published for this change.

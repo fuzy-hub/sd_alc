@@ -9,7 +9,7 @@
     (progn (prompt "\nALCWALL is not ready. Load the complete installation.") nil)))
 
 ;; Disable even entry points left by an older version before any file is loaded.
-(foreach alc-command-symbol '(c:ALCSET c:ALCS c:ALSC c:ALCWALL c:VV c:ALCCENTRAL c:VVC c:ALCDOOR c:ALCTRIM c:ALCXTEND c:ALCLT c:ALCGT c:ALCGTS c:ALCLAYER c:ALCASSIGN c:ALCTK c:ALCTKT c:ALCTKC c:TKDIM c:TKCOUNT c:TKMS c:TKALIGN c:ALCDIM c:VVSET c:VVS c:VVWALL c:VVCENTRAL c:VVDOOR c:VVTRIM c:VVXTEND c:VVLT c:VVGT c:VVGTS c:VVLAYER c:VVASSIGN c:VVA c:VVFILTER c:VVMATCH c:VVTK c:VVTKT c:VVTKC c:VVDIM)
+(foreach alc-command-symbol '(c:ALCSET c:ALCS c:ALSC c:ALCWALL c:VV c:ALCCENTRAL c:VVC c:ALCDOOR c:ALCTRIM c:ALCXTEND c:ALCLT c:ALCGT c:ALCGTS c:ALCLAYER c:ALCASSIGN c:ALCTK c:ALCTKT c:ALCTKC c:TKDIM c:TKCOUNT c:TKMS c:TKALIGN c:ALCDIM c:VVSET c:VVS c:VVWALL c:VVCENTRAL c:VVDOOR c:VVTRIM c:VVXTEND c:VVLT c:VVGT c:VVGTS c:VVLAYER c:VVASSIGN c:VVA c:VVFILTER c:VVMATCH c:VVSUMTABLE c:VVTK c:VVTKT c:VVTKC c:VVDIM)
   (eval (list 'defun alc-command-symbol nil '(alc--ready-p) '(princ))))
 (setq alc-command-symbol nil)
 

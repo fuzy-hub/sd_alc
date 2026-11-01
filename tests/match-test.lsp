@@ -12,7 +12,7 @@
 (defun alc-test--match-rectangle (x y wall-length width tagged)
   (alc-test--match-wall (list (list x y 0.0) (list (+ x wall-length) y 0.0)
     (list (+ x wall-length) (+ y width) 0.0) (list x (+ y width) 0.0))
-    width tagged "0. Tuong ALC" '(0.0 0.0 1.0)))
+    width tagged "ALC_wall default" '(0.0 0.0 1.0)))
 
 (defun alc-test--match-output-p (entity start end width / points)
   (and entity (not (alc--closed-lwpolyline-p entity))
@@ -34,7 +34,7 @@
   (setq old-layer (getvar "CLAYER") old-pattern *alc-pattern* old-door *alc-door-width*
         old-width (getvar "PLINEWID") *alc-pattern* "ANSI37")
   (alc-test--clear)
-  (setvar "CLAYER" "0. Tuong ALC")
+  (setvar "CLAYER" "ALC_wall default")
   (setq wall (alc-test--match-rectangle 0.0 0.0 3000.0 100.0 T)
         data (entget wall '("*")) hatch (car (alc--find-boundary-hatches wall)))
   (setvar "CLAYER" "0") (setvar "PLINEWID" 17.0)
@@ -54,7 +54,7 @@
   (defun alc--build-hatch-index () (setq *alc-match-test-scan* T) (vl-exit-with-error "Unexpected global scan"))
   (defun alc--scan-boundary-hatches (entity) (setq *alc-match-test-scan* T) (vl-exit-with-error "Unexpected hatch scan"))
   (setq *alc-match-test-scan* nil)
-  (alc-test--match-check "tagged-and-legacy-match-never-scan-drawing-or-hatches"
+  (alc-test--match-check "tagged-and-legacy-match-never-scan-hatches"
     (and (alc--match-wall wall)
       (progn
         (setq data (entget wall '("ALCWALL")))
@@ -73,7 +73,7 @@
       (= (cdr (assoc 8 (entget output))) "0")
       (alc-test--match-output-p output '(0.0 75.0 0.0) '(2000.0 75.0 0.0) 150.0)))
   (alc-test--clear)
-  (setvar "CLAYER" "0. Tuong ALC")
+  (setvar "CLAYER" "ALC_wall default")
   (setq wall (alc-test--match-rectangle 0.0 0.0 6000.0 100.0 T) *alc-door-width* 900.0)
   (alc--draw-door-opening wall '(0.0 50.0 0.0) '(1000.0 50.0 0.0))
   (setq selection (ssget "_X" '((0 . "LWPOLYLINE"))) index 0)
@@ -106,28 +106,106 @@
   (setq points '((0.0 0.0 0.0) (3000.0 0.0 0.0) (3000.0 100.0 0.0) (0.0 100.0 0.0))
         transform '(lambda (p) (list (- (* (car p) (cos 0.37)) (* (cadr p) (sin 0.37)))
           (+ (* (car p) (sin 0.37)) (* (cadr p) (cos 0.37))) 0.0))
-        wall (alc-test--match-wall (mapcar transform points) 100.0 T "0. Tuong ALC" '(0.0 0.0 1.0)))
+        wall (alc-test--match-wall (mapcar transform points) 100.0 T "ALC_wall default" '(0.0 0.0 1.0)))
   (alc-test--match-check "rotated-wall-centerline"
     (alc-test--match-output-p (alc--match-wall wall)
       (apply transform (list '(0.0 50.0 0.0))) (apply transform (list '(3000.0 50.0 0.0))) 100.0))
   (alc-test--clear)
   (setq wall (alc-test--match-wall '((0.0 0.0 0.0) (3000.0 0.0 0.0)
-    (3000.0 0.0 100.0) (0.0 0.0 100.0)) 100.0 T "0. Tuong ALC" '(0.0 -1.0 0.0)))
+    (3000.0 0.0 100.0) (0.0 0.0 100.0)) 100.0 T "ALC_wall default" '(0.0 -1.0 0.0)))
   (alc-test--match-check "tilted-plane-normal-and-elevation"
     (and (setq output (alc--match-wall wall))
       (equal (cdr (assoc 210 (entget output))) '(0.0 -1.0 0.0) 1e-6)
       (alc-test--match-output-p output '(0.0 0.0 50.0) '(3000.0 0.0 50.0) 100.0)))
   (alc-test--clear)
   (setq wall (alc-test--match-wall '((0.0 0.0 0.0) (1000.0 0.0 0.0) (1000.0 1000.0 0.0)
-    (900.0 1000.0 0.0) (900.0 100.0 0.0) (0.0 100.0 0.0)) 100.0 T "0. Tuong ALC" '(0.0 0.0 1.0)))
+    (900.0 1000.0 0.0) (900.0 100.0 0.0) (0.0 100.0 0.0)) 100.0 T "ALC_wall default" '(0.0 0.0 1.0)))
   (alc-test--match-check "bent-wall-rejected" (not (alc--match-wall wall)))
+  (alc-test-run-match-existing)
   (setq *alc-pattern* old-pattern *alc-door-width* old-door)
   (setvar "CLAYER" old-layer) (setvar "PLINEWID" old-width)
   (princ))
 
+(defun alc-test--match-centerline (points width normal / output)
+  ;; Untagged output also represents polylines made by older releases.
+  (setq output (alc--create-lwpolyline-wcs-on-layer points nil normal "0"))
+  (vla-put-ConstantWidth (vlax-ename->vla-object output) width)
+  output)
+
+(defun alc-test-run-match-existing (/ wall output replacement points)
+  (alc-test--clear)
+  (setvar "CLAYER" "0")
+  (setq wall (alc-test--match-rectangle 0.0 0.0 3000.0 100.0 T)
+        output (alc--match-wall wall)
+        points '((0.0 50.0 0.0) (3000.0 50.0 0.0)))
+  (alc-test--match-check "second-call-skips-existing-centerline"
+    (and (eq (alc--match-wall wall) 'existing) (= (alc-test--entity-count "LWPOLYLINE") 2)))
+  (load (strcat *alc-resource-root* "/src/alc-commands.lsp"))
+  (alc-test--match-check "reload-still-recognizes-existing-centerline"
+    (and (eq (alc--match-wall wall) 'existing) (= (alc-test--entity-count "LWPOLYLINE") 2)))
+  (setvar "CLAYER" "ALC_wall default")
+  (alc-test--match-check "different-current-layer-does-not-duplicate-existing-centerline"
+    (eq (alc--match-wall wall) 'existing))
+  (setvar "CLAYER" "0")
+  (entdel output)
+  (setq output (alc-test--match-centerline (reverse points) 100.0 '(0.0 0.0 1.0)))
+  (alc-test--match-check "reversed-untagged-legacy-centerline-is-recognized"
+    (eq (alc--match-wall wall) 'existing))
+  (vla-Move (vlax-ename->vla-object output) (vlax-3d-point '(0.0 0.0 0.0))
+    (vlax-3d-point '(0.0 20.0 0.0)))
+  (setq replacement (alc--match-wall wall))
+  (alc-test--match-check "moved-centerline-allows-new-output-without-changing-old-one"
+    (and (alc-test--match-output-p replacement (car points) (cadr points) 100.0)
+      (alc-test--match-output-p output '(0.0 70.0 0.0) '(3000.0 70.0 0.0) 100.0)))
+  (entdel output) (entdel replacement)
+  (setq output (alc--match-wall wall))
+  (alc-test--match-check "deleted-centerline-can-be-recreated"
+    (alc-test--match-output-p output (car points) (cadr points) 100.0))
+  (vla-put-ConstantWidth (vlax-ename->vla-object output) 80.0)
+  (setq replacement (alc--match-wall wall))
+  (alc-test--match-check "wrong-width-does-not-block-new-output"
+    (alc-test--match-output-p replacement (car points) (cadr points) 100.0))
+  (entdel output) (entdel replacement)
+  (setq output (alc-test--match-centerline '((0.0 50.0 0.0) (2900.0 50.0 0.0)) 100.0 '(0.0 0.0 1.0))
+        replacement (alc--match-wall wall))
+  (alc-test--match-check "shorter-centerline-does-not-block-new-output"
+    (alc-test--match-output-p replacement (car points) (cadr points) 100.0))
+  (entdel output) (entdel replacement)
+  (setq output (alc-test--match-centerline points 100.0 '(0.0 0.0 1.0)))
+  (vla-SetBulge (vlax-ename->vla-object output) 0 0.5)
+  (setq replacement (alc--match-wall wall))
+  (alc-test--match-check "curved-centerline-does-not-block-new-output"
+    (alc-test--match-output-p replacement (car points) (cadr points) 100.0))
+  (entdel output) (entdel replacement)
+  (setq output (alc-test--match-centerline '((0.0 50.0 10.0) (3000.0 50.0 10.0)) 100.0 '(0.0 0.0 1.0))
+        replacement (alc--match-wall wall))
+  (alc-test--match-check "different-elevation-does-not-block-new-output"
+    (alc-test--match-output-p replacement (car points) (cadr points) 100.0))
+  (entdel output) (entdel replacement)
+  (setq output (alc-test--match-centerline points 100.0 '(0.0 -1.0 0.0))
+        replacement (alc--match-wall wall))
+  (alc-test--match-check "different-plane-normal-does-not-block-new-output"
+    (alc-test--match-output-p replacement (car points) (cadr points) 100.0))
+  (entdel output) (entdel replacement)
+  (setq output (alc-test--match-centerline points 100.0 '(0.0 0.0 1.0)))
+  (vla-put-Closed (vlax-ename->vla-object output) :vlax-true)
+  (setq replacement (alc--match-wall wall))
+  (alc-test--match-check "closed-polyline-does-not-block-new-output"
+    (alc-test--match-output-p replacement (car points) (cadr points) 100.0))
+  (entdel output) (entdel replacement)
+  (setvar "TILEMODE" 0) (command-s "_.PSPACE")
+  (setq output (alc-test--match-centerline points 100.0 '(0.0 0.0 1.0)))
+  (setvar "TILEMODE" 1)
+  (setq replacement (alc--match-wall wall))
+  (alc-test--match-check "paperspace-centerline-does-not-block-modelspace-wall"
+    (and (not (equal (cdr (assoc 330 (entget output))) (cdr (assoc 330 (entget replacement)))))
+      (alc-test--match-output-p replacement (car points) (cadr points) 100.0)))
+  (entdel output)
+  (princ))
+
 (defun alc-test-match-prepare ()
   (alc-test--clear)
-  (setvar "CLAYER" "0. Tuong ALC") (setvar "OSMODE" 0)
+  (setvar "CLAYER" "ALC_wall default") (setvar "OSMODE" 0)
   (setq *alc-pattern* "ANSI37" *alc-door-width* 900.0 *alc-thickness* 100.0)
   (command-s "_.ZOOM" "_Window" '(-1000.0 -1000.0 0.0) '(8000.0 3000.0 0.0))
   (princ))
@@ -159,9 +237,9 @@
         (setq outputs (1+ outputs))
         (if (alc-test--match-output-p entity '(0.0 50.0 0.0) '(1000.0 50.0 0.0) 100.0) (setq left T))
         (if (alc-test--match-output-p entity '(1900.0 50.0 0.0) '(6000.0 50.0 0.0) 100.0) (setq right T)))))
-  (alc-test--match-check "Multi-creates-two-local-polylines-in-one-command"
+  (alc-test--match-check "batch-creates-two-local-polylines-in-one-command"
     (and (= outputs 2) left right))
-  (alc-test--match-check "Multi-invalid-and-repeat-selection-do-not-add-extra-output"
+  (alc-test--match-check "batch-invalid-and-boundary-hatch-selection-do-not-add-extra-output"
     (and (= (sslength selection) 4) (= (alc-test--entity-count "HATCH") 2)
       (= (alc-test--entity-count "LINE") 1))))
 (princ)

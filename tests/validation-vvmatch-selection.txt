@@ -1,0 +1,23 @@
+VVMATCH batch selection validation - 2026-10-31
+
+Local changes on ALCWALL 3.4.4:
+- VVMATCH accepts native ssget picks, Window/Crossing, and Pickfirst.
+- Resolves selected hatch/boundary pairs to one wall and creates one pline.
+- Skips unsupported geometry; retains local wall length, width and source data.
+- Enter confirms the selection; an empty selection creates no output.
+- One Undo removes all output from the selection, preserving source walls/hatches.
+
+AutoCAD 2027 full acad.exe, new isolated process:
+Session: alc-344-20261031-160209-e6a1a36f
+PID: 29468
+Start: 2026-10-31T16:02:11.2367425+07:00
+Command: tests/run-autocad-tests.ps1 -FullAutoCAD -HardeningOnly -TimeoutSeconds 240
+Exit code: 0
+VVMATCH: 30 checks PASS. All 13 selected suites: 272 checks PASS, 0 failures.
+Completion markers and run.complete matched the recorded session.
+Native command tests use scripted coordinates, not physical mouse input.
+No pre-existing AutoCAD process was controlled.
+
+Static Lisp/version/SHA-256 manifest validation: PASS.
+The separate VVTK length-column adjustment (60% width) remains included.
+This is a local modification; no GitHub release or ZIP update was published.

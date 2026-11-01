@@ -37,7 +37,7 @@
         old-temp *alc-temp-entities* normal '(0.0 0.0 1.0))
   (alc-test--clear)
   (alc--ensure-wall-layer)
-  (setvar "CLAYER" "0. Tuong ALC")
+  (setvar "CLAYER" "ALC_wall default")
   (setq *alc-pattern* "ANSI37" *alc-thickness* 100.0
         l-points '((0.0 0.0 0.0) (1000.0 0.0 0.0) (1000.0 1000.0 0.0)
           (800.0 1000.0 0.0) (800.0 200.0 0.0) (0.0 200.0 0.0))
@@ -101,7 +101,7 @@
       '(-3 ("ALC_SCHEDULE_TEST" (1000 . "keep-existing-data")))))
   (alc-test--wall-schedule-check "tagged-custom-layer-wall-supported"
     (equal (alc--wall-type-metrics wrong-layer) '(100.0 3000.0) 1e-6))
-  (setvar "CLAYER" "0. Tuong ALC")
+  (setvar "CLAYER" "ALC_wall default")
   (setq *alc-pattern* "ANSI31"
         lintel (alc-test--schedule-rectangle 150.0 3000.0 5000.0))
   (alc-test--wall-schedule-check "legacy-lintel-wall-tie-ANSI31-excluded"
@@ -119,7 +119,7 @@
     (equal (alc-test--schedule-group-length totals 100.0) 3000.0 1e-6))
   (alc-test--wall-schedule-check "collector-releases-hatch-index"
     (not *alc-hatch-index*))
-  (setq layer-data (entget (tblobjname "LAYER" "0. Tuong ALC"))
+  (setq layer-data (entget (tblobjname "LAYER" "ALC_wall default"))
         before (entget wall-100))
   (entmod (subst (cons 70 (logior 4 (cdr (assoc 70 layer-data))))
     (assoc 70 layer-data) layer-data))
@@ -275,7 +275,7 @@
 (defun alc-test-wall-schedule-prepare (/ wall saved-door-width)
   (alc-test--clear)
   (alc--ensure-wall-layer)
-  (setvar "CLAYER" "0. Tuong ALC")
+  (setvar "CLAYER" "ALC_wall default")
   (setq *alc-pattern* "ANSI37")
   (setq saved-door-width *alc-door-width* *alc-door-width* 900.0
         wall (alc-test--schedule-rectangle 100.0 3000.0 0.0))

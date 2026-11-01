@@ -105,7 +105,7 @@
 )
 
 (defun alc--activate-drawing-resources (/ item result)
-  (foreach item '(("LAYER" "0. Tuong ALC" "CLAYER")
+  (foreach item '(("LAYER" "ALC_wall default" "CLAYER")
                  ("STYLE" "alc text note" "TEXTSTYLE")
                  ("DIMSTYLE" "ALC Dim TL" "DIMSTYLE"))
     (if (tblsearch (car item) (cadr item))
@@ -128,7 +128,7 @@
 
 (defun alc--init-drawing-resources (/ item result pass)
   (setq pass T)
-  (foreach item '((alc--ensure-wall-layer . "layer 0. Tuong ALC")
+  (foreach item '((alc--ensure-wall-layer . "layer ALC_wall default")
                  (alc--ensure-text-style . "text style alc text dim")
                  (alc--ensure-note-style . "text style alc text note")
                  (alc--ensure-dim-style . "dim style ALC Dim TL"))

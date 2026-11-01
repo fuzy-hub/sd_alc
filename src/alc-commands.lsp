@@ -188,9 +188,58 @@
                       (alc--vector-scale (alc--vector-add (cadr points) (caddr points)) 0.5))))
               (list width (car caps) (cadr caps)))))))))
 
+(defun alc--match-output-entry (entity / data valid pair points width)
+  (setq data (entget entity) valid T)
+  (if (and (= (cdr (assoc 0 data)) "LWPOLYLINE")
+           (= (cdr (assoc 90 data)) 2)
+           (= (logand (cdr (assoc 70 data)) 1) 0)
+           (setq width (cdr (assoc 43 data))) (> width 0.0))
+    (progn
+      (foreach pair data
+        (if (or (and (= (car pair) 42) (not (equal (cdr pair) 0.0 1e-10)))
+                (and (member (car pair) '(40 41))
+                     (not (equal (cdr pair) 0.0 1e-10))
+                     (not (equal (cdr pair) width 1e-5)))) (setq valid nil)))
+      (if (and valid (setq points (alc--lwp-points entity)))
+        ;; Reactor references precede the actual owner in entget data.
+        (list entity (cdr (assoc 330 (reverse data))) width (car points) (cadr points)
+          (if (assoc 210 data) (cdr (assoc 210 data)) '(0.0 0.0 1.0)))))))
+
+(defun alc--match-existing-outputs (/ selection index entry entries)
+  ;; One candidate scan per command, including older untagged VVMATCH output.
+  (if (setq selection (ssget "_X" (list '(0 . "LWPOLYLINE") '(90 . 2)
+      (cons 410 (if (= (getvar "CVPORT") 1) (getvar "CTAB") "Model")))))
+    (progn
+      (setq index 0)
+      (repeat (sslength selection)
+        (setq entry (alc--match-output-entry (ssname selection index)) index (1+ index))
+        (if entry (setq entries (cons entry entries))))))
+  entries)
+
+(defun alc--match-existing-p (wall entry / candidates owner normal found candidate)
+  (setq candidates (if (and (boundp '*alc-match-index-ready*) *alc-match-index-ready*)
+                     *alc-match-outputs* (alc--match-existing-outputs))
+        owner (cdr (assoc 330 (reverse (entget wall))))
+        normal (cdr (assoc 210 (entget wall))))
+  (if (not normal) (setq normal '(0.0 0.0 1.0)))
+  (while (and candidates (not found))
+    (setq candidate (car candidates) candidates (cdr candidates))
+    (if (and (equal owner (cadr candidate))
+             (equal (car entry) (caddr candidate) 1e-5)
+             (equal (abs (alc--vector-dot normal (nth 5 candidate))) 1.0 1e-7)
+             (or (and (equal (cadr entry) (nth 3 candidate) 1e-5)
+                      (equal (caddr entry) (nth 4 candidate) 1e-5))
+                 (and (equal (cadr entry) (nth 4 candidate) 1e-5)
+                      (equal (caddr entry) (nth 3 candidate) 1e-5))))
+      (setq found T)))
+  found)
+
 (defun alc--match-wall (wall / layer entry normal output data)
   (setq layer (getvar "CLAYER"))
-  (if (and (not (alc--layer-locked-p layer)) (setq entry (alc--match-entry wall)))
+  (cond
+    ((not (setq entry (alc--match-entry wall))) nil)
+    ((alc--match-existing-p wall entry) 'existing)
+    ((not (alc--layer-locked-p layer))
     (progn
       (setq normal (cdr (assoc 210 (entget wall)))
             output (alc--track-temp (alc--create-lwpolyline-wcs-on-layer
@@ -204,30 +253,58 @@
             (progn
               (vla-put-Color (vlax-ename->vla-object output) 256)
               (vla-put-EntityTransparency (vlax-ename->vla-object output) "ByLayer")
+              (if (and (boundp '*alc-match-index-ready*) *alc-match-index-ready*)
+                (setq *alc-match-outputs* (cons (alc--match-output-entry output) *alc-match-outputs*)))
               (alc--untrack-temp output)
               (prompt (strcat "\nDa tao pline tim doan tuong, width=" (rtos (car entry) 2 3)
                 ", dai=" (rtos (distance (cadr entry) (caddr entry)) 2 3) " mm."))
               output)
-            (progn (alc--cleanup-temp) nil)))))))
+            (progn (alc--cleanup-temp) nil))))))))
 
-(defun alc--match-pick () (entsel "\nChon tuong ALC thang tiep theo <Enter ket thuc>: "))
-(defun alc--match-loop (/ picked wall seen count done)
-  (setq count 0)
-  (while (not done)
-    (setvar "ERRNO" 0)
-    (setq picked (alc--match-pick))
+(defun alc--match-select ()
+  (prompt "\nPick hoac quet chon cac tuong ALC thang <Enter xac nhan>: ")
+  (ssget '((0 . "LWPOLYLINE,HATCH"))))
+(defun alc--match-create-loop (/ wall result)
+  (foreach wall (reverse *alc-match-pending*)
+    (setq result (alc--match-wall wall))
     (cond
-      (picked
-        (setq wall (alc--resolve-wall (car picked)))
+      ((eq result 'existing) (setq skipped (1+ skipped)))
+      (result (setq count (1+ count)))
+      (T (prompt "\nKhong the tao pline tim; layer current can mo khoa.")))))
+
+(defun alc--match-loop (/ selection index wall entry seen count skipped
+    *alc-match-index-ready* *alc-match-outputs* *alc-match-pending*)
+  (setq count 0 skipped 0)
+  (if (setq selection (alc--match-select))
+    (progn
+      (setq index 0 *alc-match-outputs* (alc--match-existing-outputs) *alc-match-index-ready* T)
+      (repeat (sslength selection)
+        (setq wall (alc--resolve-wall (ssname selection index))
+              index (1+ index))
         (cond
-          ((and wall (member wall seen)) (prompt "\nTuong nay da tao pline trong luot chon."))
-          ((and wall (alc--match-wall wall))
-            (setq seen (cons wall seen) count (1+ count)))
-          (T (prompt "\nHay chon tuong ALC thang hop le; layer current can mo khoa."))))
-      ((= (getvar "ERRNO") 7) (prompt "\nChua chon trung doi tuong. Chon lai hoac Enter ket thuc."))
-      (T (setq done T))))
-  (prompt (strcat "\nDa tao " (itoa count) " pline tim tuong.")))
-(defun c:VVMATCH () (alc--run-command 'alc--match-loop "VVMATCH") (princ))
+          ((and wall (member wall seen)) nil)
+          ((and wall (setq entry (alc--match-entry wall)) (alc--match-existing-p wall entry))
+            (setq seen (cons wall seen) skipped (1+ skipped)))
+          ((and wall entry)
+            (setq seen (cons wall seen) *alc-match-pending* (cons wall *alc-match-pending*)))
+          (T (prompt "\nBo qua doi tuong khong phai tuong ALC thang hop le."))))
+      ;; Selection and duplicate checks are read-only: do not add empty Undo groups.
+      (if *alc-match-pending*
+        (if (alc--layer-locked-p (getvar "CLAYER"))
+          (prompt "\nKhong the tao pline tim tren layer current bi khoa.")
+          (alc--run-command 'alc--match-create-loop "VVMATCH")))))
+  (prompt (strcat "\nDa tao " (itoa count) " pline tim tuong; bo qua "
+    (itoa skipped) " tuong da co pline tim.")))
+(defun c:VVMATCH (/ result message)
+  (if (alc--ready-p)
+    (progn
+      (setq result (vl-catch-all-apply 'alc--match-loop nil))
+      (if (vl-catch-all-error-p result)
+        (progn
+          (setq message (vl-catch-all-error-message result))
+          (if (not (wcmatch (strcase message) "*BREAK*,*CANCEL*,*EXIT*"))
+            (prompt (strcat "\nVVMATCH error: " message)))))))
+  (princ))
 
 (defun alc--filter-select-objects (/ previous result)
   ;; ssget otherwise consumes an existing Pickfirst set without prompting.
@@ -361,10 +438,20 @@
   (princ)
 )
 
-(defun c:ALCTK ()
-  (alc--run-command 'alc--stat-loop "ALCTK")
-  (princ)
-)
+(defun c:ALCTK (/ result message)
+  (if (alc--ready-p)
+    (progn
+      (setq result (vl-catch-all-apply 'alc--stat-command nil))
+      (if (vl-catch-all-error-p result)
+        (progn
+          (setq message (vl-catch-all-error-message result))
+          (if (not (wcmatch (strcase message) "*BREAK*,*CANCEL*,*EXIT*"))
+            (prompt (strcat "\nALCTK error: " message)))))))
+  (princ))
+
+(defun c:VVSUMTABLE ()
+  (alc--run-command 'alc--sumtable-loop "VVSUMTABLE")
+  (princ))
 
 (defun c:ALCTKT ()
   (alc--run-command 'alc--wall-type-stat-loop "ALCTKT")
@@ -457,7 +544,7 @@
 (defun c:VVDIM () (c:ALCDIM))
 
 (princ
-  "\nALCWALL loaded. Commands: ALCWALL, VV, ALCCENTRAL, VVC, ALCDOOR, ALCTRIM, ALCXTEND, ALCLT, ALCGT, ALCGTS, ALCLAYER, ALCASSIGN, VVA, VVFILTER, VVMATCH, ALCTK, ALCTKT, ALCTKC, TKDIM, TKCOUNT, TKMS, TKALIGN, ALCDIM, ALCSET, ALCS, ALSC. ALCxxx aliases: VVxxx.")
+  "\nALCWALL loaded. Commands: ALCWALL, VV, ALCCENTRAL, VVC, ALCDOOR, ALCTRIM, ALCXTEND, ALCLT, ALCGT, ALCGTS, ALCLAYER, ALCASSIGN, VVA, VVFILTER, VVMATCH, VVSUMTABLE, ALCTK, ALCTKT, ALCTKC, TKDIM, TKCOUNT, TKMS, TKALIGN, ALCDIM, ALCSET, ALCS, ALSC. ALCxxx aliases: VVxxx.")
 (princ)
 
 (defun alc--run-command (fn name) (if (alc--ready-p) (alc--run-command-unsafe fn name)))

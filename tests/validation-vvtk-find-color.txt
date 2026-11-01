@@ -1,0 +1,38 @@
+VVTK / Find highlight color - 2026-10-31
+
+Approved change: default red (ACI 1), Color/C option inside Find, remember the
+chosen ACI color for subsequent Find runs in the same drawing session.
+SELECTIONEFFECT=1 and SELECTIONEFFECTCOLOR are applied only during Find and
+restored on normal completion or caught error. Source entity color, TrueColor,
+layer and other data are never edited. Color dialog cancellation retains the
+current choice; ByLayer/ByBlock are rejected.
+
+Successful isolated AutoCAD 2027 regression run:
+Session: alc-344-20261031-232457-362d1022
+PID: 35816
+Start: 2026-10-31T23:24:58.6941225+07:00
+Command: tests/run-autocad-tests.ps1 -FullAutoCAD -HardeningOnly -TimeoutSeconds 90
+Exit code: 0; all 15 suites completed, 367 PASS, 0 failures.
+stat-find-test: 38 PASS, including 14 added color-state/native-option checks.
+Checks cover default red, remembered choice/reload, invalid ACI, picker cancel,
+Color while highlighting, native Color keyword, source-data preservation,
+normal/error cleanup, global-effect restoration and snap restoration.
+Picker responses were supplied by a test adapter; no physical dialog-click
+test is claimed. The initial synthetic quit test aborted its suite and was
+rejected; the successful run uses an actual catchable argument error instead.
+
+Visual preview in another newly launched AutoCAD 2027 process:
+Session: find-red-visible-20261031-231826-ce7c43ec
+PID: 3912
+Start: 2026-10-31T23:18:26.1524217+07:00
+Computer Use selected only the window with this session's DWG title.
+Observed the selected upper polyline glowing red while the lower LINE remained
+its ordinary color. complete.txt = (T T T): prior effect, prior effect color,
+and original source entity data all matched after Find returned.
+The successful visible preview exited. An earlier hidden preview was not used
+for visual confirmation and was cleaned up only by its recorded PID/start time.
+No pre-existing AutoCAD process was controlled.
+
+Static Lisp/version/SHA-256 manifest validation: PASS.
+The rolled-back manual-link workflow for old tables remains removed.
+These are local edits; no GitHub release or ZIP was published.

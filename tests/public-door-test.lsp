@@ -2,7 +2,7 @@
 (defun alc-test-public-door-prepare ()
   (alc-test--clear)
   (setq *alc-pattern* "ANSI37" *alc-thickness* 100.0 *alc-stat-text-height* 100.0)
-  (setvar "CLAYER" "0. Tuong ALC")
+  (setvar "CLAYER" "ALC_wall default")
   (setvar "OSMODE" 0)
   (setvar "DYNMODE" 0)
   (setvar "ORTHOMODE" 0)

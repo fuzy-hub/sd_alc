@@ -21,7 +21,7 @@
     old-dim old-text old-layer old-dimblk layer-data text-data dim-data
     changed-layer changed-text changed-dim before-values after-values note-style note-data changed-note)
   (setq checks nil
-        layer (tblobjname "LAYER" "0. Tuong ALC")
+        layer (tblobjname "LAYER" "ALC_wall default")
         text-style (tblobjname "STYLE" "alc text dim")
         dim-style (tblobjname "DIMSTYLE" "ALC Dim TL")
         iso (tblobjname "DIMSTYLE" "ISO-25")
@@ -29,7 +29,7 @@
         old-layer (getvar "CLAYER") old-dimblk (getvar "DIMBLK"))
   (alc-test--styles-check "startup-measurement-metric" (= (getvar "MEASUREMENT") 1))
   (alc-test--styles-check "startup-resources" (and layer text-style dim-style))
-  (alc-test--styles-check "startup-current-layer" (= (getvar "CLAYER") "0. Tuong ALC"))
+  (alc-test--styles-check "startup-current-layer" (= (getvar "CLAYER") "ALC_wall default"))
   (alc-test--styles-check "startup-current-text" (= (strcase (getvar "TEXTSTYLE")) "ALC TEXT NOTE"))
   (alc-test--styles-check "startup-current-dim" (= (getvar "DIMSTYLE") "ALC Dim TL"))
   (setq note-style (tblobjname "STYLE" "alc text note") note-data (entget note-style))
@@ -116,7 +116,7 @@
          (equal (vl-remove-if '(lambda (pair) (= (car pair) 69)) changed-dim)
                 (vl-remove-if '(lambda (pair) (= (car pair) 69)) (entget dim-style)))))
   (alc-test--styles-check "reload-activates-existing-resources"
-    (and (= (getvar "CLAYER") "0. Tuong ALC")
+    (and (= (getvar "CLAYER") "ALC_wall default")
          (= (strcase (getvar "TEXTSTYLE")) "ALC TEXT NOTE")
          (= (getvar "DIMSTYLE") "ALC Dim TL")
          (equal (getvar "DIMSCALE") 33.0 1e-9)

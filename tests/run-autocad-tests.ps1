@@ -1,8 +1,9 @@
-param([int]$TimeoutSeconds=240, [switch]$FullAutoCAD, [switch]$StylesOnly, [switch]$TrimOnly, [switch]$HardeningOnly, [string]$InputDrawing, [switch]$PublicDoorOnly, [switch]$PublicDoorReopen, [switch]$AssignEnterUI)
+param([int]$TimeoutSeconds=240, [switch]$FullAutoCAD, [switch]$StylesOnly, [switch]$TrimOnly, [switch]$HardeningOnly, [string]$InputDrawing, [switch]$PublicDoorOnly, [switch]$PublicDoorReopen, [switch]$AssignEnterUI, [switch]$StatFindReopen)
 $ErrorActionPreference='Stop'
 if (([int]$StylesOnly.IsPresent+[int]$TrimOnly.IsPresent+[int]$HardeningOnly.IsPresent) -gt 1) { throw 'Choose one suite mode.' }
 if ($PublicDoorOnly -and ($StylesOnly -or $TrimOnly -or $HardeningOnly)) { throw 'PublicDoorOnly cannot be combined with another suite mode.' }
 if ($PublicDoorReopen -and (!$PublicDoorOnly -or !$InputDrawing)) { throw 'PublicDoorReopen requires PublicDoorOnly and an existing InputDrawing.' }
+if ($StatFindReopen -and !$InputDrawing) { throw 'StatFindReopen requires a saved InputDrawing.' }
 if (!$FullAutoCAD -and !$StylesOnly) { throw 'Hatch suites require -FullAutoCAD (AutoCAD 2027).' }
 $taskRoot=Split-Path -Parent $PSScriptRoot
 # Even the style suite uses ActiveX SetFont, unavailable in Core Console.
@@ -75,11 +76,83 @@ $taskSuites['assign-ui-test']=15
 $taskCommands+="`n(alc-test--suite `"stat-layer-test`" `"stat-layer-test.lsp`" 'alc-test-run-stat-layer nil)`n"
 $taskSuites['stat-layer-test']=27
 $taskCommands+="`n(alc-test--suite `"stat-detail-test`" `"stat-detail-test.lsp`" 'alc-test-run-stat-detail nil)`n"
-$taskSuites['stat-detail-test']=27
+$taskSuites['stat-detail-test']=37
 $taskCommands+="`n(alc-test--suite `"revcloud-test`" `"revcloud-test.lsp`" 'alc-test-run-revcloud nil)`n"
 $taskSuites['revcloud-test']=13
 $taskCommands+="`n(alc-test--suite `"filter-test`" `"filter-test.lsp`" 'alc-test-run-filter nil)`n"
 $taskSuites['filter-test']=12
+$taskCommands+="`n"+@'
+(load (strcat (getenv "ALCWALL_TEST_ROOT") "/tests/generate-fixtures.lsp"))
+(alc-test--suite "sumtable-test" "sumtable-test.lsp" 'alc-test-run-sumtable T)
+(alc-test--step 'alc-test-sumtable-prepare "sumtable-test")
+VVSUMTABLE
+100
+_All
+
+40000,0
+(alc-test--step 'alc-test-sumtable-public-check "sumtable-test")
+_.UNDO
+1
+(alc-test--step 'alc-test-sumtable-undo-check "sumtable-test")
+(setvar "PICKFIRST" 1)
+(sssetfirst nil (ssget "_X" '((0 . "ACAD_TABLE"))))
+VVSUMTABLE
+
+40000,0
+(alc-test--step 'alc-test-sumtable-public-check "sumtable-test")
+_.UNDO
+1
+(alc-test--step 'alc-test-sumtable-undo-check "sumtable-test")
+VVSUMTABLE
+
+
+(alc-test--step 'alc-test-sumtable-undo-check "sumtable-test")
+VVSUMTABLE
+
+_All
+
+
+(alc-test--step 'alc-test-sumtable-undo-check "sumtable-test")
+(alc-test--finish "sumtable-test")
+'@
+$taskSuites['sumtable-test']=31
+$taskCommands+="`n"+@'
+(alc-test--suite "stat-find-test" "stat-find-test.lsp" 'alc-test-run-stat-find T)
+(alc-test--step 'alc-test-stat-find-prepare "stat-find-test")
+VVTK
+
+A
+_All
+
+12000,0
+(alc-test--step 'alc-test-stat-find-created "stat-find-test")
+_.UNDO
+1
+(alc-test--step 'alc-test-stat-find-create-undo "stat-find-test")
+(setvar "OSMODE" 3)
+VVTK
+Find
+8450,-510
+
+(alc-test-stat-find-selected *alc-find-test-b*)
+ALCTK
+F
+5250,-690
+
+(alc-test-stat-find-selected *alc-find-test-a*)
+(setq *alc-find-test-effect* (getvar "SELECTIONEFFECT") *alc-find-test-effect-color* (getvar "SELECTIONEFFECTCOLOR"))
+(defun alc--stat-find-pick-color () 2)
+VVTK
+F
+Color
+8450,-510
+
+(alc-test-stat-find-selected *alc-find-test-b*)
+(alc-test--step 'alc-test-stat-find-native-color "stat-find-test")
+(load (strcat (getenv "ALCWALL_TEST_ROOT") "/src/alc-schedule.lsp"))
+(alc-test--finish "stat-find-test")
+'@
+$taskSuites['stat-find-test']=38
 if (!$StylesOnly -and !$PublicDoorOnly) {
     $taskCommands+="`n(load (strcat (getenv `"ALCWALL_TEST_ROOT`") `"/tests/generate-fixtures.lsp`"))`n"
     $taskCommands+=@'
@@ -97,6 +170,10 @@ ALCDOOR
 1000,50
 VVMATCH
 500,0
+
+(alc-test--step 'alc-test-match-public-check "match-test")
+VVMATCH
+500,50
 
 (alc-test--step 'alc-test-match-public-check "match-test")
 _.UNDO
@@ -119,9 +196,43 @@ VVMATCH
 _.UNDO
 1
 (alc-test--step 'alc-test-match-undo-check "match-test")
+VVMATCH
+_W
+-100,-100
+7100,2100
+
+(alc-test--step 'alc-test-match-multi-check "match-test")
+VVMATCH
+_W
+-100,-100
+7100,2100
+
+(alc-test--step 'alc-test-match-multi-check "match-test")
+_.UNDO
+1
+(alc-test--step 'alc-test-match-undo-check "match-test")
+VVMATCH
+_C
+6100,150
+-100,-50
+
+(alc-test--step 'alc-test-match-multi-check "match-test")
+_.UNDO
+1
+(alc-test--step 'alc-test-match-undo-check "match-test")
+(setvar "PICKFIRST" 1)
+(sssetfirst nil (ssget "_W" '(-100.0 -100.0 0.0) '(7100.0 2100.0 0.0) '((0 . "LWPOLYLINE,HATCH"))))
+VVMATCH
+(alc-test--step 'alc-test-match-multi-check "match-test")
+_.UNDO
+1
+(alc-test--step 'alc-test-match-undo-check "match-test")
+VVMATCH
+
+(alc-test--step 'alc-test-match-undo-check "match-test")
 (alc-test--finish "match-test")
 '@
-    $taskSuites['match-test']=20
+    $taskSuites['match-test']=46
     if (!$TrimOnly -and !$HardeningOnly) {
         $taskCommands+=@'
 (alc-test--suite "settings-test" "settings-test.lsp" 'alc-test-run-settings nil)
@@ -270,6 +381,21 @@ PUBLIC WALL DOORS
 (alc-test--finish "public-door-test")
 '@
     $taskSuites['public-door-test']=5
+}
+if ($StatFindReopen) {
+    $taskCommands=@'
+(setq alc-test-saved-secureload (getvar "SECURELOAD") alc-test-saved-acad (getenv "ACAD"))
+(setvar "SECURELOAD" 0)
+(setvar "CMDECHO" 0)
+(setvar "FILEDIA" 0)
+(setvar "LOGFILEPATH" (strcat (getenv "ALCWALL_TEST_RUN") "/"))
+(setvar "LOGFILEMODE" 1)
+(setq *alc-install-root* (getenv "ALCWALL_TEST_ROOT"))
+(load (strcat (getenv "ALCWALL_TEST_ROOT") "/ALCWALL.lsp"))
+(load (strcat (getenv "ALCWALL_TEST_ROOT") "/tests/test-harness.lsp"))
+(alc-test--suite "stat-find-reopen-test" "stat-find-test.lsp" 'alc-test-run-stat-find-reopen nil)
+'@
+    $taskSuites=[ordered]@{'stat-find-reopen-test'=2}
 }
 $taskCommands=$taskCommands.TrimEnd("`r","`n")+"`n(setenv `"ACAD`" alc-test-saved-acad)`n(setvar `"SECURELOAD`" alc-test-saved-secureload)`n(setq alc-test-end-file (open (alc-test--result-path `"run.complete`") `"w`"))`n(write-line (getenv `"ALCWALL_TEST_LABEL`") alc-test-end-file)`n(close alc-test-end-file)`n(command-s `"_.QSAVE`")`n_.QUIT`n_Y`n"
 if ($AssignEnterUI) {

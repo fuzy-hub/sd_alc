@@ -183,9 +183,11 @@
   (vl-mkdir path)
   (setq *alc-install-root* path *alc-test-stale-command-ran* nil)
   (defun c:VV () (setq *alc-test-stale-command-ran* T))
+  (defun c:VVSUMTABLE () (setq *alc-test-stale-command-ran* T))
   (load (strcat pinned "/ALCWALL.lsp"))
   (alc-test--hard-check "incomplete-installation-fails-closed" (not *alc-ready*))
   (c:VV)
+  (c:VVSUMTABLE)
   (alc-test--hard-check "stale-command-is-blocked-after-load-failure"
     (and (not *alc-test-stale-command-ran*) (= before (alc-test--entity-count "LWPOLYLINE"))))
   (setq *alc-install-root* pinned)

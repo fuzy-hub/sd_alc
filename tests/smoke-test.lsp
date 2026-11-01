@@ -76,7 +76,7 @@
             "C:ALCDIM" "C:ALCS" "C:ALSC" "C:ALCTRIM" "C:ALCXTEND" "C:VV" "C:VVC"
             "C:VVSET" "C:VVS" "C:VVWALL" "C:VVCENTRAL" "C:VVDOOR"
             "C:VVTRIM" "C:VVXTEND" "C:VVLT" "C:VVGT" "C:VVGTS"
-            "C:VVTK" "C:VVTKC" "C:VVDIM" "C:VVFILTER")
+            "C:VVTK" "C:VVTKC" "C:VVDIM" "C:VVFILTER" "C:VVSUMTABLE")
         atoms (atoms-family 1)
         missing nil
         legacy-command-pass (not c:ALCCUT20))

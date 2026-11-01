@@ -1,0 +1,59 @@
+VVTK / Find source-row lookup - 2026-10-31
+
+Local changes on ALCWALL 3.4.4:
+- VVTK/ALCTK accepts Find/F at the initial text-height prompt.
+- New VVTK tables retain four columns and store source links in cell custom data.
+- Sorted row entries retain exact handles before rendering; equal lengths/layers
+  never substitute for source identity.
+- Find tests the full cell area using Table.HitTest and highlights the source.
+- Enter ends lookup and retains the last source in Pickfirst.
+- Find temporarily disables snaps and restores them on exit/error.
+- A drawing fingerprint and row-content signature reject foreign/stale links.
+- Erased sources, old unlinked tables and header/total rows are reported.
+- Moving source geometry or moving/rotating the table keeps source identity.
+- No extra public command or visible identifier column was added.
+
+Successful full AutoCAD 2027 isolated regression run:
+Session: alc-344-20261031-224809-f1131f5c
+PID: 1456
+Start: 2026-10-31T22:48:09.5591154+07:00
+Command: tests/run-autocad-tests.ps1 -FullAutoCAD -HardeningOnly -TimeoutSeconds 90
+Exit code: 0; all 15 suites completed, 353 PASS, 0 failures.
+stat-find-test: 24 PASS, including native VVTK create/Undo and VVTK/ALCTK Find.
+
+Saved DWG opened in a second newly created AutoCAD 2027 process:
+Session: alc-344-20261031-224848-432a2195
+PID: 7232
+Start: 2026-10-31T22:48:48.4713513+07:00
+Command: tests/run-autocad-tests.ps1 -FullAutoCAD -StatFindReopen
+  -InputDrawing tests/results/alc-344-20261031-224809-f1131f5c/stat-find-persist.dwg
+Exit code: 0; 2 PASS for persisted links and HitTest after reopening.
+
+Total Find-specific checks: 26 PASS. Coverage also includes STT/length-cell
+clicks, rotated UCS/table, moving tables/sources, inserted rows, deleted sources,
+edited row values, foreign fingerprints, same-DWG table copies, VVSUMTABLE
+compatibility, snap restoration and original source-data preservation.
+Completion markers and run.complete matched both recorded sessions.
+Native tests used scripted coordinates; physical mouse input is not claimed.
+Both successful owned processes exited; no pre-existing CAD process was controlled.
+
+Earlier interactive probes were rejected. Picking only selectable text/grid
+geometry missed cell interiors; Find now reads a point and tests the cell area.
+Cleanup audit: one initial manually issued failed-probe cleanup had a timestamp
+conversion error. Its exact recorded probe PID was used. Subsequent manual
+cleanup used ErrorActionPreference=Stop and compared typed UTC timestamps before
+termination. All test ownership records remain in their session directories.
+
+Limits: pre-existing tables need regeneration by VVTK to gain links. Copying a
+table within the DWG retains links to the original sources; create VVTK again to
+reference copied geometry. Cross-DWG links are rejected. Find does not update
+snapshot totals or automatically zoom/change the view.
+
+Static Lisp/version/SHA-256 manifest checks: PASS in root and Git checkout.
+Previous VVTK open-polyline filtering, reduced length column, VVMATCH and
+VVSUMTABLE changes are retained. No GitHub release or ZIP was published.
+
+API references:
+https://help.autodesk.com/cloudhelp/2026/ENU/AutoCAD-ActiveX-Reference/files/GUID-5BB29807-967F-4E22-BE84-F267DE481F98.htm
+https://help.autodesk.com/cloudhelp/2026/ENU/AutoCAD-ActiveX-Reference/files/GUID-BCA24A43-3E9D-4107-B455-E253823C507C.htm
+https://help.autodesk.com/cloudhelp/2015/RUS/AutoCAD-ActiveX/files/GUID-8812BEE2-BD9F-488D-BAA1-A38060FA4D86.htm

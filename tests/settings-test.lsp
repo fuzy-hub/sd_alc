@@ -36,8 +36,8 @@
   (alc-test--check "new-custom-scale-250-kept" (= *alc-scale* 250.0))
   (setq *alc-scale* old-scale)
   (alc--save-settings)
-  (setq layer (if (tblobjname "LAYER" "0. Tuong ALC")
-                (entget (tblobjname "LAYER" "0. Tuong ALC"))))
+  (setq layer (if (tblobjname "LAYER" "ALC_wall default")
+                (entget (tblobjname "LAYER" "ALC_wall default"))))
   (alc-test--check "startup-layer"
     (and layer (= (cdr (assoc 62 layer)) 4)
          (= (strcase (cdr (assoc 6 layer))) "CONTINUOUS")
