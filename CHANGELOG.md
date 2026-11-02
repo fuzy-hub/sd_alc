@@ -1,5 +1,16 @@
 # Changelog
 
+## 3.4.5 — 2026-11-03
+
+- VVTK/ALCTK: giảm cột CHIỀU DÀI còn 60%, bỏ mọi polyline khép kín; giữ LINE và polyline mở.
+- Sắp số theo 20 dải ngang, trái sang phải trong mỗi dải, theo hướng nhìn hiện tại kể cả khi UCS/PLAN bị xoay.
+- Thêm Find (F): bấm dòng bảng mới để highlight đúng nguồn; màu mặc định đỏ. Bảng cũ chưa có liên kết cần tạo lại, không suy đoán nguồn.
+- Ghi STT cạnh LINE/pline trên layer ALC_VVTK_STT. Đánh số lại thay số cũ của nguồn được thống kê; giữ số vùng khác và bảng cũ. Một Undo phục hồi bộ cũ.
+- Manage (M) trong VVTK: Numbers (N) bật/tắt số; Color (C) đổi màu Find; Exit (E) thoát. Lưu lựa chọn trong DWG, không hỏi ghi số mỗi lần tạo bảng.
+- Thêm VVSUMTABLE: cộng tổng hiển thị của các bảng VVTK được chọn, mỗi bảng một dòng và một dòng tổng cộng; không tự cập nhật khi nguồn thay đổi.
+- VVMATCH hỗ trợ pick/quét chọn/Pickfirst nhiều tường và bỏ qua pline tim tương ứng đã có; giữ nguồn và một Undo cho lượt tạo.
+- Layer mặc định khi load đổi thành ALC_wall default; giữ layer 0. Tuong ALC và đối tượng có sẵn.
+
 ## 3.4.4 — 2026-10-31
 
 - VVTK/ALCTK bỏ qua REVCLOUD theo dấu/thuộc tính nhận diện của AutoCAD, không tính vào dòng chi tiết hoặc tổng, kể cả cùng layer được chọn/All. Giữ pline cong thông thường.

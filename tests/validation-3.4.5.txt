@@ -1,0 +1,24 @@
+ALCWALL 3.4.5 release validation - AutoCAD 2027 only
+Date: 2026-11-03 (Asia/Saigon)
+Session: alc-345-20261103-000850-830930fc
+PID: 34448
+StartTime: 2026-11-03T00:08:50.8780470+07:00
+Result: 16 native suites, 402 PASS, zero failures; run.complete and markers
+verified by tools/verify_test_run.py. Test process exited after completion.
+Python: 10 unittest gate checks PASS.
+Static: 36 Lisp files, 43 public commands, manifest 3.4.5 PASS.
+Native suite counts:
+smoke 5; styles 39; layer 15; assign 12; assign-ui 15; stat-layer 27;
+stat-detail 47; stat-label 18; revcloud 13; filter 12; sumtable 31;
+stat-find 45; match 46; hardening 24; wall-schedule 48; public-door 5.
+Coverage includes startup resources and ALC_wall default; multi-selection
+and existing-centerline skip; all closed polylines excluded; sum tables;
+view-oriented horizontal bands; linked Find and color restoration;
+visible numbering; source-scoped replacement and legacy automatic labels;
+Manage M / Numbers N / Color C settings persisted to drawing;
+No-number creation without an extra prompt; Undo restores prior labels.
+Source and manifest use repository LF format before final native test.
+Only the newly launched labeled hidden AutoCAD process was used.
+No user's existing AutoCAD session was reused, closed or automated.
+Source geometry preserved. Tables and numbers are snapshots, not live updates.
+Old tables without row links are not guessed or manually rebound.

@@ -1,0 +1,19 @@
+ALCWALL 3.4.5 — 2026-11-03
+
+- VVTK/ALCTK: giảm cột CHIỀU DÀI còn 60%, bỏ mọi polyline khép kín; giữ LINE và polyline mở.
+- Sắp số theo 20 dải ngang, trái sang phải trong mỗi dải, theo hướng nhìn hiện tại kể cả khi UCS/PLAN bị xoay.
+- Thêm Find (F): bấm dòng bảng mới để highlight đúng nguồn; màu mặc định đỏ. Bảng cũ chưa có liên kết cần tạo lại, không suy đoán nguồn.
+- Ghi STT cạnh LINE/pline trên layer ALC_VVTK_STT. Đánh số lại thay số cũ của nguồn được thống kê; giữ số vùng khác và bảng cũ. Một Undo phục hồi bộ cũ.
+- Manage (M) trong VVTK: Numbers (N) bật/tắt số; Color (C) đổi màu Find; Exit (E) thoát. Lưu lựa chọn trong DWG, không hỏi ghi số mỗi lần tạo bảng.
+- Thêm VVSUMTABLE: cộng tổng hiển thị của các bảng VVTK được chọn, mỗi bảng một dòng và một dòng tổng cộng; không tự cập nhật khi nguồn thay đổi.
+- VVMATCH hỗ trợ pick/quét chọn/Pickfirst nhiều tường và bỏ qua pline tim tương ứng đã có; giữ nguồn và một Undo cho lượt tạo.
+- Layer mặc định khi load đổi thành ALC_wall default; giữ layer 0. Tuong ALC và đối tượng có sẵn.
+Yêu cầu: AutoCAD 2027 for Windows. Font NGHIA5.SHX không kèm ZIP.
+
+Cài đặt: giải nén toàn bộ, giữ nguyên src và manifest; chạy tools/install.ps1, APPLOAD ALCWALL-LOAD.lsp. Khi đã cài, có thể APPLOAD lại loader để cập nhật phần Lisp. DLL VVA không đổi so với 3.4.4; tránh ghi đè DLL đang được AutoCAD nạp.
+
+Số STT và bảng là dữ liệu tại thời điểm thống kê, không tự cập nhật khi sửa pline hoặc đổi hướng nhìn. Bảng VVTK cũ chưa có liên kết không dùng được Find; tạo lại bảng để có liên kết. Số từ bản thử trước chưa có dấu nguồn được nhận diện theo vị trí đặt tự động.
+
+Kiểm thử và thông tin phiên AutoCAD riêng: xem tests/validation-3.4.5.txt.
+
+Kiểm thử: 402 kiểm tra AutoCAD 2027 và 10 kiểm tra Python đều đạt; kiểm tra tĩnh và manifest 3.4.5 đạt.

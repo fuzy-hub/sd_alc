@@ -1,17 +1,28 @@
-# ALCWALL 3.4.4
+# ALCWALL 3.4.5
 
-ALCWALL là bộ công cụ AutoLISP hỗ trợ triển khai tường ALC 2D trên AutoCAD for Windows. Bản 3.4.4 được kiểm thử bằng AutoCAD 2027.
+ALCWALL là bộ công cụ AutoLISP hỗ trợ triển khai tường ALC 2D trên AutoCAD for Windows. Bản 3.4.5 được kiểm thử bằng AutoCAD 2027.
 
 ## Cài đặt
 
 1. Giữ nguyên toàn bộ cấu trúc thư mục, đặc biệt là `ALCWALL.lsp` và thư mục `src`.
 2. Trong AutoCAD, mở `OPTIONS > Files > Support File Search Path` và thêm thư mục ALCWALL.
 3. Chạy PowerShell `./tools/install.ps1`, rồi `APPLOAD` tệp `ALCWALL-LOAD.lsp` được tạo trong thư mục cài. Thêm tệp này vào `APPLOAD > Startup Suite > Contents > Add` để tự nạp mỗi lần mở CAD/bản vẽ. Loader này ghim đúng thư mục khi máy có nhiều bản ALCWALL. Nếu chỉ có một bản trong Support Path, vẫn có thể nạp trực tiếp `ALCWALL.lsp`.
-4. Khi thấy thông báo `ALCWALL v3.4.4 modules loaded`, bộ lệnh đã sẵn sàng.
+4. Khi thấy thông báo `ALCWALL v3.4.5 modules loaded`, bộ lệnh đã sẵn sàng.
 
 Khi cập nhật, APPLOAD lại `ALCWALL-LOAD.lsp`; loader gỡ định nghĩa lệnh cũ `ALCCUT20` còn trong phiên làm việc, chỉ dùng `ALCTRIM`.
 
 Không nạp riêng các tệp trong `src`; `ALCWALL.lsp` là loader duy nhất.
+
+## Thay đổi 3.4.5
+
+- VVTK/ALCTK: giảm cột CHIỀU DÀI còn 60%, bỏ mọi polyline khép kín; giữ LINE và polyline mở.
+- Sắp số theo 20 dải ngang, trái sang phải trong mỗi dải, theo hướng nhìn hiện tại kể cả khi UCS/PLAN bị xoay.
+- Thêm Find (F): bấm dòng bảng mới để highlight đúng nguồn; màu mặc định đỏ. Bảng cũ chưa có liên kết cần tạo lại, không suy đoán nguồn.
+- Ghi STT cạnh LINE/pline trên layer ALC_VVTK_STT. Đánh số lại thay số cũ của nguồn được thống kê; giữ số vùng khác và bảng cũ. Một Undo phục hồi bộ cũ.
+- Manage (M) trong VVTK: Numbers (N) bật/tắt số; Color (C) đổi màu Find; Exit (E) thoát. Lưu lựa chọn trong DWG, không hỏi ghi số mỗi lần tạo bảng.
+- Thêm VVSUMTABLE: cộng tổng hiển thị của các bảng VVTK được chọn, mỗi bảng một dòng và một dòng tổng cộng; không tự cập nhật khi nguồn thay đổi.
+- VVMATCH hỗ trợ pick/quét chọn/Pickfirst nhiều tường và bỏ qua pline tim tương ứng đã có; giữ nguồn và một Undo cho lượt tạo.
+- Layer mặc định khi load đổi thành ALC_wall default; giữ layer 0. Tuong ALC và đối tượng có sẵn.
 
 ## Thay đổi 3.4.4
 
