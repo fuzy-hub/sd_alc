@@ -171,12 +171,37 @@
              (equal (alc--stat-row-source table 2) *alc-find-test-b*)
              (equal (alc--stat-row-source table 3) *alc-find-test-a*)) (setq found T)))
   (alc-test--find-check "native-VVTK-create-saves-the-source-link-for-each-row"
-    (and (= (sslength selection) 2) found)))
+    (and (= (sslength selection) 2) found))
+  (alc-test--find-check "native-VVTK-Yes-creates-two-visible-row-numbers"
+    (and (setq selection (ssget "_X" '((0 . "TEXT") (8 . "ALC_VVTK_STT"))))
+      (= (sslength selection) 2)))
+  (setq *alc-find-test-old-labels* (list (ssname selection 0) (ssname selection 1))))
+
+(defun alc-test-stat-find-renumbered ()
+  (alc-test--find-check "native-renumber-replaces-old-labels-and-keeps-old-tables"
+    (and (= (alc-test--entity-count "ACAD_TABLE") 3)
+      (= (sslength (ssget "_X" '((0 . "TEXT") (8 . "ALC_VVTK_STT")))) 2)
+      (not (entget (car *alc-find-test-old-labels*)))
+      (not (entget (cadr *alc-find-test-old-labels*))))))
+
+(defun alc-test-stat-find-renumber-undo ()
+  (alc-test--find-check "one-Undo-restores-original-number-labels-and-removes-renumber-table"
+    (and (= (alc-test--entity-count "ACAD_TABLE") 2)
+      (= (sslength (ssget "_X" '((0 . "TEXT") (8 . "ALC_VVTK_STT")))) 2)
+      (entget (car *alc-find-test-old-labels*))
+      (entget (cadr *alc-find-test-old-labels*)))))
 
 (defun alc-test-stat-find-create-undo ()
   (alc-test--find-check "one-Undo-removes-created-linked-table-and-keeps-source-objects"
     (and (= (alc-test--entity-count "ACAD_TABLE") 1)
-      (entget *alc-find-test-a*) (entget *alc-find-test-b*))))
+      (entget *alc-find-test-a*) (entget *alc-find-test-b*)))
+  (alc-test--find-check "one-Undo-also-removes-both-row-number-labels"
+    (not (ssget "_X" '((0 . "TEXT") (8 . "ALC_VVTK_STT"))))))
+
+(defun alc-test-stat-find-created-no ()
+  (alc-test--find-check "native-Manage-M-N-No-skips-number-prompt-and-creates-table-only"
+    (and (not *alc-stat-number-sources*) (= (alc-test--entity-count "ACAD_TABLE") 2)
+      (not (ssget "_X" '((0 . "TEXT") (8 . "ALC_VVTK_STT")))))))
 
 (defun alc-test-run-stat-find-reopen (/ selection index table sources valid source)
   (setq selection (ssget "_X" '((0 . "ACAD_TABLE"))) index 0)

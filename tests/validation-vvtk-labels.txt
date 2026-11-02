@@ -1,0 +1,15 @@
+VVTK visible row numbers - AutoCAD 2027
+Session: alc-344-20261102-234332-26851020
+PID: 21256
+StartTime: 2026-11-02T23:43:33.1616221+07:00
+Result: 16 suites, 388 PASS, zero failures; verified with verify_test_run.py.
+Stat labels: 13 PASS; Find including native Yes and Undo: 40 PASS.
+VVTK asks Yes/No before table insertion; Enter defaults to Yes.
+Yes creates centered TEXT on ALC_VVTK_STT, new layer red ACI1, ByLayer.
+Position: half curve length, offset upward 0.8 x text height in current UCS.
+Existing layer properties preserved; hidden/frozen/locked label layer rejected.
+Tests: No mode, exact STT/source correspondence, arc midpoint, LINE midpoint,
+rotated UCS, layer/style/height, original geometry unchanged, Find preserved,
+partial failure rolls back table and labels, native creation and single Undo.
+Labels are snapshots; no automatic move/update or deletion of older label sets.
+No user's CAD process reused; own labeled hidden CAD test process exited.

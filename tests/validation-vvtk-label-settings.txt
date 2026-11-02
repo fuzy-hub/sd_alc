@@ -1,0 +1,18 @@
+VVTK label replacement and Manage settings - AutoCAD 2027
+Session: alc-344-20261103-000052-7a860c27
+PID: 8180
+StartTime: 2026-11-03T00:00:53.0439920+07:00
+Result: 16 suites, 402 PASS, zero failures; verified with verify_test_run.py.
+Stat labels: 18 PASS; native Find/settings/Undo: 45 PASS.
+VVTK initial prompt: Find (F), Manage (M).
+Manage: Numbers (N), Color (C), Exit (E); Yes (Y)/No (N).
+Numbers and Find color saved as optional XRecord fields 94/95, schema V4.
+Existing drawings without new fields default to Yes and red.
+No per-table numbering prompt; create uses stored preference.
+Labels carry ALC_VVTK_LABEL source-handle XData.
+Renumber replaces labels for selected sources, preserves other sources/tables.
+Previous untagged labels recognized at their original automatic midpoint offset.
+New labels created first; failure cleans new output and preserves old labels.
+Native test confirms a single Undo restores old labels and removes new table.
+Native tests exercise M/N/Yes and M/N/No shortcuts, with no extra create prompt.
+No preexisting AutoCAD process reused; own hidden CAD process exited after test.

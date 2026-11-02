@@ -1,0 +1,15 @@
+VVTK Z ordering by horizontal bands - AutoCAD 2027
+Supersedes the earlier 5x5-cell implementation: columns removed.
+Session: alc-344-20261102-232525-adb7d137
+PID: 26360
+StartTime: 2026-11-02T23:25:26.3391251+07:00
+Result: 15 suites, 373 PASS, zero failures; verified with verify_test_run.py.
+Stat detail: 43 PASS; Find: 38 PASS; sumtable: 31 PASS.
+Divide eligible objects' WCS bounding height into N equal horizontal bands.
+Default N=20; no X/column divisions. Assign each object once using its Ymax.
+Traverse bands top-to-bottom, each band Xmin ascending, then Ymax descending
+and permanent handle for stable ties. Empty bands require no iteration.
+Same-band nearby-X regression verifies left object before higher right object.
+Preference: (setq *alc-stat-grid-size* N), integer 1..1000; counts bands only.
+No preexisting AutoCAD process reused; own hidden process exited after test.
+

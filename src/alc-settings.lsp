@@ -33,6 +33,8 @@
         *alc-thickness* 100.0
         *alc-door-width* 900.0
         *alc-stat-text-height* 100.0
+        *alc-stat-number-sources* T
+        *alc-stat-find-color* 1
         *alc-count-prefix* "CK"
         *alc-last-side* 1
         *alc-settings-schema-version* 4)
@@ -153,6 +155,10 @@
       (if (setq value (cdr (assoc 70 data)))
         (setq *alc-last-side* (if (= value -1) -1 1))
       )
+      (if (member (setq value (cdr (assoc 94 data))) '(0 1))
+        (setq *alc-stat-number-sources* (= value 1)))
+      (if (alc--valid-color-p (setq value (cdr (assoc 95 data))))
+        (setq *alc-stat-find-color* (fix value)))
       (if (or needs-upgrade (/= schema-version 4))
         (alc--save-settings)
       )
@@ -191,6 +197,10 @@
        (boundp '*alc-stat-text-height*)
        (numberp *alc-stat-text-height*)
        (> *alc-stat-text-height* 0.0)
+       (boundp '*alc-stat-number-sources*)
+       (member *alc-stat-number-sources* '(nil T))
+       (boundp '*alc-stat-find-color*)
+       (alc--valid-color-p *alc-stat-find-color*)
        (boundp '*alc-count-prefix*)
        (eq (type *alc-count-prefix*) 'STR)
        (/= *alc-count-prefix* "")
@@ -221,6 +231,8 @@
       (cons 41 *alc-thickness*)
       (cons 42 *alc-door-width*)
       (cons 43 *alc-stat-text-height*)
+      (cons 94 (if *alc-stat-number-sources* 1 0))
+      (cons 95 *alc-stat-find-color*)
       (cons 2 *alc-count-prefix*)
       (cons 70 *alc-last-side*)
     )

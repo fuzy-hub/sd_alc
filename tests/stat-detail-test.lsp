@@ -70,14 +70,14 @@
         spatial-selection (ssadd))
   (foreach entity (list spatial-right spatial-left spatial-top spatial-same) (ssadd entity spatial-selection))
   (setq spatial-rows (alc--collect-length-rows spatial-selection))
-  (alc-test--detail-check "left-before-right-even-when-right-object-is-higher"
-    (and (= (length spatial-rows) 4) (= (car (last spatial-rows)) "ALC_Detail_C")))
+  (alc-test--detail-check "upper-grid-row-before-lower-left-object"
+    (and (= (length spatial-rows) 4) (= (caar spatial-rows) "ALC_Detail_C")))
   (alc-test--detail-check "same-left-edge-sorts-top-before-bottom"
-    (equal (mapcar 'cdr spatial-rows) '(200.0 200.0 100.0 300.0)))
+    (equal (mapcar 'cdr spatial-rows) '(300.0 200.0 200.0 100.0)))
   (alc-test--detail-check "reversed-vertices-use-left-edge-not-start-point"
-    (= (caar spatial-rows) "ALC_Detail_B"))
+    (= (caadr spatial-rows) "ALC_Detail_B"))
   (alc-test--detail-check "coincident-equal-length-objects-remain-two-rows"
-    (and (equal (car spatial-rows) (cadr spatial-rows))
+    (and (equal (cadr spatial-rows) (caddr spatial-rows))
       (equal (alc--total-layer-length spatial-rows) 800.0 1e-6)))
   (setq tiny-x (entmakex '((0 . "LINE") (8 . "ALC_Detail_C")
           (10 -199.9999999 2000.0 0.0) (11 200.0000001 2000.0 0.0)))
@@ -93,7 +93,8 @@
     (equal (mapcar 'car (alc--collect-length-rows tie-selection)) '("ALC_Detail_C" "ALC_Detail_A")))
   (setq entry (alc--stat-length-entry high-pline "ALC_Detail_D" (alc--curve-length high-pline)))
   (alc-test--detail-check "extents-are-Xmin-and-Ymax-not-start-or-lowest-vertex"
-    (and (= (car entry) -200.0) (= (cadr entry) 3000.0)))
+    (and (equal (car entry) (car (trans '(-200.0 3000.0 0.0) 0 2)) 1e-6)
+         (equal (cadr entry) (cadr (trans '(-200.0 3000.0 0.0) 0 2)) 1e-6)))
   (setq tie-selection (ssadd)) (ssadd spatial-top tie-selection) (ssadd high-pline tie-selection)
   (alc-test--detail-check "equal-Xmin-highest-Ymax-wins-even-with-lower-start-point"
     (= (caar (alc--collect-length-rows tie-selection)) "ALC_Detail_D"))
@@ -106,28 +107,52 @@
   (alc-test--detail-check "exact-spatial-ties-remain-stable-across-opposite-selection-orders"
     (and (equal (alc--collect-length-rows tie-selection) (alc--collect-length-rows reverse-selection))
       (= (length (alc--collect-length-rows tie-selection)) 2)))
-  ;; Tolerance boundaries and grouping must not depend on pick order.
-  (setq near-entries '((0.0 0.0 "101" ("Left" . 100.0))
-                       (9.999999 100.0 "102" ("Near" . 200.0))
-                       (10.0 200.0 "103" ("Boundary" . 300.0))))
+  ;; Horizontal bands only: X order wins over small Y differences in each band.
+  (setq near-entries '((0.0 100.0 "101" ("TopLeft" . 100.0))
+                       (100.0 99.0 "102" ("TopRight" . 200.0))
+                       (0.0 79.0 "103" ("NextRow" . 300.0))
+                       (100.0 0.0 "104" ("BottomRight" . 400.0))))
   (setq ordered (mapcar 'cadddr (alc--stat-sort-entries near-entries)))
-  (alc-test--detail-check "X-difference-under-10-sorts-highest-Ymax-first"
-    (equal (mapcar 'car ordered) '("Near" "Left" "Boundary")))
-  (alc-test--detail-check "X-difference-exactly-10-starts-new-group"
-    (equal (mapcar 'car (mapcar 'cadddr (alc--stat-sort-entries
-      (list (car near-entries) (caddr near-entries))))) '("Left" "Boundary")))
+  (alc-test--detail-check "bands-traverse-left-to-right-then-next-row"
+    (equal (mapcar 'car ordered) '("TopLeft" "TopRight" "NextRow" "BottomRight")))
+  (alc-test--detail-check "exact-Y-boundary-enters-next-band"
+    (and (= (alc--stat-grid-index 20.0 100.0 5) 1)
+         (= (alc--stat-grid-index 100.0 100.0 5) 4)
+         (= (alc--stat-grid-index 19.999999 100.0 5) 0)))
   (alc-test--detail-check "grouping-independent-of-selection-order"
     (equal ordered (mapcar 'cadddr (alc--stat-sort-entries (reverse near-entries)))))
-  (alc-test--detail-check "chain-of-near-X-does-not-merge-wide-columns"
+  (alc-test--detail-check "same-band-left-object-before-higher-right-object"
     (equal (mapcar 'car (mapcar 'cadddr (alc--stat-sort-entries
-      '((0.0 0.0 "101" ("Zero" . 100.0))
-        (9.0 100.0 "102" ("Nine" . 200.0))
-        (18.0 200.0 "103" ("Eighteen" . 300.0)))))) '("Nine" "Zero" "Eighteen")))
-  (alc-test--detail-check "negative-X-coordinates-use-same-under-10-rule"
+      '((0.0 99.0 "101" ("Left" . 100.0))
+        (100.0 100.0 "102" ("Right" . 200.0))
+        (0.0 0.0 "103" ("Bottom" . 300.0)))))) '("Left" "Right" "Bottom")))
+  (alc-test--detail-check "negative-coordinates-use-same-Z-order"
     (equal (mapcar 'car (mapcar 'cadddr (alc--stat-sort-entries
-      '((-20.0 0.0 "101" ("Left" . 100.0))
-        (-10.000001 100.0 "102" ("Near" . 200.0))
-        (-10.0 200.0 "103" ("Boundary" . 300.0)))))) '("Near" "Left" "Boundary")))
+      '((-100.0 -1.0 "101" ("Left" . 100.0))
+        (0.0 0.0 "102" ("Right" . 200.0))
+        (-100.0 -100.0 "103" ("Bottom" . 300.0)))))) '("Left" "Right" "Bottom")))
+  (setq *alc-stat-grid-size* 1)
+  (alc-test--detail-check "one-band-uses-left-to-right-order-across-all-heights"
+    (equal (mapcar 'cadddr (alc--stat-sort-entries near-entries))
+      (mapcar 'cadddr (vl-sort near-entries 'alc--stat-position-before-p))))
+  (setq *alc-stat-grid-size* 5)
+  (alc-test--detail-check "nearby-X-in-same-band-still-left-first-without-cells"
+    (equal (mapcar 'caddr (alc--stat-sort-entries
+      '((1.0 99.0 "101" ("Left" . 1.0))
+        (2.0 100.0 "102" ("Right" . 1.0))
+        (100.0 0.0 "103" ("Bottom" . 1.0))))) '("101" "102" "103")))
+  (setq *alc-stat-grid-size* 10)
+  (alc-test--detail-check "grid-resolution-can-be-changed"
+    (and (= (alc--stat-grid-size) 10) (= (alc--stat-grid-index 15.0 100.0 10) 1)))
+  (setq *alc-stat-grid-size* 0)
+  (alc-test--detail-check "invalid-grid-resolution-resets-to-twenty"
+    (= (alc--stat-grid-size) 20))
+  (alc-test--detail-check "zero-width-or-height-does-not-divide-by-zero"
+    (and (= (alc--stat-grid-index 0.0 0.0 5) 0)
+      (not (alc--stat-sort-entries nil))))
+  (alc-test--detail-check "object-extent-includes-lowest-and-rightmost-vertices"
+    (equal (nth 4 entry)
+      (list (trans '(-200.0 -300.0 0.0) 0 2) (trans '(0.0 3000.0 0.0) 0 2)) 1e-6))
   (defun alc--object-bounds (entity) nil)
   (setq result (vl-catch-all-apply 'alc--stat-length-entry
     (list high-pline "ALC_Detail_D" (alc--curve-length high-pline))))
@@ -139,6 +164,58 @@
   (vla-Delete table) (vla-Delete old-table)
   (foreach entity (list a b line closed arc zero) (entdel entity))
   (alc-test-run-stat-closed)
+  (alc-test-run-stat-view-order)
+  (princ))
+
+(defun alc-test-run-stat-view-order (/ definitions item entity selection entities before
+    entries raw bounds expected table index labels saved-size)
+  (setq saved-size (alc--stat-grid-size) *alc-stat-grid-size* 20)
+  (command-s "_.UCS" "_World")
+  (command-s "_.UCS" "_Z" "90")
+  (command-s "_.PLAN" "_Current")
+  ;; Draw in SCREEN coordinates: two short top walls separated by the full width.
+  (setq definitions '(((0.0 1000.0 0.0) (0.0 950.0 0.0))
+                      ((1000.0 1000.0 0.0) (1000.0 950.0 0.0))
+                      ((0.0 900.0 0.0) (1000.0 900.0 0.0))
+                      ((0.0 850.0 0.0) (0.0 0.0 0.0))
+                      ((1000.0 850.0 0.0) (1000.0 0.0 0.0))
+                      ((0.0 0.0 0.0) (1000.0 0.0 0.0)))
+        selection (ssadd))
+  (foreach item definitions
+    (setq entity (entmakex (list '(0 . "LINE") '(8 . "ALC_Detail_A")
+      (cons 10 (trans (car item) 2 0)) (cons 11 (trans (cadr item) 2 0)))))
+    (setq entities (append entities (list entity))))
+  (foreach entity (reverse entities) (ssadd entity selection))
+  (setq before (mapcar 'entget entities)
+        expected (mapcar '(lambda (entity) (cdr (assoc 5 (entget entity)))) entities)
+        entries (alc--collect-length-entries selection))
+  (alc-test--detail-check "rotated-view-starts-with-both-short-top-walls-left-to-right"
+    (equal (mapcar 'caddr entries) expected))
+  ;; Demonstrate that the old WCS scheme does NOT yield the required visual order.
+  (foreach entity entities
+    (setq bounds (alc--object-bounds entity)
+          raw (cons (list (caar bounds) (cadadr bounds) (cdr (assoc 5 (entget entity)))
+            (cons "ALC_Detail_A" (alc--curve-length entity)) bounds) raw)))
+  (alc-test--detail-check "WCS-order-reproduces-wrong-traversal-after-view-rotation"
+    (not (equal (mapcar 'caddr (alc--stat-sort-entries raw)) expected)))
+  (setq table (alc--stat-create-output entries '(5000.0 0.0 0.0) 20.0 T)
+        index 2 labels nil)
+  (foreach entity entities
+    (setq labels (cons (equal (alc--stat-row-source table index) entity) labels)
+          index (1+ index)))
+  (alc-test--detail-check "rotated-view-table-row-links-use-the-same-visual-order"
+    (not (member nil labels)))
+  (alc-test--detail-check "view-ordering-and-numbering-do-not-modify-original-curves"
+    (equal before (mapcar 'entget entities)))
+  (vla-Delete table)
+  (if (setq selection (ssget "_X" '((0 . "TEXT") (8 . "ALC_VVTK_STT"))))
+    (progn (setq index 0)
+      (repeat (sslength selection)
+        (entdel (ssname selection index)) (setq index (1+ index)))))
+  (foreach entity entities (entdel entity))
+  (command-s "_.UCS" "_World")
+  (command-s "_.PLAN" "_World")
+  (setq *alc-stat-grid-size* saved-size)
   (princ))
 (defun alc-test--stat-legacy-polyline (points flags / point)
   (entmake (list '(0 . "POLYLINE") '(66 . 1) '(8 . "ALC_Detail_A")

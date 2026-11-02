@@ -6,8 +6,8 @@
       "sha256": "b92e975f5bb2327f7ad77bdef9485fa31a304cec8c30831220f31500c6e18ded"
     },
     "src/alc-settings.lsp": {
-      "bytes": 12205,
-      "sha256": "9bde914fa60b89b4ddc7633132cc96d54319e7fa1d00a9a24e255b3fcc9a3971"
+      "bytes": 12776,
+      "sha256": "bb11d916ccbc4b15e4ee1bb5a501cb6cc6613fb6d648c6b20ca78e4201503bac"
     },
     "src/alc-styles.lsp": {
       "bytes": 6591,
@@ -34,8 +34,8 @@
       "sha256": "3fb177a82366c97bea52bee76650f9f525d0065fd7ca3c00de770a0d7dce6e95"
     },
     "src/alc-schedule.lsp": {
-      "bytes": 41806,
-      "sha256": "b42428610f75132097a03a1fd3ad061ad2c817a0db339e3d5d84424353072f4d"
+      "bytes": 48979,
+      "sha256": "6b133fe306357c0c75c4079b7ca11419b0e2479424477c77525934eb47a6ad10"
     },
     "src/alc-door-schedule.lsp": {
       "bytes": 12372,

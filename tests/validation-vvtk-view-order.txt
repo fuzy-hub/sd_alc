@@ -1,0 +1,16 @@
+VVTK visual reading order under rotated view - AutoCAD 2027
+Session: alc-344-20261102-234851-592213a8
+PID: 25084
+StartTime: 2026-11-02T23:48:52.1441907+07:00
+Result: 16 suites, 392 PASS, zero failures; verified with verify_test_run.py.
+Stat detail: 47 PASS; labels: 13 PASS; Find: 40 PASS.
+Reproducer: 90-degree UCS/PLAN, two short walls at opposite top corners,
+a horizontal top wall, two long lower vertical walls and a bottom wall.
+The old WCS sort is confirmed to disagree with the required visual ordering.
+Fixed: project all eight WCS bounding-box corners into current view DCS.
+Then assign horizontal bands and sort left-to-right in each band as before.
+Screen top-left short wall comes first, top-right short wall second.
+Table rows resolve the same ordered sources; original geometry unchanged.
+No automatic renumbering of existing tables/labels when view changes.
+User screenshot diagnosis remains unmeasured: user's active drawing not accessed.
+Only the new labeled hidden AutoCAD process used; test process exited.

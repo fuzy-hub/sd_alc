@@ -76,7 +76,9 @@ $taskSuites['assign-ui-test']=15
 $taskCommands+="`n(alc-test--suite `"stat-layer-test`" `"stat-layer-test.lsp`" 'alc-test-run-stat-layer nil)`n"
 $taskSuites['stat-layer-test']=27
 $taskCommands+="`n(alc-test--suite `"stat-detail-test`" `"stat-detail-test.lsp`" 'alc-test-run-stat-detail nil)`n"
-$taskSuites['stat-detail-test']=37
+$taskSuites['stat-detail-test']=47
+$taskCommands+="`n(alc-test--suite `"stat-label-test`" `"stat-label-test.lsp`" 'alc-test-run-stat-label nil)`n"
+$taskSuites['stat-label-test']=18
 $taskCommands+="`n(alc-test--suite `"revcloud-test`" `"revcloud-test.lsp`" 'alc-test-run-revcloud nil)`n"
 $taskSuites['revcloud-test']=13
 $taskCommands+="`n(alc-test--suite `"filter-test`" `"filter-test.lsp`" 'alc-test-run-filter nil)`n"
@@ -120,6 +122,10 @@ $taskCommands+="`n"+@'
 (alc-test--suite "stat-find-test" "stat-find-test.lsp" 'alc-test-run-stat-find T)
 (alc-test--step 'alc-test-stat-find-prepare "stat-find-test")
 VVTK
+M
+N
+Yes
+E
 
 A
 _All
@@ -129,6 +135,40 @@ _All
 _.UNDO
 1
 (alc-test--step 'alc-test-stat-find-create-undo "stat-find-test")
+VVTK
+M
+N
+No
+E
+
+A
+_All
+
+12000,0
+(alc-test--step 'alc-test-stat-find-created-no "stat-find-test")
+_.UNDO
+1
+(alc-test--step 'alc-test-stat-find-create-undo "stat-find-test")
+(setq *alc-stat-number-sources* T)
+(alc--save-settings)
+VVTK
+
+A
+_All
+
+12000,0
+(setq alc-test-label-selection (ssget "_X" '((0 . "TEXT") (8 . "ALC_VVTK_STT"))) *alc-find-test-old-labels* (list (ssname alc-test-label-selection 0) (ssname alc-test-label-selection 1)))
+VVTK
+
+A
+_All
+
+16000,0
+(alc-test--step 'alc-test-stat-find-renumbered "stat-find-test")
+_.UNDO
+1
+(alc-test--step 'alc-test-stat-find-renumber-undo "stat-find-test")
+(alc-test--step 'alc-test-stat-find-prepare "stat-find-test")
 (setvar "OSMODE" 3)
 VVTK
 Find
@@ -152,7 +192,7 @@ Color
 (load (strcat (getenv "ALCWALL_TEST_ROOT") "/src/alc-schedule.lsp"))
 (alc-test--finish "stat-find-test")
 '@
-$taskSuites['stat-find-test']=38
+$taskSuites['stat-find-test']=45
 if (!$StylesOnly -and !$PublicDoorOnly) {
     $taskCommands+="`n(load (strcat (getenv `"ALCWALL_TEST_ROOT`") `"/tests/generate-fixtures.lsp`"))`n"
     $taskCommands+=@'

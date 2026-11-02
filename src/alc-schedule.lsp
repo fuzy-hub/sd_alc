@@ -83,7 +83,7 @@
 )
 
 (defun alc--stat-position-before-p (a b / ha hb)
-  ;; Exact ordering used to build deterministic Xmin groups.
+  ;; Left-to-right inside a horizontal band; height and handle break X ties.
   (cond
     ((/= (car a) (car b)) (< (car a) (car b)))
     ((/= (cadr a) (cadr b)) (> (cadr a) (cadr b)))
@@ -93,34 +93,66 @@
       (if (/= (strlen ha) (strlen hb)) (< (strlen ha) (strlen hb))
         (and (/= ha hb) (= ha (car (acad_strlsort (list ha hb)))))))))
 
-(defun alc--stat-top-before-p (a b)
-  (if (/= (cadr a) (cadr b)) (> (cadr a) (cadr b))
-    (alc--stat-position-before-p a b)))
+(defun alc--stat-grid-size ()
+  ;; Drawing-session preference; APPLOAD preserves a valid user setting.
+  (if (not (and (boundp '*alc-stat-grid-size*)
+                (numberp *alc-stat-grid-size*)
+                (<= 1 *alc-stat-grid-size* 1000)
+                (= *alc-stat-grid-size* (fix *alc-stat-grid-size*))))
+    (setq *alc-stat-grid-size* 20))
+  (fix *alc-stat-grid-size*))
 
-(defun alc--stat-sort-entries (entries / pending anchor group result item)
-  ;; Each group spans strictly less than 10 units from its leftmost Xmin.
-  ;; Anchoring prevents non-transitive pairwise ties (e.g. X=0,9,18).
-  (setq pending (vl-sort entries 'alc--stat-position-before-p))
-  (while pending
-    (setq anchor (caar pending) group nil)
-    (while (and pending (< (- (caar pending) anchor) 10.0))
-      (setq group (cons (car pending) group) pending (cdr pending)))
-    (foreach item (vl-sort group 'alc--stat-top-before-p)
-      (setq result (cons item result))))
-  (reverse result))
+(defun alc--stat-grid-index (offset span size)
+  ;; Clamp the bottom boundary into the final band; zero height uses one band.
+  (if (> span 0.0)
+    (max 0 (min (1- size) (fix (* size (/ offset span)))))
+    0))
+
+(defun alc--stat-grid-before-p (a b)
+  (if (/= (car a) (car b)) (< (car a) (car b))
+    (alc--stat-position-before-p (cadr a) (cadr b))))
+
+(defun alc--stat-sort-entries (entries / size ymin ymax bounds item keyed)
+  ;; Only divide Y: equal-height bands across the full selection width.
+  ;; Visit bands top-to-bottom, objects left-to-right (Z); no column divisions.
+  (setq size (alc--stat-grid-size))
+  (foreach item entries
+    (setq bounds (nth 4 item))
+    ;; Four-field entries remain usable as point anchors by internal callers.
+    (if (not bounds)
+      (setq bounds (list (list (car item) (cadr item))
+                         (list (car item) (cadr item)))))
+    (setq ymin (if ymin (min ymin (cadar bounds)) (cadar bounds))
+          ymax (if ymax (max ymax (cadadr bounds)) (cadadr bounds))))
+  (foreach item entries
+    (setq keyed (cons (list
+      (alc--stat-grid-index (- ymax (cadr item)) (- ymax ymin) size)
+      item) keyed)))
+  (mapcar 'cadr (vl-sort keyed 'alc--stat-grid-before-p)))
+
+(defun alc--stat-view-bounds (bounds / point low high)
+  ;; Project all corners: WCS axes may appear vertical/horizontal after a twist.
+  ;; Never rotate/move the actual source entity just to determine reading order.
+  (foreach point (alc--bounds-corners (car bounds) (cadr bounds))
+    (setq point (trans point 0 2)
+          low (if low (mapcar 'min low point) point)
+          high (if high (mapcar 'max high point) point)))
+  (list low high))
 
 (defun alc--stat-length-entry (entity layer length-value / bounds)
   (setq bounds (alc--object-bounds entity))
   (if bounds
+    (progn
+    (setq bounds (alc--stat-view-bounds bounds))
     (list (caar bounds) (cadadr bounds) (cdr (assoc 5 (entget entity)))
-      (cons layer length-value))
+      (cons layer length-value) bounds))
     ;; A start point is not an extent: never silently substitute it for Xmin/Ymax.
     (vl-exit-with-error
       (strcat "Khong doc duoc Xmin/Ymax cua doi tuong " (cdr (assoc 5 (entget entity)))
         "; dung thong ke de tranh sap xep sai."))))
 
 (defun alc--collect-length-entries (selection / index entity layer length-value rows)
-  ;; WCS bounding extents are independent of vertex direction and pick order.
+  ;; Screen-oriented bounds are independent of vertex direction and pick order.
   (setq index 0)
   (if selection
     (repeat (sslength selection)
@@ -277,6 +309,117 @@
   (alc--add-length-table-rows (mapcar 'cadddr entries) insertion text-height
     (list 'linked (mapcar 'caddr entries))))
 
+(defun alc--stat-label-layer (/ name data)
+  (setq name "ALC_VVTK_STT")
+  (if (not (tblsearch "LAYER" name))
+    (entmake (list '(0 . "LAYER") '(100 . "AcDbSymbolTableRecord")
+      '(100 . "AcDbLayerTableRecord") (cons 2 name) '(70 . 0)
+      '(62 . 1) '(6 . "Continuous"))))
+  (setq data (tblsearch "LAYER" name))
+  (if (and data (= 0 (logand (cdr (assoc 70 data)) 5))
+           (> (cdr (assoc 62 data)) 0)) name
+    (vl-exit-with-error "Hay bat, thaw va mo khoa layer ALC_VVTK_STT truoc khi ghi so.")))
+
+(defun alc--stat-add-label (entry index text-height layer / entity point normal axis text)
+  (setq entity (handent (caddr entry))
+        point (vlax-curve-getPointAtDist entity (/ (cdr (cadddr entry)) 2.0))
+        ;; Offset above the halfway point in the current UCS, not along the chord.
+        point (trans (mapcar '+ (trans point 0 1) (list 0.0 (* text-height 0.8) 0.0)) 1 0)
+        normal (trans '(0.0 0.0 1.0) 1 0 T)
+        axis (trans '(1.0 0.0 0.0) 1 normal T)
+        text (vla-AddText (alc--current-space) (itoa index)
+               (vlax-3d-point point) text-height))
+  (alc--track-temp (vlax-vla-object->ename text))
+  (vla-put-Layer text layer)
+  (vla-put-Color text 256)
+  (vla-put-StyleName text "alc text note")
+  (vla-put-Normal text (vlax-3d-point normal))
+  (vla-put-Rotation text (atan (cadr axis) (car axis)))
+  (vla-put-Alignment text 10)
+  (vla-put-TextAlignmentPoint text (vlax-3d-point point))
+  (regapp "ALC_VVTK_LABEL")
+  (entmod (append (entget (vlax-vla-object->ename text))
+    (list (list -3 (list "ALC_VVTK_LABEL" '(1000 . "1")
+      (cons 1005 (caddr entry)))))))
+  (vlax-vla-object->ename text))
+
+(defun alc--stat-legacy-label-p (entity entries / data value codes valid point normal angle-value up middle match entry)
+  ;; Earlier labels have no source tag. Match their known placement, not a row
+  ;; number or an arbitrary text elsewhere in the drawing.
+  (setq data (entget entity) value (cdr (assoc 1 data))
+        codes (vl-string->list value) valid (/= value ""))
+  (foreach code codes (if (or (< code 48) (> code 57)) (setq valid nil)))
+  (if valid
+    (progn
+      (setq point (trans (cdr (assoc 11 data)) entity 0)
+            normal (cdr (assoc 210 data)) angle-value (cdr (assoc 50 data))
+            up (trans (list (- (sin angle-value)) (cos angle-value) 0.0) normal 0 T)
+            point (mapcar '- point
+              (mapcar '(lambda (value) (* value 0.8 (cdr (assoc 40 data)))) up)))
+      (foreach entry entries
+        (setq middle (vlax-curve-getPointAtDist (handent (caddr entry)) (/ (cdr (cadddr entry)) 2.0)))
+        (if (equal point middle 1e-5) (setq match T)))))
+  match)
+
+(defun alc--stat-old-labels (entries / selection handles index entity data source result)
+  (setq handles (mapcar 'caddr entries) index 0
+        selection (ssget "_X" (list '(0 . "TEXT") '(8 . "ALC_VVTK_STT")
+          (cons 410 (if (= (getvar "CVPORT") 1) (getvar "CTAB") "Model")))))
+  (if selection
+    (repeat (sslength selection)
+      (setq entity (ssname selection index) index (1+ index)
+            data (cdr (assoc "ALC_VVTK_LABEL"
+              (cdr (assoc -3 (entget entity '("ALC_VVTK_LABEL"))))))
+            source (cdr (assoc 1005 data)))
+      (if (if data (member source handles) (alc--stat-legacy-label-p entity entries))
+        (setq result (cons entity result)))))
+  result)
+
+(defun alc--stat-create-output (entries insertion text-height number-sources
+    / table labels layer index result entity entry old-labels erased)
+  ;; Keep the table and all labels temporary until the entire batch succeeds.
+  (setq result (vl-catch-all-apply
+    '(lambda ()
+      (if number-sources
+        (setq layer (alc--stat-label-layer) old-labels (alc--stat-old-labels entries)))
+      (setq table (alc--add-length-source-table entries insertion text-height))
+      (alc--track-temp (vlax-vla-object->ename table))
+      (if number-sources
+        (progn
+          (setq index 0)
+          (foreach entry entries
+            (setq index (1+ index)
+                  labels (cons (alc--stat-add-label entry index text-height layer) labels)))))
+      ;; Replace old numbers only after every new number has been created.
+      (foreach entity old-labels
+        (if (entdel entity) (setq erased (cons entity erased))
+          (vl-exit-with-error "Khong xoa duoc so STT cu; huy bo so moi.")))
+      table) nil))
+  (if (vl-catch-all-error-p result)
+    (progn (alc--cleanup-temp) (foreach entity erased (entdel entity)))
+    (progn
+      (alc--untrack-temp (vlax-vla-object->ename table))
+      (foreach entity labels (alc--untrack-temp entity))))
+  result)
+
+(defun alc--stat-settings-loop (/ choice value color)
+  (while (/= choice "Exit")
+    (prompt (strcat "\nVVTK: Numbers=" (if *alc-stat-number-sources* "Yes" "No")
+      " | Color=" (itoa (alc--stat-find-color))))
+    (initget "Numbers Color Exit")
+    (setq choice (getkword "\nVVTK settings [Numbers/Color/Exit] <Exit>: "))
+    (cond
+      ((= choice "Numbers")
+        (initget "Yes No")
+        (setq value (getkword (strcat "\nGhi so STT tren pline [Yes/No] <"
+          (if *alc-stat-number-sources* "Yes" "No") ">: ")))
+        (if value (progn (setq *alc-stat-number-sources* (= value "Yes")) (alc--save-settings))))
+      ((= choice "Color")
+        (if (and (setq color (alc--stat-find-pick-color)) (alc--valid-color-p color))
+          (progn (setq *alc-stat-find-color* color) (alc--save-settings))))
+      (T (setq choice "Exit"))))
+  (princ))
+
 (defun alc--stat-cell-link-value (table row / value)
   (vla-GetCustomData table row 0 "ALC_VVTK_ROW" 'value)
   (if (= (type value) 'VARIANT) (setq value (vlax-variant-value value)))
@@ -332,6 +475,7 @@
     (if (and (= (type color) 'INT) (>= color 1) (<= color 255))
       (progn
         (setq *alc-stat-find-color* color)
+        (alc--save-settings)
         (setvar "SELECTIONEFFECTCOLOR" color)
         (if (and *alc-stat-find-highlight* (entget *alc-stat-find-highlight*))
           (progn (redraw *alc-stat-find-highlight* 4) (redraw *alc-stat-find-highlight* 3)))
@@ -387,9 +531,12 @@
     (sssetfirst nil (if *alc-stat-find-highlight* (ssadd *alc-stat-find-highlight*) previous))))
 
 (defun alc--stat-command (/ value *alc-stat-command-height*)
-  (initget 6 "Find")
-  (setq value (getdist (strcat "\nChieu cao chu hoac [Find] <"
-    (rtos *alc-stat-text-height* 2 0) ">: ")))
+  (setq value "Manage")
+  (while (= value "Manage")
+    (initget 6 "Find Manage")
+    (setq value (getdist (strcat "\nChieu cao chu hoac [Find/Manage] <"
+      (rtos *alc-stat-text-height* 2 0) ">: ")))
+    (if (= value "Manage") (alc--run-command 'alc--stat-settings-loop "VVTK Settings")))
   (if (= (type value) 'STR)
     (alc--stat-find-loop)
     (progn
@@ -564,7 +711,7 @@
   (alc--stat-filter-selection selection layers))
 
 (defun alc--stat-loop
-  (/ text-height selection entries totals insertion result total-length layers)
+  (/ text-height selection entries totals insertion result total-length layers number-sources)
   (setq text-height
     (if (and (boundp '*alc-stat-command-height*) (numberp *alc-stat-command-height*))
       *alc-stat-command-height* (alc--ask-stat-text-height)))
@@ -578,11 +725,13 @@
     (progn
       (setq entries (alc--collect-length-entries selection) totals (mapcar 'cadddr entries))
       (if totals
+        (progn
+        (setq number-sources *alc-stat-number-sources*)
         (if (setq insertion (getpoint "\nChon diem chen bang: "))
           (progn
             (setq result
-              (vl-catch-all-apply 'alc--add-length-source-table
-                (list entries (trans insertion 1 0) text-height)))
+              (vl-catch-all-apply 'alc--stat-create-output
+                (list entries (trans insertion 1 0) text-height number-sources)))
             (if (vl-catch-all-error-p result)
               (prompt (strcat "\nKhong the tao bang thong ke: "
                 (vl-catch-all-error-message result)))
@@ -590,7 +739,7 @@
                 (setq total-length (alc--total-layer-length totals))
                 (prompt (strcat "\nDa tao bang cho " (itoa (length totals))
                   " doi tuong. Tong chieu dai="
-                  (rtos (/ total-length 1000.0) 2 3) " m."))))))
+                  (rtos (/ total-length 1000.0) 2 3) " m.")))))))
         (prompt "\nKhong tim thay LINE/POLYLINE mo hop le (bo qua polyline khep kin va REVCLOUD).")))))
 
 ;;; --------------------------------------------------------------------------
