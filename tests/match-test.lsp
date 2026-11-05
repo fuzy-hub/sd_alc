@@ -120,7 +120,7 @@
   (alc-test--clear)
   (setq wall (alc-test--match-wall '((0.0 0.0 0.0) (1000.0 0.0 0.0) (1000.0 1000.0 0.0)
     (900.0 1000.0 0.0) (900.0 100.0 0.0) (0.0 100.0 0.0)) 100.0 T "ALC_wall default" '(0.0 0.0 1.0)))
-  (alc-test--match-check "bent-wall-rejected" (not (alc--match-wall wall)))
+  (alc-test--match-check "L-wall-supported" (and (= (length (alc--match-entries wall)) 2) (alc--match-wall wall)))
   (alc-test-run-match-existing)
   (setq *alc-pattern* old-pattern *alc-door-width* old-door)
   (setvar "CLAYER" old-layer) (setvar "PLINEWID" old-width)
@@ -228,18 +228,14 @@
     (10 6000.0 2000.0 0.0) (11 7000.0 2000.0 0.0)))
   (princ))
 
-(defun alc-test-match-multi-check (/ selection i entity outputs left right)
-  (setq selection (ssget "_X" '((0 . "LWPOLYLINE"))) i 0 outputs 0)
-  (repeat (sslength selection)
-    (setq entity (ssname selection i) i (1+ i))
-    (if (not (alc--closed-lwpolyline-p entity))
-      (progn
-        (setq outputs (1+ outputs))
-        (if (alc-test--match-output-p entity '(0.0 50.0 0.0) '(1000.0 50.0 0.0) 100.0) (setq left T))
-        (if (alc-test--match-output-p entity '(1900.0 50.0 0.0) '(6000.0 50.0 0.0) 100.0) (setq right T)))))
-  (alc-test--match-check "batch-creates-two-local-polylines-in-one-command"
-    (and (= outputs 2) left right))
+(defun alc-test-match-multi-check (/ axes dims)
+  (setq axes (alc--match-existing-outputs) dims (alc--match-door-dimensions))
+  (alc-test--match-check "batch-joins-both-walls-through-900-door"
+    (and (= (length axes) 1)
+      (alc-test--match-output-p (caar axes) '(0.0 50.0 0.0) '(6000.0 50.0 0.0) 100.0)
+      (= (length dims) 1)
+      (equal (vla-get-Measurement (vlax-ename->vla-object (caar dims))) 900.0 1e-5)))
   (alc-test--match-check "batch-invalid-and-boundary-hatch-selection-do-not-add-extra-output"
-    (and (= (sslength selection) 4) (= (alc-test--entity-count "HATCH") 2)
+    (and (= (alc-test--entity-count "LWPOLYLINE") 3) (= (alc-test--entity-count "HATCH") 2)
       (= (alc-test--entity-count "LINE") 1))))
 (princ)

@@ -1,0 +1,21 @@
+ALCWALL 3.4.6 — 2026-11-05
+
+Ban on dinh, cap nhat tai thu muc cai cu. Khong gom ban thu mat cat 3.5.
+- VVTK: nen WIPEOUT theo background, giu chu/khung bang o tren; gom bang va nen.
+- VVM/VVMATCH: tuong thang/L/U, width theo be day thuc te, tim trung tim tuong.
+  L uu tien truc X cua UCS; U giu cach chia chieu dai da thong nhat.
+- VV/VVC: gioi han duong ve thang/L/U, goc vuong, toi da 3 doan.
+- VVM: noi cac doan cung tim, be day va mat phang trong tap chon qua khoang
+  900–2000 mm; tinh ca cua vao chieu dai va dim rieng tung cua.
+- Thay tim roi tuong ung de khong thong ke trung. Chay lai khong tao trung.
+  Mot Undo khoi phuc tim cu va xoa pline/dim moi.
+
+ZIP khong co thu muc phien ban bao ngoai. Giai nen truc tiep vao thu muc
+ALCWALL dang cai, chap nhan thay tep; giu ALCWALL-LOAD.lsp, APPLOAD lai.
+DLL VVA khong doi so voi 3.4.5; khong can ghi de DLL dang duoc AutoCAD nap.
+Bang VVTK cu can tao lai de co nen; nen bang la kich thuoc tai thoi diem tao.
+Nguong 900–2000 la quy tac nhan khoang cua; chi xet cac tuong duoc chon.
+
+AutoCAD 2027 for Windows. Xem README.md va tests/validation-3.4.6.txt.
+
+Kiem thu: 660 AutoCAD 2027 PASS, 10 Python PASS; manifest 3.4.6 PASS.

@@ -1,5 +1,5 @@
-(setq *alc-module-version* "3.4.5")
-;;; ALCWALL v3.4.5 - geometry module
+(setq *alc-module-version* "3.4.6")
+;;; ALCWALL v3.4.6 - geometry module
 
 ;;; --------------------------------------------------------------------------
 ;;; Geometry helpers
@@ -60,18 +60,50 @@
   ename
 )
 
+;;; A standard wall is an open straight/L/U path: at most two right turns,
+;;; both with the same handedness. Work in its own plane, not WCS XY.
+(defun alc--standard-wall-path (points normal / clean p a b u v dirs valid sign turn local z)
+  (setq valid T)
+  (foreach p points
+    (if (and clean (equal p (car clean) 1e-7))
+      (setq valid nil)
+      (progn
+        (if (and (cdr clean)
+                 (equal (alc--unit-vector (alc--vector-subtract (car clean) (cadr clean)))
+                        (alc--unit-vector (alc--vector-subtract p (car clean))) 1e-7))
+          (setq clean (cdr clean)))
+        (setq clean (cons p clean)))))
+  (setq clean (reverse clean) local (mapcar '(lambda (p) (trans p 0 normal)) clean))
+  (if local (setq z (caddr (car local))))
+  (foreach p local (if (not (equal (caddr p) z 1e-6)) (setq valid nil)))
+  (setq a local)
+  (while (cdr a)
+    (setq u (alc--unit-vector (alc--vector-subtract (cadr a) (car a))))
+    (if (not u) (setq valid nil))
+    (setq dirs (cons u dirs) a (cdr a)))
+  (setq dirs (reverse dirs) a dirs)
+  (while (and valid (cdr a))
+    (setq u (car a) v (cadr a)
+          turn (- (* (car u) (cadr v)) (* (cadr u) (car v))))
+    (if (or (> (abs (alc--vector-dot u v)) 1e-7)
+            (and sign (< (* sign turn) 0.0)))
+      (setq valid nil))
+    (setq sign turn a (cdr a)))
+  (if (and valid (<= 2 (length clean) 4)) clean))
+
 (defun alc--ask-points (first-point / points base next-point)
   (setq points (list first-point)
         base first-point)
   (while (setq next-point
            (getpoint base "\nNext point <Enter to finish>: "))
-    (if (> (distance base next-point) 1e-8)
+    (if (and (> (distance base next-point) 1e-8)
+             (alc--standard-wall-path (append (reverse points) (list next-point)) '(0.0 0.0 1.0)))
       (progn
         (alc--track-temp (alc--create-preview-line base next-point))
         (setq points (cons next-point points)
               base next-point)
       )
-      (prompt "\nDuplicate point ignored.")
+      (prompt "\nChi cho phep tuong thang, L hoac U: toi da 3 doan, goc vuong, khong chu Z. Chon lai diem.")
     )
   )
   (setq points (reverse points))

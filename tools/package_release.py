@@ -18,13 +18,13 @@ names+=sorted(name for name in manifest['files'] if name!='ALCWALL.lsp')
 if (ROOT/f'tests/validation-{VERSION}.txt').exists(): names.append(f'tests/validation-{VERSION}.txt')
 with zipfile.ZipFile(out,'w',zipfile.ZIP_DEFLATED) as z:
     for name in names:
-        info=zipfile.ZipInfo(f'ALCWALL-{VERSION}/'+name,date_time=(2026,10,31,0,0,0))
+        info=zipfile.ZipInfo(name,date_time=(2026,11,5,0,0,0))
         info.compress_type=zipfile.ZIP_DEFLATED
         z.writestr(info,(ROOT/name).read_bytes())
 with zipfile.ZipFile(out) as z:
     if z.testzip() is not None: raise ValueError('ZIP integrity failure')
     for item in z.infolist():
-        if z.read(item)!=(ROOT/item.filename.split('/',1)[1]).read_bytes():
+        if z.read(item)!=(ROOT/item.filename).read_bytes():
             raise ValueError(f'Archive source mismatch: {item.filename}')
 try:
     commit=subprocess.check_output(['git','-C',str(ROOT),'rev-parse','HEAD'],text=True).strip()

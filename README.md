@@ -1,17 +1,25 @@
-# ALCWALL 3.4.5
+# ALCWALL 3.4.6
 
-ALCWALL là bộ công cụ AutoLISP hỗ trợ triển khai tường ALC 2D trên AutoCAD for Windows. Bản 3.4.5 được kiểm thử bằng AutoCAD 2027.
+ALCWALL là bộ công cụ AutoLISP hỗ trợ triển khai tường ALC 2D trên AutoCAD for Windows. Bản 3.4.6 được kiểm thử bằng AutoCAD 2027.
 
 ## Cài đặt
 
 1. Giữ nguyên toàn bộ cấu trúc thư mục, đặc biệt là `ALCWALL.lsp` và thư mục `src`.
 2. Trong AutoCAD, mở `OPTIONS > Files > Support File Search Path` và thêm thư mục ALCWALL.
 3. Chạy PowerShell `./tools/install.ps1`, rồi `APPLOAD` tệp `ALCWALL-LOAD.lsp` được tạo trong thư mục cài. Thêm tệp này vào `APPLOAD > Startup Suite > Contents > Add` để tự nạp mỗi lần mở CAD/bản vẽ. Loader này ghim đúng thư mục khi máy có nhiều bản ALCWALL. Nếu chỉ có một bản trong Support Path, vẫn có thể nạp trực tiếp `ALCWALL.lsp`.
-4. Khi thấy thông báo `ALCWALL v3.4.5 modules loaded`, bộ lệnh đã sẵn sàng.
+4. Khi thấy thông báo `ALCWALL v3.4.6 modules loaded`, bộ lệnh đã sẵn sàng.
 
 Khi cập nhật, APPLOAD lại `ALCWALL-LOAD.lsp`; loader gỡ định nghĩa lệnh cũ `ALCCUT20` còn trong phiên làm việc, chỉ dùng `ALCTRIM`.
 
 Không nạp riêng các tệp trong `src`; `ALCWALL.lsp` là loader duy nhất.
+
+## Thay đổi 3.4.6
+
+- VVTK có nền che theo background bản vẽ, gom cùng bảng để di chuyển.
+- VVM/VVMATCH nhận tường thẳng/L/U, L ưu tiên X của UCS, U giữ cách chia chiều dài đã thống nhất. Tự lấy bề dày và đặt đúng tim; VV/VVC giới hạn hình thẳng/L/U.
+- VVM nối qua khoảng cửa 900–2000 mm trong tập chọn, tính cả chiều dài cửa, dim từng cửa và thay tim rời tương ứng để không cộng trùng. Giữ Undo và chống tạo trùng.
+- ZIP có các tệp ngay tại gốc: giải nén **vào đúng thư mục cài cũ và thay tệp**, không tạo thư mục phiên bản mới. Giữ bộ nạp ALCWALL-LOAD.lsp tại máy, APPLOAD lại sau khi cập nhật. DLL không đổi so với 3.4.5; có thể giữ DLL đang dùng nếu AutoCAD đang khóa tệp.
+- Bản mặt cắt 3.5.0-preview.1 tiếp tục được giữ riêng, không có trong bản ổn định này.
 
 ## Thay đổi 3.4.5
 
@@ -80,7 +88,7 @@ Không nạp riêng các tệp trong `src`; `ALCWALL.lsp` là loader duy nhất.
 | `ALCLAYER`, `VVLAYER` | Tạo layer mới có tiền tố ALC_wall_, chọn màu và đặt current ngay |
 | `ALCASSIGN`, `VVASSIGN`, `VVA` | Chọn layer bắt đầu ALC bằng số hoặc chuột; đặt current và PLINEWID đã lưu |
 | `VVFILTER` | Chọn đối tượng theo layer mẫu hoặc last pick; giữ kết quả trong tập chọn |
-| `VVMATCH` | Tạo pline tim riêng đoạn tường chọn, trên layer current; width theo chiều dày |
+| `VVMATCH`, `VVM` | Tạo pline tim riêng từng đoạn tường thẳng/L/U, trên layer current; width theo chiều dày |
 | `ALCTK`, `VVTK` | Chọn layer (hoặc All/A), quét vùng; mỗi LINE/pline một dòng và cuối bảng cộng tổng |
 | `VVTK` / `ALCTK` → `Find` (`F`) | Bấm dòng bảng để tô sáng LINE/pline gốc; giữ nguyên 4 cột |
 | `VVSUMTABLE` | Cộng tổng các bảng VVTK đã chọn; mỗi bảng nguồn một dòng, cuối bảng cộng tổng |
@@ -252,13 +260,23 @@ Các dòng được sắp theo vị trí Xmin/Ymax như VVTK. Nhãn kèm handle 
 
 Giữ nguyên các bảng nguồn; một Undo xóa bảng tổng hợp mới. Enter ở bước chọn bảng hoặc điểm chèn sẽ hủy. Bảng tổng hợp lưu kết quả tại thời điểm chạy lệnh, không tự cập nhật khi sửa bảng nguồn; chạy lại VVSUMTABLE để tổng hợp giá trị mới.
 
-## Tạo pline tim tường — VVMATCH
+## Tạo pline tim tường — VVMATCH / VVM
 
-Gõ `VVMATCH`, pick hoặc quét chọn nhiều biên/hatch các đoạn tường ALC thẳng bằng Window/Crossing; Enter xác nhận để tạo pline. Có thể dùng tập chọn sẵn trước khi gọi lệnh. Đối tượng không hợp lệ được bỏ qua; chọn cả biên và hatch của cùng tường chỉ tạo một pline. Lệnh tạo một LWPOLYLINE mở hai đỉnh trùng tim, chỉ từ đầu này đến đầu kia của chính đoạn được chọn. Pline dùng layer đang current, màu và transparency ByLayer; width lấy theo chiều dày tường. Không đổi current layer hoặc PLINEWID, giữ nguyên tường/hatch gốc; một Undo xóa toàn bộ pline đã tạo trong lượt.
+Gõ `VVMATCH` hoặc `VVM`, pick hoặc quét chọn nhiều biên/hatch tường ALC thẳng, L hoặc U bằng Window/Crossing; Enter xác nhận. Có thể chọn sẵn trước khi gọi lệnh. Chọn cả biên và hatch của cùng tường chỉ xử lý một lần. Mỗi nhánh tạo một LWPOLYLINE mở hai đỉnh, nằm đúng tim tường: thẳng có 1 pline, L có 2, U có 3. Các nhánh thẳng hàng qua cửa được gom thành một pline liên tục. Pline dùng layer current, màu và transparency ByLayer; width theo bề dày thực tế. Giữ current layer, PLINEWID và tường/hatch gốc; một Undo xóa toàn bộ pline đã tạo trong lượt.
 
-Trước khi tạo, lệnh kiểm tra các pline mở hai đỉnh trong Model/Layout đang làm việc một lần mỗi lượt chọn. Tường đã có pline thẳng trùng hai đầu tim, chiều rộng và mặt phẳng (sai số vị trí/chiều rộng 0.00001 mm) được bỏ qua, kể cả pline trên layer khác hoặc tạo từ phiên bản cũ. Pline đảo thứ tự hai đầu vẫn được nhận diện. Pline đã xóa, di chuyển, đổi chiều dài/chiều rộng hoặc uốn cong không ngăn tạo pline mới. Lệnh báo số pline tạo mới và số tường đã có pline tim. Lượt chỉ bỏ qua đối tượng không tạo bước Undo rỗng.
+Chữ U: đoạn nối hai chân lấy hết chiều dài phủ bì; hai chân dừng ở mép đoạn nối, tránh tính trùng góc. Ví dụ trong hình đã thống nhất: 1455 + 880 + 490 = 2825 mm. Chữ L: nhánh gần trục X của UCS hiện hành hơn lấy hết phần góc; nhánh còn lại dừng ở mép nhánh ưu tiên. Khi hai nhánh cùng nghiêng 45° với X, ưu tiên trục có hệ số góc dương trong UCS để kết quả không phụ thuộc chiều vẽ biên. Các pline được tách ngắn/dài tại góc nhưng vẫn nằm đúng tim từng nhánh.
 
-Lệnh không quét hatch hoặc tạo chỉ mục hatch, không ghép tường lân cận và không nối qua cửa. Sau khi cắt cửa, chọn bên nào chỉ tạo pline cho bên đó. Chiều dày ưu tiên dấu ALC lưu trên tường, sau đó độ rộng lưu/suy ra từ layer nguồn nếu khớp hình học; tường cũ thiếu thông tin dùng cạnh ngắn của hình chữ nhật. Layer nguồn cũ cần bắt đầu ALC hoặc có tên `0. Tuong ALC`; tường có dấu ALC dùng được trên layer khác. Tường gấp khúc/cong/hình học không hợp lệ bị từ chối. Layer current cần mở khóa; layer nguồn khóa vẫn có thể được đọc vì nguồn không bị sửa.
+Chỉ nhận dải tường đều bề dày, góc vuông, dạng thẳng/L/U không tự giao. Hình Z, T, nhiều nhánh, cạnh cong, bề dày không đều hoặc hình học không xác định duy nhất sẽ được bỏ qua và thông báo. L/U đọc bề dày từ cặp mép tường thực tế, kể cả khi dấu bề dày cũ không còn khớp. Với hình chữ nhật, giữ cách nhận bề dày cũ để xử lý đúng đoạn tường ngắn sau cắt cửa: ưu tiên dấu/layer nếu khớp cạnh thực tế, tường cũ thiếu thông tin dùng cạnh ngắn. Biên nguồn cũ cần layer bắt đầu ALC hoặc tên `0. Tuong ALC`; tường có dấu ALC dùng được trên layer khác. Layer current cần mở khóa; layer nguồn khóa vẫn có thể đọc.
+
+Trong tập tường được chọn, hai nhánh cùng tim, cùng bề dày và cùng mặt phẳng có khoảng trống từ **900 đến 2000 mm**, gồm cả hai mốc, được coi là có cửa. VVM nối pline qua khoảng trống, nên VVTK tính cả chiều dài cửa. Mỗi cửa được đánh dấu bằng một dim aligned theo dimstyle hiện hành, đặt lệch khỏi tim; hệ số đo chiều dài của dim bằng 1 để thể hiện đúng chiều rộng. Nhiều cửa liên tiếp được nối trên cùng một pline. Ví dụ: tường 1000 + cửa 900 + tường 1000 → pline 2900 mm và một dim cửa 900 mm.
+
+Chỉ xét tường trong tập chọn; chọn một phía cửa không tự tìm và nối sang phía còn lại. Không nối khi lệch tim, khác bề dày/mặt phẳng, khoảng trống ngoài 900–2000 mm hoặc các khoảng tường chồng lấn làm tuyến không rõ ràng. Việc nhận cửa dựa trên khoảng trống hình học, không cần ký hiệu cửa hay dữ liệu cắt cửa trước đó.
+
+Lệnh kiểm tra pline tim theo hai đầu, width và mặt phẳng, kể cả pline khác layer hoặc đảo chiều; dim cửa do VVM tạo cũng được nhận lại theo vị trí và mặt phẳng. Chạy lại không tạo trùng; dim bị xóa được tạo lại. Khi gom qua cửa, các pline tim rời hoặc tuyến đã gom ngắn hơn có hai đầu trùng đầu đoạn nguồn được thay bằng tuyến đầy đủ để tránh VVTK đếm trùng. Layer của các pline cần thay phải được mở khóa. Giữ nguyên tường/hatch nguồn và các pline khác không khớp; không quét thêm hatch/tường ngoài tập chọn.
+
+Một Undo khôi phục pline tim cũ và xóa cả pline/dim mới của lượt; lượt không thay đổi gì không thêm bước Undo rỗng. Nếu tạo pline/dim hoặc thay pline cũ bị lỗi, hủy toàn bộ đầu ra mới và giữ đầu ra cũ. Pline và dim là kết quả tại thời điểm chạy lệnh, không tự cập nhật theo nguồn.
+
+VV/VVC chỉ nhận đường vẽ thẳng, L hoặc U: tối đa 3 đoạn, hai góc vuông rẽ cùng chiều. Điểm thẳng hàng được gộp khi kiểm tra; điểm làm thành hình Z, cạnh xiên tại góc, quay ngược hoặc thêm nhánh thứ tư sẽ bị từ chối ngay và cho chọn lại. Tường thẳng có thể đặt ở góc bất kỳ; toàn bộ L/U có thể xoay hoặc lật hướng.
 
 Kiểm thử mã nguồn: dùng PowerShell 7.6 (.NET 10) để chạy `./tests/run-autocad-tests.ps1 -FullAutoCAD`. Công cụ biên dịch hộp thoại chỉ phục vụ phát triển; người dùng dùng DLL đã đi kèm bản ZIP.
 

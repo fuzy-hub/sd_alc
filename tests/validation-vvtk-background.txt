@@ -1,0 +1,12 @@
+VVTK drawing-background mask - AutoCAD 2027
+Session: alc-345-20261105-112444-54bb1a96
+PID: 15472
+StartTime: 2026-11-05T11:24:45.0366662+07:00
+Result: stat-mask-test 8 PASS; stat-detail-test 47 PASS; stat-label-test 18 PASS.
+Total: 73 PASS, no failures. Static project validation PASS.
+Native WIPEOUT matches regenerated table extents; table and mask share layer/owner.
+Draw order: existing geometry, mask, table. Selectable group contains table and mask.
+Global WIPEOUTFRAME and PICKSTYLE preserved. Detail rows, rotated UCS/view,
+source links, numbering, and label failure rollback pass existing suites.
+AutoCAD process launched by this run only; process exited after script completion.
+Mask is a size snapshot. Group selection follows PICKSTYLE; resize requires recreation.

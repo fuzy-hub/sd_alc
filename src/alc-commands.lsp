@@ -1,5 +1,5 @@
-(setq *alc-module-version* "3.4.5")
-;;; ALCWALL v3.4.5 - commands module
+(setq *alc-module-version* "3.4.6")
+;;; ALCWALL v3.4.6 - commands module
 
 ;;; --------------------------------------------------------------------------
 ;;; Public commands
@@ -188,6 +188,97 @@
                       (alc--vector-scale (alc--vector-add (cadr points) (caddr points)) 0.5))))
               (list width (car caps) (cadr caps)))))))))
 
+;;; Recover two parallel offset sides between opposite end caps. Every side
+;;; segment must be parallel to the recovered centerline and exactly width
+;;; apart. This rejects tapered walls and arbitrary orthogonal polygons.
+(defun alc--match-bent-path (points cap normal / n half k side-a side-b centers width valid a b c d u delta)
+  (setq n (length points) half (/ n 2) k 0 valid T)
+  (repeat half
+    (setq a (nth (rem (+ cap 1 k) n) points)
+          b (nth (rem (+ cap n (- k)) n) points)
+          side-a (append side-a (list a)) side-b (append side-b (list b))
+          centers (append centers (list (alc--vector-scale (alc--vector-add a b) 0.5)))
+          k (1+ k)))
+  (setq width (distance (car side-a) (car side-b)))
+  (if (not (and (> width 1e-6)
+                (equal width (distance (last side-a) (last side-b)) 1e-5)
+                (alc--standard-wall-path centers normal))) (setq valid nil))
+  (setq k 0)
+  (repeat (1- half)
+    (setq a (nth k side-a) b (nth (1+ k) side-a)
+          c (nth k side-b) d (nth (1+ k) side-b)
+          u (alc--unit-vector (alc--vector-subtract (nth (1+ k) centers) (nth k centers)))
+          delta (alc--vector-subtract c a))
+    (if (not (and u
+           (equal u (alc--unit-vector (alc--vector-subtract b a)) 1e-7)
+           (equal u (alc--unit-vector (alc--vector-subtract d c)) 1e-7)
+           (equal (alc--vector-length
+             (alc--vector-subtract delta (alc--vector-scale u (alc--vector-dot delta u)))) width 1e-5)))
+      (setq valid nil))
+    (setq k (1+ k)))
+  (if (and valid
+       (< (abs (alc--vector-dot (alc--vector-subtract (car side-a) (car side-b))
+            (alc--unit-vector (alc--vector-subtract (cadr centers) (car centers))))) 1e-5)
+       (< (abs (alc--vector-dot (alc--vector-subtract (last side-a) (last side-b))
+            (alc--unit-vector (alc--vector-subtract (last centers) (nth (- half 2) centers))))) 1e-5))
+    (cons width centers)))
+
+(defun alc--match-split-path (path / width points count priority k a b u start end entries xaxis ax bx local-a local-b)
+  (setq width (car path) points (cdr path) count (1- (length points)) priority 1)
+  ;; U: the joining segment owns both corners. L: prefer the branch closest
+  ;; to the current UCS X axis, regardless of polygon winding/start vertex.
+  (if (= count 2)
+    (progn
+      (setq xaxis (trans '(1.0 0.0 0.0) 1 0 T)
+            a (alc--unit-vector (alc--vector-subtract (cadr points) (car points)))
+            b (alc--unit-vector (alc--vector-subtract (caddr points) (cadr points))))
+      (setq ax (abs (alc--vector-dot a xaxis)) bx (abs (alc--vector-dot b xaxis))
+            local-a (trans a 0 1 T) local-b (trans b 0 1 T))
+      ;; At an exact 45-degree tie prefer the positive-slope undirected axis.
+      (setq priority
+        (if (if (equal ax bx 1e-7)
+              (>= (* (car local-a) (cadr local-a)) (* (car local-b) (cadr local-b)))
+              (> ax bx)) 0 1))))
+  (setq k 0)
+  (repeat count
+    (setq a (nth k points) b (nth (1+ k) points)
+          u (alc--unit-vector (alc--vector-subtract b a)) start a end b)
+    (if (> k 0)
+      (setq start (alc--vector-add a (alc--vector-scale u (* (if (= k priority) -0.5 0.5) width)))))
+    (if (< k (1- count))
+      (setq end (alc--vector-add b (alc--vector-scale u (* (if (= k priority) 0.5 -0.5) width)))))
+    (if (> (alc--vector-dot (alc--vector-subtract end start) u) 1e-6)
+      (setq entries (append entries (list (list width start end))))
+      (setq entries (append entries (list nil))))
+    (setq k (1+ k)))
+  (if (not (member nil entries)) entries))
+
+(defun alc--match-entries (wall / straight data points normal valid pair cap path found)
+  (if (setq straight (alc--match-entry wall)) (list straight)
+    (progn
+      (setq data (entget wall) valid (alc--closed-lwpolyline-p wall)
+            normal (if (assoc 210 data) (cdr (assoc 210 data)) '(0.0 0.0 1.0)))
+      (foreach pair data
+        (if (and (= (car pair) 42) (not (equal (cdr pair) 0.0 1e-10))) (setq valid nil)))
+      (if (and valid
+           (or (alc--wall-tag-width wall) (= (strcase (cdr (assoc 8 data))) "0. TUONG ALC")
+               (= (substr (strcase (cdr (assoc 8 data))) 1 3) "ALC"))
+           (member (length (setq points (alc--match-corners (alc--lwp-points wall)))) '(6 8))
+           (alc--valid-polygon-p points normal))
+        (progn
+          (setq cap 0)
+          (repeat (/ (length points) 2)
+            (if (setq path (alc--match-bent-path points cap normal))
+              (setq found (cons path found)))
+            (setq cap (1+ cap)))
+          ;; Ambiguous geometry is skipped rather than choosing an arbitrary axis.
+          (if (= (length found) 1) (alc--match-split-path (car found))))))))
+
+(defun alc--match-all-existing-p (wall entries / valid entry)
+  (setq valid (and entries T))
+  (foreach entry entries (if (not (alc--match-existing-p wall entry)) (setq valid nil)))
+  valid)
+
 (defun alc--match-output-entry (entity / data valid pair points width)
   (setq data (entget entity) valid T)
   (if (and (= (cdr (assoc 0 data)) "LWPOLYLINE")
@@ -234,10 +325,9 @@
       (setq found T)))
   found)
 
-(defun alc--match-wall (wall / layer entry normal output data)
+(defun alc--match-segment (wall entry / layer normal output data)
   (setq layer (getvar "CLAYER"))
   (cond
-    ((not (setq entry (alc--match-entry wall))) nil)
     ((alc--match-existing-p wall entry) 'existing)
     ((not (alc--layer-locked-p layer))
     (progn
@@ -255,46 +345,240 @@
               (vla-put-EntityTransparency (vlax-ename->vla-object output) "ByLayer")
               (if (and (boundp '*alc-match-index-ready*) *alc-match-index-ready*)
                 (setq *alc-match-outputs* (cons (alc--match-output-entry output) *alc-match-outputs*)))
-              (alc--untrack-temp output)
               (prompt (strcat "\nDa tao pline tim doan tuong, width=" (rtos (car entry) 2 3)
                 ", dai=" (rtos (distance (cadr entry) (caddr entry)) 2 3) " mm."))
               output)
-            (progn (alc--cleanup-temp) nil))))))))
+            (progn (entdel output) (alc--untrack-temp output) nil))))))))
+
+(defun alc--match-wall (wall / entries entry result output created old-index old-temps)
+  (setq entries (alc--match-entries wall) old-index *alc-match-outputs* old-temps *alc-temp-entities*)
+  (if entries
+    (progn
+      (setq result (vl-catch-all-apply
+        '(lambda ()
+          (foreach entry entries
+            (setq output (alc--match-segment wall entry))
+            (cond ((eq output 'existing) nil)
+                  (output (setq created (cons output created)))
+                  (T (vl-exit-with-error "Khong tao duoc day du pline tim tuong."))))
+          (if created (car created) 'existing)) nil))
+      (if (vl-catch-all-error-p result)
+        (progn
+          (foreach output *alc-temp-entities*
+            (if (not (member output old-temps))
+              (progn (if (entget output) (entdel output)) (alc--untrack-temp output))))
+          (setq *alc-match-outputs* old-index)
+          (prompt (strcat "\n" (vl-catch-all-error-message result))) nil)
+        (progn
+          (foreach output created (alc--untrack-temp output))
+          (setq *alc-match-created-count* (+ (if (numberp *alc-match-created-count*) *alc-match-created-count* 0) (length created)))
+          result)))))
 
 (defun alc--match-select ()
-  (prompt "\nPick hoac quet chon cac tuong ALC thang <Enter xac nhan>: ")
+  (prompt "\nPick hoac quet chon cac tuong ALC thang/L/U <Enter xac nhan>: ")
   (ssget '((0 . "LWPOLYLINE,HATCH"))))
-(defun alc--match-create-loop (/ wall result)
-  (foreach wall (reverse *alc-match-pending*)
-    (setq result (alc--match-wall wall))
-    (cond
-      ((eq result 'existing) (setq skipped (1+ skipped)))
-      (result (setq count (1+ count)))
-      (T (prompt "\nKhong the tao pline tim; layer current can mo khoa.")))))
+;;; Door matching is selection-scoped. Records are (source-wall entry);
+;;; jobs are (representative-wall joined-entry member-records door-endpoints).
+(defun alc--match-collinear-p (left right / a b u delta na nb da db)
+  (setq a (cadr left) b (cadr right)
+        da (entget (car left)) db (entget (car right))
+        na (cdr (assoc 210 da)) nb (cdr (assoc 210 db))
+        u (alc--unit-vector (alc--vector-subtract (caddr a) (cadr a)))
+        delta (alc--vector-subtract (cadr b) (cadr a)))
+  (if (not na) (setq na '(0.0 0.0 1.0)))
+  (if (not nb) (setq nb '(0.0 0.0 1.0)))
+  (and (equal (car a) (car b) 1e-5)
+       (equal (cdr (assoc 330 (reverse da))) (cdr (assoc 330 (reverse db))))
+       (equal (abs (alc--vector-dot na nb)) 1.0 1e-7)
+       (equal (abs (alc--vector-dot u
+         (alc--unit-vector (alc--vector-subtract (caddr b) (cadr b))))) 1.0 1e-7)
+       (< (alc--vector-length (alc--vector-subtract delta
+            (alc--vector-scale u (alc--vector-dot delta u)))) 1e-5)))
 
-(defun alc--match-loop (/ selection index wall entry seen count skipped
-    *alc-match-index-ready* *alc-match-outputs* *alc-match-pending*)
-  (setq count 0 skipped 0)
+(defun alc--match-jobs (records / seed remaining group record u origin intervals a b lo hi
+    interval sorted job jobs gap start end blocked cursor)
+  (while records
+    (setq seed (car records) remaining nil group (list seed))
+    (foreach record (cdr records)
+      (if (alc--match-collinear-p seed record)
+        (setq group (cons record group)) (setq remaining (cons record remaining))))
+    (setq records (reverse remaining) origin (cadr (cadr seed))
+          u (alc--unit-vector (alc--vector-subtract (caddr (cadr seed)) origin)))
+    ;; Canonical direction makes ordering and dimension side independent of picks.
+    (if (or (< (car u) -1e-7)
+            (and (< (abs (car u)) 1e-7) (< (cadr u) -1e-7))
+            (and (< (abs (car u)) 1e-7) (< (abs (cadr u)) 1e-7) (< (caddr u) 0.0)))
+      (setq u (alc--vector-scale u -1.0)))
+    (setq intervals nil)
+    (foreach record group
+      (setq a (cadr (cadr record)) b (caddr (cadr record))
+            lo (alc--vector-dot (alc--vector-subtract a origin) u)
+            hi (alc--vector-dot (alc--vector-subtract b origin) u))
+      (if (> lo hi) (setq intervals (cons (list hi lo record b a) intervals))
+        (setq intervals (cons (list lo hi record a b) intervals))))
+    (setq sorted (mapcar '(lambda (i) (nth i intervals))
+      (vl-sort-i intervals '(lambda (a b) (if (equal (car a) (car b) 1e-7)
+        (< (cadr a) (cadr b)) (< (car a) (car b)))))))
+    (setq job nil end nil blocked nil cursor nil)
+    (foreach interval sorted
+      (if (and cursor (< (car interval) (- cursor 1e-5))) (setq blocked T))
+      (setq cursor (if cursor (max cursor (cadr interval)) (cadr interval))))
+    (foreach interval sorted
+      (setq record (nth 2 interval) gap (if end (- (car interval) end)))
+      (if (and job (not blocked) (>= gap (- 900.0 1e-5)) (<= gap (+ 2000.0 1e-5)))
+        (setq job (list (car job)
+          (list (car (cadr job)) (cadr (cadr job)) (nth 4 interval))
+          (append (caddr job) (list record))
+          (append (cadddr job) (list (list (caddr (cadr job)) (nth 3 interval))))))
+        (progn
+          (if job (setq jobs (cons job jobs)))
+          (setq job (list (car record)
+            (list (car (cadr record)) (nth 3 interval) (nth 4 interval)) (list record) nil))))
+      (setq end (cadr interval)))
+    (if job (setq jobs (cons job jobs))))
+  (reverse jobs))
+
+(defun alc--match-door-dimensions (/ selection i entity data result)
+  (if (setq selection (ssget "_X" (list '(0 . "DIMENSION")
+        (cons 410 (if (= (getvar "CVPORT") 1) (getvar "CTAB") "Model"))
+        '(-3 ("ALC_VVM_DOOR")))))
+    (progn
+      (setq i 0)
+      (repeat (sslength selection)
+        (setq entity (ssname selection i) data (entget entity) i (1+ i))
+        (if (and (= (logand (cdr (assoc 70 data)) 7) 1) (assoc 13 data) (assoc 14 data))
+          (setq result (cons (list entity (cdr (assoc 13 data)) (cdr (assoc 14 data))) result))))))
+  result)
+
+(defun alc--match-door-dim-p (gap dimensions wall / found dim data source normal other)
+  (setq source (entget wall) normal (cdr (assoc 210 source)))
+  (if (not normal) (setq normal '(0.0 0.0 1.0)))
+  (foreach dim dimensions
+    (setq data (entget (car dim)) other (cdr (assoc 210 data)))
+    (if (not other) (setq other '(0.0 0.0 1.0)))
+    (if (and data
+      (equal (cdr (assoc 330 (reverse data))) (cdr (assoc 330 (reverse source))))
+      (equal (abs (alc--vector-dot normal other)) 1.0 1e-7)
+      (or (and (equal (car gap) (cadr dim) 1e-5) (equal (cadr gap) (caddr dim) 1e-5))
+          (and (equal (car gap) (caddr dim) 1e-5) (equal (cadr gap) (cadr dim) 1e-5))))
+      (setq found T)))
+  found)
+
+(defun alc--match-add-door-dim (wall width gap / normal u side offset point dim entity data)
+  (setq normal (cdr (assoc 210 (entget wall))))
+  (if (not normal) (setq normal '(0.0 0.0 1.0)))
+  (setq u (alc--unit-vector (alc--vector-subtract (cadr gap) (car gap)))
+        side (list (- (* (cadr normal) (caddr u)) (* (caddr normal) (cadr u)))
+                   (- (* (caddr normal) (car u)) (* (car normal) (caddr u)))
+                   (- (* (car normal) (cadr u)) (* (cadr normal) (car u))))
+        offset (max (* 2.0 width) (* 3.0 (getvar "DIMTXT") (max 1.0 (getvar "DIMSCALE"))))
+        point (alc--vector-add (alc--vector-scale (alc--vector-add (car gap) (cadr gap)) 0.5)
+                  (alc--vector-scale side offset))
+        dim (vla-AddDimAligned (alc--current-space) (vlax-3d-point (car gap))
+              (vlax-3d-point (cadr gap)) (vlax-3d-point point))
+        entity (alc--track-temp (vlax-vla-object->ename dim)))
+  (vla-put-Normal dim (vlax-3d-point normal))
+  (vla-put-ExtLine1Point dim (vlax-3d-point (car gap)))
+  (vla-put-ExtLine2Point dim (vlax-3d-point (cadr gap)))
+  (vla-put-TextPosition dim (vlax-3d-point point))
+  (vla-put-Layer dim (getvar "CLAYER"))
+  (vla-put-LinearScaleFactor dim 1.0)
+  (regapp "ALC_VVM_DOOR")
+  (entmod (append (entget entity) '((-3 ("ALC_VVM_DOOR" (1000 . "1"))))))
+  (vla-Update dim)
+  entity)
+
+(defun alc--match-old-axes (job / record candidate nodes old entry)
+  ;; Retire exact local axes or earlier joined subsets. Endpoints must coincide
+  ;; with selected source endpoints, so arbitrary shorter plines are preserved.
+  (if (cadddr job)
+    (progn
+      (foreach record (caddr job)
+        (setq nodes (append nodes (cdr (cadr record)))))
+      (foreach candidate *alc-match-outputs*
+        (setq entry (list (caddr candidate) (nth 3 candidate) (nth 4 candidate)))
+        (if (and (not (alc--match-same-entry-p entry (cadr job)))
+                 (alc--match-collinear-p (list (car job) entry) (list (car job) (cadr job)))
+                 (vl-some '(lambda (p) (equal p (cadr entry) 1e-5)) nodes)
+                 (vl-some '(lambda (p) (equal p (caddr entry) 1e-5)) nodes)
+                 (equal (cadr candidate) (cdr (assoc 330 (reverse (entget (car job))))))
+                 (equal (abs (alc--vector-dot (nth 5 candidate)
+                   (if (assoc 210 (entget (car job))) (cdr (assoc 210 (entget (car job)))) '(0.0 0.0 1.0)))) 1.0 1e-7))
+          (setq old (cons (car candidate) old))))))
+  old)
+
+(defun alc--match-same-entry-p (a b)
+  (and (equal (car a) (car b) 1e-5)
+    (or (and (equal (cadr a) (cadr b) 1e-5) (equal (caddr a) (caddr b) 1e-5))
+        (and (equal (cadr a) (caddr b) 1e-5) (equal (caddr a) (cadr b) 1e-5)))))
+
+(defun alc--match-job-needed-p (job / needed gap)
+  (setq needed (or (not (alc--match-existing-p (car job) (cadr job))) (alc--match-old-axes job)))
+  (foreach gap (cadddr job)
+    (if (not (alc--match-door-dim-p gap *alc-match-door-dims* (car job))) (setq needed T)))
+  needed)
+
+(defun alc--match-create-loop (/ job output gap result old old-axes erased saved-index saved-dims saved-temps)
+  (setq saved-index *alc-match-outputs* saved-dims *alc-match-door-dims* saved-temps *alc-temp-entities*)
+  (setq result (vl-catch-all-apply
+    '(lambda ()
+      (foreach job *alc-match-pending*
+        (setq old-axes (append old-axes (alc--match-old-axes job))
+              output (alc--match-segment (car job) (cadr job)))
+        (cond ((eq output 'existing) nil)
+              (output (setq count (1+ count)))
+              (T (vl-exit-with-error "Khong tao duoc pline qua cua.")))
+        (foreach gap (cadddr job)
+          (if (not (alc--match-door-dim-p gap *alc-match-door-dims* (car job)))
+            (progn
+              (setq output (alc--match-add-door-dim (car job) (car (cadr job)) gap)
+                    *alc-match-door-dims* (cons (cons output gap) *alc-match-door-dims*)
+                    dim-count (1+ dim-count))))))
+      ;; All replacement geometry exists before any older local output is erased.
+      (foreach old old-axes
+        (if (entget old)
+          (if (and (not (alc--layer-locked-p (cdr (assoc 8 (entget old))))) (entdel old))
+            (setq erased (cons old erased))
+            (vl-exit-with-error "Khong thay duoc pline tim cu; hay mo khoa layer cua pline."))))
+      T) nil))
+  (if (vl-catch-all-error-p result)
+    (progn
+      (foreach old erased (if (not (entget old)) (entdel old)))
+      (foreach output *alc-temp-entities*
+        (if (not (member output saved-temps))
+          (progn (if (entget output) (entdel output)) (alc--untrack-temp output))))
+      (setq *alc-match-outputs* saved-index *alc-match-door-dims* saved-dims count 0 dim-count 0)
+      (prompt (strcat "\nDa huy luot tao pline/cua: " (vl-catch-all-error-message result))))
+    (progn
+      (foreach output *alc-temp-entities*
+        (if (not (member output saved-temps)) (alc--untrack-temp output)))
+      (setq replaced-count (length erased)))))
+
+(defun alc--match-loop (/ selection index wall entries entry seen records job count skipped dim-count replaced-count
+    *alc-match-index-ready* *alc-match-outputs* *alc-match-pending* *alc-match-door-dims*)
+  (setq count 0 skipped 0 dim-count 0 replaced-count 0)
   (if (setq selection (alc--match-select))
     (progn
-      (setq index 0 *alc-match-outputs* (alc--match-existing-outputs) *alc-match-index-ready* T)
+      (setq index 0 *alc-match-outputs* (alc--match-existing-outputs)
+            *alc-match-door-dims* (alc--match-door-dimensions) *alc-match-index-ready* T)
       (repeat (sslength selection)
-        (setq wall (alc--resolve-wall (ssname selection index))
-              index (1+ index))
-        (cond
-          ((and wall (member wall seen)) nil)
-          ((and wall (setq entry (alc--match-entry wall)) (alc--match-existing-p wall entry))
-            (setq seen (cons wall seen) skipped (1+ skipped)))
-          ((and wall entry)
-            (setq seen (cons wall seen) *alc-match-pending* (cons wall *alc-match-pending*)))
-          (T (prompt "\nBo qua doi tuong khong phai tuong ALC thang hop le."))))
-      ;; Selection and duplicate checks are read-only: do not add empty Undo groups.
+        (setq wall (alc--resolve-wall (ssname selection index)) index (1+ index))
+        (if (and wall (not (member wall seen)))
+          (progn
+            (setq seen (cons wall seen) entries (alc--match-entries wall))
+            (if entries
+              (foreach entry entries (setq records (cons (list wall entry) records)))
+              (prompt "\nBo qua tuong ngoai tieu chuan thang/L/U deu be day.")))))
+      (foreach job (alc--match-jobs (reverse records))
+        (if (alc--match-job-needed-p job) (setq *alc-match-pending* (cons job *alc-match-pending*))
+          (setq skipped (1+ skipped))))
       (if *alc-match-pending*
         (if (alc--layer-locked-p (getvar "CLAYER"))
-          (prompt "\nKhong the tao pline tim tren layer current bi khoa.")
+          (prompt "\nHay mo khoa layer current truoc khi tao pline/dim cua.")
           (alc--run-command 'alc--match-create-loop "VVMATCH")))))
-  (prompt (strcat "\nDa tao " (itoa count) " pline tim tuong; bo qua "
-    (itoa skipped) " tuong da co pline tim.")))
+  (prompt (strcat "\nDa tao " (itoa count) " pline tim (tinh ca cua), " (itoa dim-count)
+    " dim cua; thay " (itoa replaced-count) " pline tim roi; bo qua " (itoa skipped) " doan da co.")))
+
 (defun c:VVMATCH (/ result message)
   (if (alc--ready-p)
     (progn
@@ -305,6 +589,8 @@
           (if (not (wcmatch (strcase message) "*BREAK*,*CANCEL*,*EXIT*"))
             (prompt (strcat "\nVVMATCH error: " message)))))))
   (princ))
+
+(defun c:VVM () (c:VVMATCH))
 
 (defun alc--filter-select-objects (/ previous result)
   ;; ssget otherwise consumes an existing Pickfirst set without prompting.

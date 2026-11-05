@@ -1,0 +1,26 @@
+ALCWALL 3.4.6 - AutoCAD 2027 release validation
+2026-11-05; isolated labeled processes only.
+
+alc-346-20261105-145417-d9c3ea90
+PID: 28784; start: 2026-11-05T14:54:18.7336880+07:00
+Checks: 499; zero failures.
+
+alc-346-20261105-145610-297c7286
+PID: 8116; start: 2026-11-05T14:56:10.7077832+07:00
+Checks: 73; zero failures.
+
+alc-346-20261105-145620-1d778721
+PID: 18820; start: 2026-11-05T14:56:21.4126182+07:00
+Checks: 63; zero failures.
+
+alc-346-20261105-145636-8f658fd2
+PID: 23700; start: 2026-11-05T14:56:36.8190036+07:00
+Checks: 25; zero failures.
+
+Total: 660 AutoCAD PASS; 10 Python PASS; static manifest validation PASS.
+All test scripts completed with session-matched markers; owned CAD processes exited.
+Stable source updated in existing repository paths; no preview/elevation source included.
+ZIP uses root-relative paths; no ALCWALL-version wrapper folder.
+DLL unchanged from prior release. Native selection, Undo, door dimensions, L/U geometry,
+VV/VVC input restrictions, VVTK background mask, numbering, Find, schedules, hatch
+and geometry hardening passed. See individual validation reports for behavior limits.

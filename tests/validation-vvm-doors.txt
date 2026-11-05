@@ -1,0 +1,20 @@
+VVMATCH door gaps - AutoCAD 2027
+Door session: alc-345-20261105-115516-6acae20d
+PID: 16776
+StartTime: 2026-11-05T11:55:16.9155492+07:00
+25 PASS, zero failures.
+Regression session: alc-345-20261105-115526-bdc51e3c
+PID: 19396
+StartTime: 2026-11-05T11:55:26.7808762+07:00
+match-test 27 PASS; standard-wall-test 36 PASS; zero failures.
+Total 88 PASS. Static validation PASS.
+Door endpoints: 899 rejected, 900 accepted, 2000 accepted, 2001 rejected.
+6400 axis through two doors, correct center and width, unchanged source walls.
+Existing local axes replaced, repeated commands do not duplicate axes or dims.
+Deleted dim recreated without another axis. Rotated/tilted plane dimensions true.
+Different width/elevation, offset center, overlapping intervals not joined.
+Single selected remnant never searches or extends to unselected neighbors.
+L branch can join another selected wall. Dimension failure preserves old axes.
+Native VVM and VVMATCH replacement, repeat and one Undo restoration verified.
+Original straight/L/U, duplicate detection, VV/VVC input limits and Undo pass.
+Both runs used separately launched labeled AutoCAD 2027 processes and exited.

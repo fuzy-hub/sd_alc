@@ -1,5 +1,5 @@
-(setq *alc-module-version* "3.4.5")
-;;; ALCWALL v3.4.5 - schedule module
+(setq *alc-module-version* "3.4.6")
+;;; ALCWALL v3.4.6 - schedule module
 
 ;;; --------------------------------------------------------------------------
 ;;; Length schedule
@@ -201,6 +201,37 @@
   (vla-SetText table row column value)
 )
 
+;;; A TABLE fill has no drawing-background option. Use a real WIPEOUT,
+;;; grouped with the editable table, rather than a fixed black/white fill.
+(defun alc--mask-length-table (table / data origin width height mask object dict order group)
+  (setq data (entget (vlax-vla-object->ename table))
+        origin (vlax-safearray->list (vlax-variant-value (vla-get-InsertionPoint table)))
+        width (vla-get-Width table)
+        height (vla-get-Height table))
+  ;; AddTable creates a WCS XY table. Use its final regenerated dimensions.
+  (command-s "_.WIPEOUT"
+    "_non" (trans origin 0 1)
+    "_non" (trans (list (+ (car origin) width) (cadr origin) (caddr origin)) 0 1)
+    "_non" (trans (list (+ (car origin) width) (- (cadr origin) height) (caddr origin)) 0 1)
+    "_non" (trans (list (car origin) (- (cadr origin) height) (caddr origin)) 0 1)
+    "_Close")
+  (setq mask (entlast) object (vlax-ename->vla-object mask))
+  (alc--track-temp mask)
+  (vla-put-Layer object (vla-get-Layer table))
+  ;; The mask must cover existing geometry; the table must cover the mask.
+  (setq dict (vla-GetExtensionDictionary
+               (vlax-ename->vla-object (cdr (assoc 330 data))))
+        order (vl-catch-all-apply 'vla-Item (list dict "ACAD_SORTENTS")))
+  (if (vl-catch-all-error-p order)
+    (setq order (vla-AddObject dict "ACAD_SORTENTS" "AcDbSortentsTable")))
+  (vlax-invoke order 'MoveToTop (list object))
+  (vlax-invoke order 'MoveToTop (list table))
+  (setq group (vla-Add (vla-get-Groups (alc--get-active-document))
+                (strcat "ALC_VVTK_" (vla-get-Handle table))))
+  (vlax-invoke group 'AppendItems (list table object))
+  (alc--untrack-temp mask)
+  mask)
+
 (defun alc--add-length-table-rows
   (totals insertion text-height detail
     / space table table-ename row-count row table-row item total-length
@@ -295,6 +326,7 @@
 
   (vla-put-RegenerateTableSuppressed table :vlax-false)
   (vla-Update table)
+  (alc--mask-length-table table)
   (alc--untrack-temp table-ename)
   table
 )
@@ -376,7 +408,7 @@
   result)
 
 (defun alc--stat-create-output (entries insertion text-height number-sources
-    / table labels layer index result entity entry old-labels erased)
+    / table labels layer index result entity entry old-labels erased mask group)
   ;; Keep the table and all labels temporary until the entire batch succeeds.
   (setq result (vl-catch-all-apply
     '(lambda ()
@@ -384,6 +416,10 @@
         (setq layer (alc--stat-label-layer) old-labels (alc--stat-old-labels entries)))
       (setq table (alc--add-length-source-table entries insertion text-height))
       (alc--track-temp (vlax-vla-object->ename table))
+      (setq group (vla-Item (vla-get-Groups (alc--get-active-document))
+                    (strcat "ALC_VVTK_" (vla-get-Handle table)))
+            mask (vlax-vla-object->ename (vla-Item group 1)))
+      (alc--track-temp mask)
       (if number-sources
         (progn
           (setq index 0)
@@ -396,9 +432,12 @@
           (vl-exit-with-error "Khong xoa duoc so STT cu; huy bo so moi.")))
       table) nil))
   (if (vl-catch-all-error-p result)
-    (progn (alc--cleanup-temp) (foreach entity erased (entdel entity)))
+    (progn (alc--cleanup-temp)
+      (if group (vla-Delete group))
+      (foreach entity erased (entdel entity)))
     (progn
       (alc--untrack-temp (vlax-vla-object->ename table))
+      (alc--untrack-temp mask)
       (foreach entity labels (alc--untrack-temp entity))))
   result)
 

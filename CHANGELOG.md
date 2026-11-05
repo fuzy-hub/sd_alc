@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.4.6 — 2026-11-05
+
+- VVMATCH/VVM nối các đoạn cùng tim, bề dày và mặt phẳng trong tập chọn qua khoảng trống 900–2000 mm; tính cả cửa vào chiều dài pline. Tạo dim aligned cho từng cửa, hỗ trợ nhiều cửa, không tạo trùng pline/dim khi chạy lại. Thay các tim rời tương ứng để tránh cộng trùng; một Undo khôi phục tim cũ và bỏ pline/dim mới. Nếu tạo/thay bị lỗi, hủy lượt và giữ đầu ra cũ. Chỉ xét tập chọn, không quét thêm tường ngoài vùng chọn.
+
+- VVMATCH/VVM nhận tường thẳng, L và U đều bề dày, tạo pline riêng cho từng nhánh đúng tim/width. L ưu tiên X của UCS hiện hành; U ưu tiên đoạn nối hai chân. Từ chối hình Z/T, cong, khác bề dày và hình ngoài tiêu chuẩn. Tạo lại riêng nhánh thiếu, giữ chống tạo trùng và Undo chung cho lượt.
+- VV/VVC giới hạn tối đa 3 đoạn, góc vuông, chỉ dạng thẳng/L/U; điểm vượt giới hạn được báo và yêu cầu chọn lại. Gộp điểm thẳng hàng khi kiểm tra. Thêm kiểm tra L/U xoay/lật, đổi UCS, mặt phẳng nghiêng, rollback khi lỗi và lệnh thực tế trên AutoCAD 2027.
+
+- Bảng VVTK mới có WIPEOUT theo màu nền bản vẽ, che đối tượng phía dưới và giữ chữ/khung bảng phía trên. Gom bảng và nền thành group để chọn, di chuyển cùng nhau khi bật chọn group (PICKSTYLE 1 hoặc 3). Áp dụng cả các bảng chiều dài dùng chung bộ dựng bảng.
+- Khi tạo STT thất bại, dọn cả nền che cùng bảng và số mới. Nền là ảnh chụp kích thước lúc tạo; tạo lại bảng nếu thêm dòng hoặc đổi kích thước ô. Bảng cũ cần tạo lại để có nền.
+
 ## 3.4.5 — 2026-11-03
 
 - VVTK/ALCTK: giảm cột CHIỀU DÀI còn 60%, bỏ mọi polyline khép kín; giữ LINE và polyline mở.

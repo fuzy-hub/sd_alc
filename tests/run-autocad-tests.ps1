@@ -1,4 +1,4 @@
-param([int]$TimeoutSeconds=240, [switch]$FullAutoCAD, [switch]$StylesOnly, [switch]$TrimOnly, [switch]$HardeningOnly, [string]$InputDrawing, [switch]$PublicDoorOnly, [switch]$PublicDoorReopen, [switch]$AssignEnterUI, [switch]$StatFindReopen)
+param([int]$TimeoutSeconds=240, [switch]$FullAutoCAD, [switch]$StylesOnly, [switch]$TrimOnly, [switch]$HardeningOnly, [string]$InputDrawing, [switch]$PublicDoorOnly, [switch]$PublicDoorReopen, [switch]$AssignEnterUI, [switch]$StatFindReopen, [switch]$StatMaskOnly, [switch]$StandardWallOnly, [switch]$MatchDoorOnly)
 $ErrorActionPreference='Stop'
 if (([int]$StylesOnly.IsPresent+[int]$TrimOnly.IsPresent+[int]$HardeningOnly.IsPresent) -gt 1) { throw 'Choose one suite mode.' }
 if ($PublicDoorOnly -and ($StylesOnly -or $TrimOnly -or $HardeningOnly)) { throw 'PublicDoorOnly cannot be combined with another suite mode.' }
@@ -436,6 +436,106 @@ if ($StatFindReopen) {
 (alc-test--suite "stat-find-reopen-test" "stat-find-test.lsp" 'alc-test-run-stat-find-reopen nil)
 '@
     $taskSuites=[ordered]@{'stat-find-reopen-test'=2}
+}
+if ($StatMaskOnly) {
+    $taskCommands=@'
+(setq alc-test-saved-secureload (getvar "SECURELOAD") alc-test-saved-acad (getenv "ACAD"))
+(setvar "SECURELOAD" 0)
+(setvar "CMDECHO" 0)
+(setvar "FILEDIA" 0)
+(setvar "LOGFILEPATH" (strcat (getenv "ALCWALL_TEST_RUN") "/"))
+(setvar "LOGFILEMODE" 1)
+(setq *alc-install-root* (getenv "ALCWALL_TEST_ROOT"))
+(load (strcat (getenv "ALCWALL_TEST_ROOT") "/ALCWALL.lsp"))
+(load (strcat (getenv "ALCWALL_TEST_ROOT") "/tests/test-harness.lsp"))
+(alc-test--suite "stat-mask-test" "stat-mask-test.lsp" 'alc-test-run-stat-mask nil)
+(alc-test--suite "stat-detail-test" "stat-detail-test.lsp" 'alc-test-run-stat-detail nil)
+(alc-test--suite "stat-label-test" "stat-label-test.lsp" 'alc-test-run-stat-label nil)
+'@
+    $taskSuites=[ordered]@{'stat-mask-test'=8; 'stat-detail-test'=47; 'stat-label-test'=18}
+}
+if ($StandardWallOnly) {
+    $taskCommands=@'
+(setq alc-test-saved-secureload (getvar "SECURELOAD") alc-test-saved-acad (getenv "ACAD"))
+(setvar "SECURELOAD" 0)
+(setvar "CMDECHO" 0)
+(setvar "FILEDIA" 0)
+(setvar "LOGFILEPATH" (strcat (getenv "ALCWALL_TEST_RUN") "/"))
+(setvar "LOGFILEMODE" 1)
+(setq *alc-install-root* (getenv "ALCWALL_TEST_ROOT"))
+(load (strcat (getenv "ALCWALL_TEST_ROOT") "/ALCWALL.lsp"))
+(load (strcat (getenv "ALCWALL_TEST_ROOT") "/tests/test-harness.lsp"))
+(load (strcat (getenv "ALCWALL_TEST_ROOT") "/tests/generate-fixtures.lsp"))
+(alc-test--suite "match-test" "match-test.lsp" 'alc-test-run-match nil)
+(alc-test--suite "standard-wall-test" "standard-wall-test.lsp" 'alc-test-run-standard-wall T)
+(alc-test--step 'alc-test-standard-prepare "standard-wall-test")
+VV
+0,0
+1000,0
+1500,500
+1000,1000
+2000,1000
+0,1000
+0,500
+
+500,50
+(alc-test--step 'alc-test-standard-draw-check "standard-wall-test")
+_.UNDO
+1
+(alc-test--step 'alc-test-standard-empty-check "standard-wall-test")
+VVC
+0,0
+1000,0
+1500,500
+1000,1000
+2000,1000
+0,1000
+0,500
+
+(alc-test--step 'alc-test-standard-draw-check "standard-wall-test")
+_.UNDO
+1
+(alc-test--step 'alc-test-standard-empty-check "standard-wall-test")
+(alc-test--step 'alc-test-standard-match-prepare "standard-wall-test")
+VVM
+(alc-test--step 'alc-test-standard-match-check "standard-wall-test")
+(sssetfirst nil (ssadd *alc-standard-a* (ssadd *alc-standard-b*)))
+VVMATCH
+(alc-test--step 'alc-test-standard-match-check "standard-wall-test")
+_.UNDO
+1
+(alc-test--step 'alc-test-standard-match-undo-check "standard-wall-test")
+(alc-test--finish "standard-wall-test")
+'@
+    $taskSuites=[ordered]@{'match-test'=27; 'standard-wall-test'=36}
+}
+if ($MatchDoorOnly) {
+    $taskCommands=@'
+(setq alc-test-saved-secureload (getvar "SECURELOAD") alc-test-saved-acad (getenv "ACAD"))
+(setvar "SECURELOAD" 0)
+(setvar "CMDECHO" 0)
+(setvar "FILEDIA" 0)
+(setvar "LOGFILEPATH" (strcat (getenv "ALCWALL_TEST_RUN") "/"))
+(setvar "LOGFILEMODE" 1)
+(setq *alc-install-root* (getenv "ALCWALL_TEST_ROOT"))
+(load (strcat (getenv "ALCWALL_TEST_ROOT") "/ALCWALL.lsp"))
+(load (strcat (getenv "ALCWALL_TEST_ROOT") "/tests/test-harness.lsp"))
+(load (strcat (getenv "ALCWALL_TEST_ROOT") "/tests/generate-fixtures.lsp"))
+(load (strcat (getenv "ALCWALL_TEST_ROOT") "/tests/match-test.lsp"))
+(load (strcat (getenv "ALCWALL_TEST_ROOT") "/tests/standard-wall-test.lsp"))
+(alc-test--suite "match-door-test" "match-door-test.lsp" 'alc-test-run-match-door T)
+(alc-test--step 'alc-test-door-public-prepare "match-door-test")
+VVM
+(alc-test--step 'alc-test-door-public-check "match-door-test")
+(sssetfirst nil (ssadd *alc-door-a* (ssadd *alc-door-b*)))
+VVMATCH
+(alc-test--step 'alc-test-door-public-check "match-door-test")
+_.UNDO
+1
+(alc-test--step 'alc-test-door-public-undo-check "match-door-test")
+(alc-test--finish "match-door-test")
+'@
+    $taskSuites=[ordered]@{'match-door-test'=25}
 }
 $taskCommands=$taskCommands.TrimEnd("`r","`n")+"`n(setenv `"ACAD`" alc-test-saved-acad)`n(setvar `"SECURELOAD`" alc-test-saved-secureload)`n(setq alc-test-end-file (open (alc-test--result-path `"run.complete`") `"w`"))`n(write-line (getenv `"ALCWALL_TEST_LABEL`") alc-test-end-file)`n(close alc-test-end-file)`n(command-s `"_.QSAVE`")`n_.QUIT`n_Y`n"
 if ($AssignEnterUI) {

@@ -1,0 +1,14 @@
+Standard straight/L/U walls - AutoCAD 2027
+Session: alc-345-20261105-114225-c26d55f2
+PID: 372
+StartTime: 2026-11-05T11:42:25.6566745+07:00
+Result: match-test 27 PASS; standard-wall-test 36 PASS; zero failures.
+Static validation PASS. All 63 checks completed with matching session markers.
+U example lengths 1455, 880, 490; actual width and center axes verified.
+L UCS-X corner priority, 45-degree winding tie, mirrored/rotated/tilted U,
+all U start vertices and windings, stale width tags, partial recreation,
+nonstandard Z/T/curved/tapered geometry rejection, partial failure rollback.
+Native VV/VVC reject diagonal turns, Z and fourth segment, accept corrected U.
+Native VVM alias/Pickfirst batch creates five outputs for L+U; repeated VVMATCH
+creates no duplicates; one Undo removes all five outputs and preserves sources.
+Separate labeled Codex process launched and exited; preexisting CAD untouched.

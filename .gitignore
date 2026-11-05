@@ -12,3 +12,5 @@ tests/results/*.log
 __pycache__/
 /ALCWALL-*.zip.json
 /ALCWALL-LOAD.lsp
+
+/versions/
