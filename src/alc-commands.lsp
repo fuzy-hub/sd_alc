@@ -1,5 +1,5 @@
-(setq *alc-module-version* "3.4.6")
-;;; ALCWALL v3.4.6 - commands module
+(setq *alc-module-version* "3.5.0")
+;;; ALCWALL v3.5.0 - commands module
 
 ;;; --------------------------------------------------------------------------
 ;;; Public commands
@@ -809,6 +809,9 @@
   )
   (princ)
 )
+
+(defun c:ALCMC () (alc--run-command 'alc--mc-loop "ALCMC") (princ))
+(defun c:VVMC () (c:ALCMC))
 
 ;; Every public ALCxxx command has a matching VVxxx entry point.
 (defun c:VVSET () (c:ALCSET))

@@ -1,4 +1,4 @@
-(setq *alc-module-version* "3.4.6")
+(setq *alc-module-version* "3.5.0")
 ;;; ALCWALL - shorten or extend one end of a straight-sided wall strip.
 
 (defun alc--ensure-trim-distance ()

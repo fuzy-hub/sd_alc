@@ -15,6 +15,7 @@ out.parent.mkdir(parents=True,exist_ok=True)
 names=['ALCWALL.lsp','README.md','CHANGELOG.md','VERSION','REVIEW.txt',
        'manifest.json','manifest.lspdata',f'RELEASE-{VERSION}.txt','tools/install.ps1']
 names+=sorted(name for name in manifest['files'] if name!='ALCWALL.lsp')
+names+=sorted(p.relative_to(ROOT).as_posix() for p in (ROOT/'examples').rglob('*') if p.is_file())
 if (ROOT/f'tests/validation-{VERSION}.txt').exists(): names.append(f'tests/validation-{VERSION}.txt')
 with zipfile.ZipFile(out,'w',zipfile.ZIP_DEFLATED) as z:
     for name in names:

@@ -1,4 +1,4 @@
-(setq *alc-module-version* "3.4.6")
+(setq *alc-module-version* "3.5.0")
 (defun alc--three-digit-number (value / result)
   (setq result (itoa value))
   (cond

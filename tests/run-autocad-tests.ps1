@@ -1,4 +1,4 @@
-param([int]$TimeoutSeconds=240, [switch]$FullAutoCAD, [switch]$StylesOnly, [switch]$TrimOnly, [switch]$HardeningOnly, [string]$InputDrawing, [switch]$PublicDoorOnly, [switch]$PublicDoorReopen, [switch]$AssignEnterUI, [switch]$StatFindReopen, [switch]$StatMaskOnly, [switch]$StandardWallOnly, [switch]$MatchDoorOnly)
+param([int]$TimeoutSeconds=240, [switch]$FullAutoCAD, [switch]$StylesOnly, [switch]$TrimOnly, [switch]$HardeningOnly, [string]$InputDrawing, [switch]$PublicDoorOnly, [switch]$PublicDoorReopen, [switch]$AssignEnterUI, [switch]$StatFindReopen, [switch]$StatMaskOnly, [switch]$StandardWallOnly, [switch]$MatchDoorOnly, [switch]$ElevationOnly)
 $ErrorActionPreference='Stop'
 if (([int]$StylesOnly.IsPresent+[int]$TrimOnly.IsPresent+[int]$HardeningOnly.IsPresent) -gt 1) { throw 'Choose one suite mode.' }
 if ($PublicDoorOnly -and ($StylesOnly -or $TrimOnly -or $HardeningOnly)) { throw 'PublicDoorOnly cannot be combined with another suite mode.' }
@@ -536,6 +536,41 @@ _.UNDO
 (alc-test--finish "match-door-test")
 '@
     $taskSuites=[ordered]@{'match-door-test'=25}
+}
+if ($ElevationOnly) {
+    $taskCommands=@'
+(setq alc-test-saved-secureload (getvar "SECURELOAD") alc-test-saved-acad (getenv "ACAD"))
+(setvar "SECURELOAD" 0)
+(setvar "CMDECHO" 0)
+(setvar "FILEDIA" 0)
+(setvar "LOGFILEPATH" (strcat (getenv "ALCWALL_TEST_RUN") "/"))
+(setvar "LOGFILEMODE" 1)
+(setq *alc-install-root* (getenv "ALCWALL_TEST_ROOT"))
+(load (strcat (getenv "ALCWALL_TEST_ROOT") "/ALCWALL.lsp"))
+(load (strcat (getenv "ALCWALL_TEST_ROOT") "/tests/test-harness.lsp"))
+(load (strcat (getenv "ALCWALL_TEST_ROOT") "/tests/generate-fixtures.lsp"))
+(alc-test--suite "elevation-test" "elevation-test.lsp" 'alc-test-run-elevation T)
+(alc-test--step 'alc-test-mc-prepare "elevation-test")
+VVMC
+6000
+0
+150
+1500
+3300
+3000
+300
+150
+200
+150
+0,0
+(alc-test--step 'alc-test-mc-public-check "elevation-test")
+_.UNDO
+1
+(alc-test--step 'alc-test-mc-undo-check "elevation-test")
+(alc-test--step 'alc-test-mc-sample "elevation-test")
+(alc-test--finish "elevation-test")
+'@
+    $taskSuites=[ordered]@{'elevation-test'=31}
 }
 $taskCommands=$taskCommands.TrimEnd("`r","`n")+"`n(setenv `"ACAD`" alc-test-saved-acad)`n(setvar `"SECURELOAD`" alc-test-saved-secureload)`n(setq alc-test-end-file (open (alc-test--result-path `"run.complete`") `"w`"))`n(write-line (getenv `"ALCWALL_TEST_LABEL`") alc-test-end-file)`n(close alc-test-end-file)`n(command-s `"_.QSAVE`")`n_.QUIT`n_Y`n"
 if ($AssignEnterUI) {

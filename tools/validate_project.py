@@ -10,7 +10,7 @@ EXTRA_FILES = ['src/alc-assign-ui.cs', 'src/alc-assign-ui.dll', 'tools/build-ass
 MODULES = ['alc-settings.lsp', 'alc-styles.lsp', 'alc-patterns.lsp',
            'alc-geometry.lsp', 'alc-safety.lsp', 'alc-wall.lsp', 'alc-trim.lsp',
            'alc-schedule.lsp', 'alc-door-schedule.lsp', 'alc-dim-schedule.lsp',
-           'alc-count.lsp', 'alc-text-copy.lsp', 'alc-align.lsp', 'alc-commands.lsp']
+           'alc-count.lsp', 'alc-text-copy.lsp', 'alc-align.lsp', 'alc-elevation.lsp', 'alc-commands.lsp']
 
 def validate():
     files = [ROOT/'ALCWALL.lsp', *sorted((ROOT/'src').glob('*.lsp')), *sorted((ROOT/'tests').glob('*.lsp'))]

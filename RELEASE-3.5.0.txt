@@ -1,0 +1,17 @@
+ALCWALL 3.5.0 — 2026-11-05
+
+Một thư mục cài, một ALCWALL-LOAD.lsp. Bao gồm các cập nhật 3.4.6 và VVMC.
+- VVMC/ALCMC: một khoang tường chưa có cửa, theo cao độ nhập; trục biên,
+  đường bao/dim/cao độ, tham chiếu trần, gạch vẽ từng ô, bê tông AR-CONC.
+- Gạch 1100x600 mm, mạch 5, khe sàn/giằng 10, foam đỉnh min 100.
+- Thử giằng 100–200 và foam 100–150 mm (giới hạn trên nhập lại được),
+  tận dụng miếng cắt; là ước tính bố trí, chưa trừ đường cưa.
+- Một Undo xóa toàn bộ khoang; lỗi dựng hình không giữ hình dở.
+- Giữ VVM qua cửa 900–2000, hình L/U và nền bảng VVTK của 3.4.6.
+
+Giải nén ZIP trực tiếp vào thư mục ALCWALL hiện có, thay tệp rồi APPLOAD lại
+ALCWALL-LOAD.lsp. Không tạo thư mục phiên bản mới. DLL VVA không đổi.
+Các bản cũ giữ trên GitHub Releases; kèm archive preview và sao lưu trước đó.
+Không bổ sung bản preview vào Startup Suite. Xem README.md và examples/.
+
+Kiểm tra: 691 AutoCAD 2027 PASS, 10 Python PASS; manifest 3.5.0 PASS.

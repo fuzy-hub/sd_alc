@@ -1,13 +1,35 @@
-# ALCWALL 3.4.6
+# ALCWALL 3.5.0
 
-ALCWALL là bộ công cụ AutoLISP hỗ trợ triển khai tường ALC 2D trên AutoCAD for Windows. Bản 3.4.6 được kiểm thử bằng AutoCAD 2027.
+ALCWALL là bộ công cụ AutoLISP hỗ trợ triển khai tường ALC 2D trên AutoCAD for Windows. Bản 3.5.0 được kiểm thử bằng AutoCAD 2027.
+
+## Cài một lần, cập nhật tại chỗ
+
+Chỉ dùng một thư mục ALCWALL và một `ALCWALL-LOAD.lsp`. Bản 3.5.0 gồm toàn bộ tính năng 3.4.6 và VVMC. APPLOAD lại bộ nạp hiện có sau mỗi cập nhật; không cần thư mục preview hoặc bộ nạp khác. Bản cũ được lưu bằng tag/Release tại https://github.com/fuzy-hub/sd_alc/releases. Để quay lại bản trước, tải ZIP 3.4.6 trên GitHub, giải nén đè vào chính thư mục này rồi APPLOAD lại bộ nạp. ZIP bản cập nhật có tệp ngay ở gốc để giải nén đè vào chính thư mục đang dùng. Giữ DLL hiện tại nếu AutoCAD đang khóa tệp vì DLL không đổi.
+
+## VVMC — bản thử một khoang chưa có cửa
+
+Nhập chiều dài khoang, cao độ mặt sàn dưới, chiều dày sàn dưới, **cao độ đáy giằng**, cao độ kết thúc tường (đáy dầm hoặc đáy sàn), cao độ trần tham chiếu, chiều cao phần dầm nằm dưới sàn trên, chiều dày sàn trên và hai giới hạn trên của giằng/foam. Điểm chèn là giao giữa trục biên trái và mặt sàn dưới; bản vẽ theo UCS hiện hành. Các cao độ nhập là tuyệt đối, còn vị trí bản vẽ lấy mặt sàn dưới làm mốc. Chiều dài có thể nhập từ kết quả đo giữa hai trục biên do người dùng xác định; chương trình không tự suy đoán cột/bước cột từ mặt bằng.
+
+Mặc định: khoang 6000 mm; mặt sàn 0; sàn dưới/trên 150; đáy giằng 1500; kết thúc tường 3300; trần tham chiếu 3000; phần dầm dưới sàn 300. Trần chỉ là nét tham chiếu, không cắt các hàng gạch tại cao độ này. Nếu không có dầm, nhập chiều cao phần dầm bằng 0.
+
+- Gạch vẽ bằng từng hình chữ nhật, dài 1100 × cao 600 mm; mạch ngang/đứng 5 mm; khe sát sàn và hai phía giằng 10 mm.
+- Dầm, giằng và hai sàn hatch AR-CONC; foam đỉnh hatch riêng ANSI31. Foam thay toàn bộ khe đỉnh, không cộng thêm khe 10 mm.
+- Thử giằng 100–200 và foam 100–150 mm, bước 5 mm, ưu tiên giằng 150 và foam 100 nếu các tiêu chí khác bằng nhau. Hai giới hạn trên có thể nhập lại; giới hạn dưới giữ 100 mm.
+- Miếng cắt cao ít nhất 100, dài ít nhất 200 mm. Khi hàng cuối quá mỏng, chia chiều cao giữa hai hàng cuối. Xen kẽ khởi đầu viên nguyên/nửa viên và dịch vị trí cắt đầu hàng khi cần để tránh mảnh cuối ngắn.
+- Duyệt các phương án trong lưới thông số; ưu tiên ít diện tích phế liệu, ít viên nguyên phải cấp, ít miếng cắt và gần kích thước mong muốn. Tận dụng phần cắt bằng cách ghép hình chữ nhật kiểu cắt thẳng, không chồng phần sử dụng.
+- Đây là **ước tính bố trí**, dùng phép ghép tham lam, không bảo đảm nghiệm tối ưu toàn cục. Bản thử chưa trừ đường cưa và không xoay viên khi tận dụng. Thông số giằng/foam là giới hạn thử hình học, không thay thế cấu tạo được duyệt của dự án.
+- Không tìm được phương án thì không dựng hình. Khi hatch/dựng hình lỗi sẽ dọn hình mới còn dở. Không tạo cột, cửa, lanh tô và liên kết trực tiếp với mặt bằng ở bản đầu này.
+
+Các layer riêng: ALC_MC_TRUC, ALC_MC_BETONG, ALC_MC_GACH, ALC_MC_FOAM, ALC_MC_TRAN, ALC_MC_CHU, ALC_MC_DIM. Giữ nguyên layer hiện hữu; cần bật/thaw/mở khóa chúng trước khi vẽ.
+
+Xem `examples/mat-cat-mau.png` (hình minh họa từ dữ liệu tính) và `examples/mat-cat-mau.dwg` (bản vẽ AutoCAD thực tế) để đối chiếu kết quả mẫu.
 
 ## Cài đặt
 
 1. Giữ nguyên toàn bộ cấu trúc thư mục, đặc biệt là `ALCWALL.lsp` và thư mục `src`.
 2. Trong AutoCAD, mở `OPTIONS > Files > Support File Search Path` và thêm thư mục ALCWALL.
 3. Chạy PowerShell `./tools/install.ps1`, rồi `APPLOAD` tệp `ALCWALL-LOAD.lsp` được tạo trong thư mục cài. Thêm tệp này vào `APPLOAD > Startup Suite > Contents > Add` để tự nạp mỗi lần mở CAD/bản vẽ. Loader này ghim đúng thư mục khi máy có nhiều bản ALCWALL. Nếu chỉ có một bản trong Support Path, vẫn có thể nạp trực tiếp `ALCWALL.lsp`.
-4. Khi thấy thông báo `ALCWALL v3.4.6 modules loaded`, bộ lệnh đã sẵn sàng.
+4. Khi thấy thông báo `ALCWALL v3.5.0 modules loaded`, bộ lệnh đã sẵn sàng.
 
 Khi cập nhật, APPLOAD lại `ALCWALL-LOAD.lsp`; loader gỡ định nghĩa lệnh cũ `ALCCUT20` còn trong phiên làm việc, chỉ dùng `ALCTRIM`.
 

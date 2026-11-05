@@ -1,0 +1,30 @@
+ALCWALL 3.5.0 - single installation root - 2026-11-05
+
+alc-350-20261105-150955-3eec66a2
+PID: 11032; start: 2026-11-05T15:09:56.2926613+07:00
+PASS: 31; failures: 0
+
+alc-350-20261105-151011-74173a59
+PID: 28980; start: 2026-11-05T15:10:12.0552478+07:00
+PASS: 499; failures: 0
+
+alc-350-20261105-151045-7cc0a6e3
+PID: 15136; start: 2026-11-05T15:10:45.4435610+07:00
+PASS: 73; failures: 0
+
+alc-350-20261105-151103-ce3bbf85
+PID: 13396; start: 2026-11-05T15:11:03.4569085+07:00
+PASS: 63; failures: 0
+
+alc-350-20261105-151121-4837dfe0
+PID: 13616; start: 2026-11-05T15:11:22.0368268+07:00
+PASS: 25; failures: 0
+
+Total: 691 AutoCAD 2027 PASS, 10 Python PASS; static manifest PASS.
+All CAD processes newly launched and labeled; preexisting user processes untouched.
+ALCWALL-LOAD.lsp continues to load the original installation directory at version 3.5.0.
+VVMC planner/render/Undo/UCS and all 3.4.6 features verified at the same root.
+Concrete AR-CONC, separate foam, 1100x600 brick outlines, 5 mm joints, 10 mm gaps.
+Layout optimization is a bounded study with greedy cutting reuse and zero saw kerf.
+Packaging remains root-relative for overwrite installation, with no version wrapper folder.
+Historical Git tags/releases retained; historical ZIPs uploaded before local duplicate cleanup.

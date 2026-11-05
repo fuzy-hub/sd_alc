@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.5.0 — 2026-11-05
+
+- Gộp VVMC/ALCMC dựng một khoang tường vào bộ cài duy nhất; giữ toàn bộ tính năng 3.4.6. Tường gạch đúng ô 1100x600, mạch 5, khe 10; bê tông AR-CONC, foam riêng, trục/cao độ/dim và tham chiếu trần.
+- Thử bố trí giằng/foam có giới hạn và tận dụng miếng cắt; giữ một Undo cho cả khoang. Phạm vi VVMC hiện là một khoang chưa có cửa, chưa tự đọc cột hoặc mặt bằng.
+- Lưu lịch sử trên GitHub bằng tag/Release và asset sao lưu; cập nhật đè tại thư mục đang dùng, không giữ bộ nạp preview riêng.
+
+
 ## 3.4.6 — 2026-11-05
 
 - VVMATCH/VVM nối các đoạn cùng tim, bề dày và mặt phẳng trong tập chọn qua khoảng trống 900–2000 mm; tính cả cửa vào chiều dài pline. Tạo dim aligned cho từng cửa, hỗ trợ nhiều cửa, không tạo trùng pline/dim khi chạy lại. Thay các tim rời tương ứng để tránh cộng trùng; một Undo khôi phục tim cũ và bỏ pline/dim mới. Nếu tạo/thay bị lỗi, hủy lượt và giữ đầu ra cũ. Chỉ xét tập chọn, không quét thêm tường ngoài vùng chọn.

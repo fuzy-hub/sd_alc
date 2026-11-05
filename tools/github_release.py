@@ -76,24 +76,50 @@ if release is None:
                       {'tag_name': tag, 'target_commitish': release_commit,
                        'name': 'ALCWALL ' + version, 'body': body,
                        'draft': True, 'prerelease': False})
-asset = next((a for a in release.get('assets', []) if a['name'] == zip_path.name), None)
-zip_bytes = zip_path.read_bytes()
-if asset is None:
-    upload = release['upload_url'].split('{')[0] + '?' + urlencode({'name': zip_path.name})
-    asset = request('POST', upload, zip_bytes, raw=True)
-if asset['size'] != len(zip_bytes):
-    raise SystemExit('Release asset size does not match the local ZIP.')
-digest = asset.get('digest')
-if digest and digest != 'sha256:' + hashlib.sha256(zip_bytes).hexdigest():
-    raise SystemExit('Release asset digest does not match the local ZIP.')
+# Optional historical ZIPs are preserved as release assets before local cleanup.
+backup_paths = []
+for index, argument in enumerate(sys.argv):
+    if argument == '--backup':
+        if index + 1 >= len(sys.argv):
+            raise SystemExit('--backup requires a ZIP path.')
+        backup_paths.append(Path(sys.argv[index + 1]).resolve())
+paths = [zip_path, *backup_paths]
+if len({path.name for path in paths}) != len(paths):
+    raise SystemExit('Release asset names must be unique.')
+expected = {}
+for path in paths:
+    if not path.is_file() or path.suffix.lower() != '.zip':
+        raise SystemExit('Release assets must be existing ZIP files.')
+    import zipfile
+    with zipfile.ZipFile(path) as archive:
+        if archive.testzip() is not None:
+            raise SystemExit('ZIP integrity failure: ' + path.name)
+    data = path.read_bytes()
+    digest = hashlib.sha256(data).hexdigest()
+    asset = next((a for a in release.get('assets', []) if a['name'] == path.name), None)
+    if asset is None:
+        upload = release['upload_url'].split('{')[0] + '?' + urlencode({'name': path.name})
+        asset = request('POST', upload, data, raw=True)
+    if asset['size'] != len(data):
+        raise SystemExit('Release asset size mismatch: ' + path.name)
+    remote_digest = asset.get('digest')
+    if remote_digest and remote_digest != 'sha256:' + digest:
+        raise SystemExit('Release asset digest mismatch: ' + path.name)
+    if path in backup_paths and not remote_digest:
+        raise SystemExit('Historical backup has no remote digest; keep the local backup: ' + path.name)
+    expected[path.name] = {'bytes': len(data), 'sha256': digest}
 if release['draft']:
     release = request('PATCH', base + '/releases/' + str(release['id']),
                       {'draft': False, 'make_latest': 'true'})
 verified = request('GET', base + '/releases/tags/' + tag)
 if verified is None or verified['draft']:
     raise SystemExit('Release publication could not be confirmed.')
-published_asset = next((a for a in verified.get('assets', []) if a['name'] == zip_path.name), None)
-if not published_asset or published_asset['size'] != len(zip_bytes):
-    raise SystemExit('Published release asset could not be confirmed.')
-print(json.dumps({'release': verified['html_url'], 'tag': verified['tag_name'],
-                  'asset': published_asset['browser_download_url'], 'bytes': published_asset['size']}, ensure_ascii=False))
+assets = []
+for name, metadata in expected.items():
+    asset = next((a for a in verified.get('assets', []) if a['name'] == name), None)
+    if not asset or asset['size'] != metadata['bytes']:
+        raise SystemExit('Published asset could not be confirmed: ' + name)
+    if asset.get('digest') and asset['digest'] != 'sha256:' + metadata['sha256']:
+        raise SystemExit('Published asset digest mismatch: ' + name)
+    assets.append({'name': name, 'url': asset['browser_download_url'], **metadata})
+print(json.dumps({'release': verified['html_url'], 'tag': verified['tag_name'], 'assets': assets}, ensure_ascii=False))
